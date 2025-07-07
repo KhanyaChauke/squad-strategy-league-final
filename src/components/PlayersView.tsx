@@ -1,0 +1,278 @@
+
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/contexts/AuthContext';
+import { playersDatabase, searchPlayers, getPlayersByPosition } from '@/data/playersData';
+import { useToast } from '@/hooks/use-toast';
+import { Plus, Search, TrendingUp, Star } from 'lucide-react';
+
+export const PlayersView = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [positionFilter, setPositionFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('rating');
+  const { user, addPlayerToSquad } = useAuth();
+  const { toast } = useToast();
+
+  const getFilteredPlayers = () => {
+    let players = playersDatabase;
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      players = searchPlayers(searchQuery);
+    }
+    
+    // Apply position filter
+    if (positionFilter !== 'all') {
+      players = getPlayersByPosition(positionFilter);
+      if (searchQuery.trim()) {
+        players = players.filter(player => 
+          player.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          player.club.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+    }
+    
+    // Apply sorting
+    switch (sortBy) {
+      case 'rating':
+        players.sort((a, b) => b.rating - a.rating);
+        break;
+      case 'cost':
+        players.sort((a, b) => b.cost - a.cost);
+        break;
+      case 'name':
+        players.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      default:
+        break;
+    }
+    
+    return players;
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-ZA', {
+      style: 'currency',
+      currency: 'ZAR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const handleAddPlayer = (player: any) => {
+    const success = addPlayerToSquad(player);
+    
+    if (success) {
+      toast({
+        title: "Player Added!",
+        description: `${player.name} has been added to your squad.`
+      });
+    } else {
+      let message = "Failed to add player.";
+      
+      if (user?.squad.length >= 11) {
+        message = "Your squad is full (11 players maximum).";
+      } else if (user?.budget && user.budget < player.cost) {
+        message = "Insufficient budget for this player.";
+      } else if (user?.squad.some(p => p.id === player.id)) {
+        message = "Player is already in your squad.";
+      }
+      
+      toast({
+        title: "Cannot Add Player",
+        description: message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getPositionColor = (position: string) => {
+    switch (position) {
+      case 'GK': return 'bg-yellow-100 text-yellow-800';
+      case 'DEF': return 'bg-blue-100 text-blue-800';
+      case 'MID': return 'bg-green-100 text-green-800';
+      case 'ATT': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getRatingColor = (rating: number) => {
+    if (rating >= 85) return 'text-green-600';
+    if (rating >= 80) return 'text-blue-600';
+    if (rating >= 75) return 'text-orange-600';
+    return 'text-gray-600';
+  };
+
+  const filteredPlayers = getFilteredPlayers();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">Player Database</h2>
+          <p className="text-gray-600">Browse and add players to your squad</p>
+        </div>
+        
+        <div className="bg-white rounded-lg p-4 shadow-sm border">
+          <div className="flex items-center space-x-4 text-sm">
+            <div className="flex items-center space-x-2">
+              <span className="text-gray-600">Budget:</span>
+              <span className="font-bold text-green-600">
+                {formatCurrency(user?.budget || 0)}
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-gray-600">Squad:</span>
+              <span className="font-bold">
+                {user?.squad.length || 0}/11
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Search & Filter</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search players or clubs..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            
+            <Select value={positionFilter} onValueChange={setPositionFilter}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="Position" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Positions</SelectItem>
+                <SelectItem value="GK">Goalkeeper</SelectItem>
+                <SelectItem value="DEF">Defender</SelectItem>
+                <SelectItem value="MID">Midfielder</SelectItem>
+                <SelectItem value="ATT">Attacker</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="rating">Rating</SelectItem>
+                <SelectItem value="cost">Cost</SelectItem>
+                <SelectItem value="name">Name</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Players Grid */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredPlayers.map((player) => (
+          <Card key={player.id} className="card-hover">
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="text-lg">{player.name}</CardTitle>
+                  <CardDescription className="flex items-center space-x-2">
+                    <span>{player.club}</span>
+                    <Badge className={getPositionColor(player.position)} variant="secondary">
+                      {player.position}
+                    </Badge>
+                  </CardDescription>
+                </div>
+                <div className="text-right">
+                  <div className={`text-2xl font-bold ${getRatingColor(player.rating)}`}>
+                    {player.rating}
+                  </div>
+                  <div className="flex items-center text-yellow-500">
+                    <Star className="h-3 w-3 fill-current" />
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="space-y-4">
+              {/* Player Stats */}
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div className="text-center">
+                  <div className="text-lg font-semibold">{player.pace}</div>
+                  <div className="text-gray-500">PAC</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-semibold">{player.shooting}</div>
+                  <div className="text-gray-500">SHO</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-semibold">{player.passing}</div>
+                  <div className="text-gray-500">PAS</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-semibold">{player.defending}</div>
+                  <div className="text-gray-500">DEF</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-semibold">{player.dribbling}</div>
+                  <div className="text-gray-500">DRI</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-semibold">{player.physical}</div>
+                  <div className="text-gray-500">PHY</div>
+                </div>
+              </div>
+              
+              {/* Cost and Add Button */}
+              <div className="flex items-center justify-between pt-2 border-t">
+                <div>
+                  <div className="text-sm text-gray-500">Cost</div>
+                  <div className="font-bold text-green-600">
+                    {formatCurrency(player.cost)}
+                  </div>
+                </div>
+                
+                <Button
+                  onClick={() => handleAddPlayer(player)}
+                  disabled={
+                    user?.squad.some(p => p.id === player.id) ||
+                    (user?.squad.length || 0) >= 11 ||
+                    (user?.budget || 0) < player.cost
+                  }
+                  className="gradient-bg hover:opacity-90"
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {filteredPlayers.length === 0 && (
+        <Card>
+          <CardContent className="text-center py-12">
+            <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500">No players found matching your criteria.</p>
+            <p className="text-gray-400 text-sm">Try adjusting your search or filters.</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+};

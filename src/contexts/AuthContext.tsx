@@ -53,7 +53,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check for existing session
     const storedUser = localStorage.getItem('fpsl_user');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      const userData = JSON.parse(storedUser);
+      // Ensure budget is adequate for new pricing structure
+      if (userData.budget < 1000000000) {
+        userData.budget = 1000000000; // Reset to 1B if less
+        localStorage.setItem('fpsl_user', JSON.stringify(userData));
+      }
+      setUser(userData);
     }
     setIsLoading(false);
   }, []);
@@ -73,9 +79,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: 'demo-user',
         fullName: 'Demo User',
         email: 'demo@fpsl.com',
-        budget: 1000000000,
+        budget: 1000000000, // Increased budget for new pricing
         squad: []
       };
+      
+      // Ensure adequate budget
+      if (userData.budget < 1000000000) {
+        userData.budget = 1000000000;
+      }
       
       setUser(userData);
       localStorage.setItem('fpsl_user', JSON.stringify(userData));
@@ -106,7 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       fullName,
       email,
       password,
-      budget: 1000000000,
+      budget: 1000000000, // Increased starting budget
       squad: []
     };
     

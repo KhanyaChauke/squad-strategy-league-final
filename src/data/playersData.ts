@@ -1,4 +1,6 @@
-interface Player {
+import { getEnhancedPSLData } from '@/services/footballDataApi';
+
+export interface Player {
   id: string;
   name: string;
   position: 'GK' | 'DEF' | 'MID' | 'ATT';
@@ -14,282 +16,85 @@ interface Player {
   imageUrl?: string;
 }
 
-export const playersDatabase: Player[] = [
-  // Goalkeepers
-  {
-    id: 'gk1',
-    name: 'Ronwen Williams',
-    position: 'GK',
-    club: 'Mamelodi Sundowns',
-    rating: 87,
-    pace: 45,
-    shooting: 15,
-    passing: 78,
-    defending: 42,
-    dribbling: 35,
-    physical: 88,
-    cost: 180000000
-  },
-  {
-    id: 'gk2',
-    name: 'Itumeleng Khune',
-    position: 'GK',
-    club: 'Kaizer Chiefs',
-    rating: 82,
-    pace: 42,
-    shooting: 12,
-    passing: 75,
-    defending: 40,
-    dribbling: 32,
-    physical: 85,
-    cost: 150000000
-  },
-  {
-    id: 'gk3',
-    name: 'Veli Mothwa',
-    position: 'GK',
-    club: 'AmaZulu',
-    rating: 79,
-    pace: 48,
-    shooting: 14,
-    passing: 72,
-    defending: 38,
-    dribbling: 30,
-    physical: 82,
-    cost: 120000000
-  },
+// Generate enhanced PSL database with proper budget balancing
+export const playersDatabase: Player[] = getEnhancedPSLData();
 
-  // Defenders
-  {
-    id: 'def1',
-    name: 'Rushine De Reuck',
-    position: 'DEF',
-    club: 'Mamelodi Sundowns',
-    rating: 84,
-    pace: 75,
-    shooting: 28,
-    passing: 82,
-    defending: 89,
-    dribbling: 65,
-    physical: 88,
-    cost: 200000000
-  },
-  {
-    id: 'def2',
-    name: 'Grant Kekana',
-    position: 'DEF',
-    club: 'Mamelodi Sundowns',
-    rating: 82,
-    pace: 68,
-    shooting: 32,
-    passing: 85,
-    defending: 87,
-    dribbling: 62,
-    physical: 84,
-    cost: 190000000
-  },
-  {
-    id: 'def3',
-    name: 'Innocent Maela',
-    position: 'DEF',
-    club: 'Orlando Pirates',
-    rating: 81,
-    pace: 78,
-    shooting: 35,
-    passing: 79,
-    defending: 85,
-    dribbling: 68,
-    physical: 82,
-    cost: 170000000
-  },
-  {
-    id: 'def4',
-    name: 'Nkosinathi Sibisi',
-    position: 'DEF',
-    club: 'Orlando Pirates',
-    rating: 80,
-    pace: 72,
-    shooting: 25,
-    passing: 78,
-    defending: 86,
-    dribbling: 58,
-    physical: 85,
-    cost: 160000000
-  },
-  {
-    id: 'def5',
-    name: 'Siyanda Xulu',
-    position: 'DEF',
-    club: 'AmaZulu',
-    rating: 78,
-    pace: 65,
-    shooting: 22,
-    passing: 76,
-    defending: 84,
-    dribbling: 55,
-    physical: 83,
-    cost: 140000000
-  },
+// Ensure budget is balanced for a starting 11
+// Average cost per player should be around 90-100M for a 1B budget
+const totalBudget = 1000000000; // 1 billion
+const averageCostPerPlayer = totalBudget / 11; // ~90M per player
 
-  // Midfielders
-  {
-    id: 'mid1',
-    name: 'Themba Zwane',
-    position: 'MID',
-    club: 'Mamelodi Sundowns',
-    rating: 88,
-    pace: 82,
-    shooting: 78,
-    passing: 89,
-    defending: 65,
-    dribbling: 91,
-    physical: 75,
-    cost: 250000000
-  },
-  {
-    id: 'mid2',
-    name: 'Teboho Mokoena',
-    position: 'MID',
-    club: 'Mamelodi Sundowns',
-    rating: 85,
-    pace: 78,
-    shooting: 82,
-    passing: 87,
-    defending: 79,
-    dribbling: 84,
-    physical: 81,
-    cost: 220000000
-  },
-  {
-    id: 'mid3',
-    name: 'Keagan Dolly',
-    position: 'MID',
-    club: 'Kaizer Chiefs',
-    rating: 83,
-    pace: 75,
-    shooting: 79,
-    passing: 85,
-    defending: 58,
-    dribbling: 88,
-    physical: 72,
-    cost: 200000000
-  },
-  {
-    id: 'mid4',
-    name: 'Goodman Mosele',
-    position: 'MID',
-    club: 'Orlando Pirates',
-    rating: 79,
-    pace: 76,
-    shooting: 68,
-    passing: 82,
-    defending: 74,
-    dribbling: 78,
-    physical: 76,
-    cost: 160000000
-  },
-  {
-    id: 'mid5',
-    name: 'Monnapule Saleng',
-    position: 'MID',
-    club: 'Orlando Pirates',
-    rating: 81,
-    pace: 88,
-    shooting: 75,
-    passing: 78,
-    defending: 45,
-    dribbling: 85,
-    physical: 68,
-    cost: 180000000
-  },
+// Adjust player costs to ensure budget balance
+const adjustedPlayers = playersDatabase.map(player => {
+  const positionMultipliers = {
+    GK: 0.7,   // Goalkeepers cheaper
+    DEF: 0.8,  // Defenders slightly cheaper
+    MID: 1.0,  // Midfielders at average
+    ATT: 1.4   // Attackers more expensive
+  };
+  
+  const ratingMultiplier = player.rating / 80; // Scale based on rating
+  const baselineCost = averageCostPerPlayer * positionMultipliers[player.position] * ratingMultiplier;
+  
+  // Add variance but keep within reasonable bounds
+  const variance = baselineCost * 0.3;
+  const adjustedCost = baselineCost + (Math.random() * variance * 2 - variance);
+  
+  return {
+    ...player,
+    cost: Math.max(20000000, Math.round(adjustedCost / 5000000) * 5000000) // Minimum 20M, round to 5M
+  };
+});
 
-  // Attackers
-  {
-    id: 'att1',
-    name: 'Peter Shalulile',
-    position: 'ATT',
-    club: 'Mamelodi Sundowns',
-    rating: 87,
-    pace: 82,
-    shooting: 91,
-    passing: 78,
-    defending: 35,
-    dribbling: 85,
-    physical: 84,
-    cost: 280000000
-  },
-  {
-    id: 'att2',
-    name: 'Evidence Makgopa',
-    position: 'ATT',
-    club: 'Orlando Pirates',
-    rating: 82,
-    pace: 85,
-    shooting: 86,
-    passing: 72,
-    defending: 32,
-    dribbling: 81,
-    physical: 79,
-    cost: 210000000
-  },
-  {
-    id: 'att3',
-    name: 'Ranga Chivaviro',
-    position: 'ATT',
-    club: 'Kaizer Chiefs',
-    rating: 78,
-    pace: 78,
-    shooting: 82,
-    passing: 68,
-    defending: 28,
-    dribbling: 75,
-    physical: 81,
-    cost: 170000000
-  },
-  {
-    id: 'att4',
-    name: 'Khanyisa Mayo',
-    position: 'ATT',
-    club: 'Cape Town City',
-    rating: 80,
-    pace: 84,
-    shooting: 84,
-    passing: 70,
-    defending: 30,
-    dribbling: 79,
-    physical: 76,
-    cost: 190000000
-  },
-  {
-    id: 'att5',
-    name: 'Iqraam Rayners',
-    position: 'ATT',
-    club: 'Stellenbosch FC',
-    rating: 79,
-    pace: 86,
-    shooting: 81,
-    passing: 65,
-    defending: 25,
-    dribbling: 77,
-    physical: 73,
-    cost: 160000000
-  }
-];
+export { adjustedPlayers as playersDatabase };
 
 export const getPlayersByPosition = (position?: string) => {
-  if (!position) return playersDatabase;
-  return playersDatabase.filter(player => player.position === position);
+  if (!position) return adjustedPlayers;
+  return adjustedPlayers.filter(player => player.position === position);
 };
 
 export const getPlayerById = (id: string) => {
-  return playersDatabase.find(player => player.id === id);
+  return adjustedPlayers.find(player => player.id === id);
 };
 
 export const searchPlayers = (query: string) => {
   const lowercaseQuery = query.toLowerCase();
-  return playersDatabase.filter(player => 
+  return adjustedPlayers.filter(player => 
     player.name.toLowerCase().includes(lowercaseQuery) ||
     player.club.toLowerCase().includes(lowercaseQuery) ||
     player.position.toLowerCase().includes(lowercaseQuery)
   );
+};
+
+// Helper function to get budget-optimized squad suggestions
+export const getBudgetOptimizedSquad = (budget: number = 1000000000) => {
+  const formation = { GK: 1, DEF: 4, MID: 4, ATT: 2 }; // 4-4-2 formation
+  const squad: Player[] = [];
+  let remainingBudget = budget;
+  
+  // Sort players by value for money (rating per cost)
+  const valueForMoney = adjustedPlayers.map(player => ({
+    ...player,
+    valueRatio: player.rating / (player.cost / 1000000)
+  })).sort((a, b) => b.valueRatio - a.valueRatio);
+  
+  // Fill each position with best value players
+  Object.entries(formation).forEach(([pos, count]) => {
+    const position = pos as 'GK' | 'DEF' | 'MID' | 'ATT';
+    const positionPlayers = valueForMoney.filter(p => 
+      p.position === position && 
+      !squad.some(s => s.id === p.id)
+    );
+    
+    for (let i = 0; i < count && positionPlayers.length > 0; i++) {
+      const affordablePlayers = positionPlayers.filter(p => p.cost <= remainingBudget);
+      if (affordablePlayers.length > 0) {
+        const selectedPlayer = affordablePlayers[0];
+        squad.push(selectedPlayer);
+        remainingBudget -= selectedPlayer.cost;
+      }
+    }
+  });
+  
+  return { squad, remainingBudget };
 };

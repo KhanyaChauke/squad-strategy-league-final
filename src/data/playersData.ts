@@ -1,3 +1,4 @@
+
 import { getEnhancedPSLData } from '@/services/footballDataApi';
 
 export interface Player {
@@ -17,7 +18,7 @@ export interface Player {
 }
 
 // Generate enhanced PSL database with proper budget balancing
-export const playersDatabase: Player[] = getEnhancedPSLData();
+const rawPlayersData: Player[] = getEnhancedPSLData();
 
 // Ensure budget is balanced for a starting 11
 // Average cost per player should be around 90-100M for a 1B budget
@@ -25,7 +26,7 @@ const totalBudget = 1000000000; // 1 billion
 const averageCostPerPlayer = totalBudget / 11; // ~90M per player
 
 // Adjust player costs to ensure budget balance
-const adjustedPlayers = playersDatabase.map(player => {
+const adjustedPlayers = rawPlayersData.map(player => {
   const positionMultipliers = {
     GK: 0.7,   // Goalkeepers cheaper
     DEF: 0.8,  // Defenders slightly cheaper
@@ -46,7 +47,8 @@ const adjustedPlayers = playersDatabase.map(player => {
   };
 });
 
-export { adjustedPlayers as playersDatabase };
+// Export the final players database
+export const playersDatabase = adjustedPlayers;
 
 export const getPlayersByPosition = (position?: string) => {
   if (!position) return adjustedPlayers;

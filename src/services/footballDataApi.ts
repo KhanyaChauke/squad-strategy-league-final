@@ -184,7 +184,7 @@ export const getEnhancedPSLData = (): TransformedPlayer[] => {
   let playerIndex = 0;
 
   // Generate players for each position ensuring balanced squad building
-  const positionCounts = { GK: 15, DEF: 40, MID: 35, ATT: 30 };
+  const positionCounts = { GK: 10, DEF: 30, MID: 30, ATT: 30 };
   
   Object.entries(positionCounts).forEach(([pos, count]) => {
     const position = pos as 'GK' | 'DEF' | 'MID' | 'ATT';

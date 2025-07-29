@@ -81,7 +81,8 @@ const calculatePlayerCost = (rating: number, position: 'GK' | 'DEF' | 'MID' | 'A
   const variance = baseCost * 0.2;
   const finalCost = baseCost + (Math.random() * variance * 2 - variance);
   
-  return Math.round(finalCost / 1000000) * 1000000; // Round to nearest million
+  // Reduce to 10% of original value
+  return Math.round((finalCost * 0.1) / 1000000) * 1000000; // Round to nearest million
 };
 
 export const fetchTeamData = async (competitionId: number = 2019): Promise<TransformedPlayer[]> => {

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { Trash2, Users, TrendingUp, Target, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { TeamChemistry } from '@/components/TeamChemistry';
 
 export const SquadView = () => {
   const { user, removePlayerFromSquad } = useAuth();
@@ -86,7 +87,7 @@ export const SquadView = () => {
       </div>
 
       {/* Squad Overview */}
-      <div className="grid md:grid-cols-4 gap-4">
+      <div className="grid md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Squad Value</CardTitle>
@@ -131,26 +132,18 @@ export const SquadView = () => {
             </p>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Squad Status</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {user?.squad.length === 11 ? (
-                <span className="text-green-600">Complete</span>
-              ) : (
-                <span className="text-orange-600">Building</span>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {11 - (user?.squad.length || 0)} slots remaining
-            </p>
-          </CardContent>
-        </Card>
       </div>
+
+      {/* Team Chemistry */}
+      <TeamChemistry 
+        squad={user?.squad.map(player => ({
+          id: player.id,
+          name: player.name,
+          club: player.club,
+          nationality: player.nationality,
+          position: player.position
+        })) || []} 
+      />
 
       {/* Formation Visualization */}
       <Card>

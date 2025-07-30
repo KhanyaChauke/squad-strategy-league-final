@@ -18,6 +18,7 @@ interface TransformedPlayer {
   name: string;
   position: 'GK' | 'DEF' | 'MID' | 'ATT';
   club: string;
+  nationality: string;
   rating: number;
   pace: number;
   shooting: number;
@@ -124,6 +125,7 @@ export const fetchTeamData = async (competitionId: number = 2019): Promise<Trans
                 name: player.name,
                 position,
                 club: team.name,
+                nationality: player.nationality || 'Unknown',
                 rating: Math.round(stats.rating),
                 pace: Math.round(stats.pace),
                 shooting: Math.round(stats.shooting),
@@ -181,6 +183,12 @@ export const getEnhancedPSLData = (): TransformedPlayer[] => {
     'Judas Moseamedi', 'Sipho Mbule', 'Tshegofatso Mabasa', 'Kwame Peprah', 'Bienvenu Eva Nga'
   ];
 
+  const nationalities = [
+    'South Africa', 'Nigeria', 'Ghana', 'Senegal', 'Morocco', 'Egypt', 'Cameroon', 'Algeria',
+    'Tunisia', 'Zimbabwe', 'Zambia', 'Mozambique', 'Angola', 'Democratic Republic of Congo',
+    'Mali', 'Ivory Coast', 'Burkina Faso', 'Botswana', 'Namibia', 'Lesotho'
+  ];
+
   const players: TransformedPlayer[] = [];
   let playerIndex = 0;
 
@@ -200,6 +208,7 @@ export const getEnhancedPSLData = (): TransformedPlayer[] => {
         name: playerNames[playerIndex % playerNames.length] || `${position} Player ${i + 1}`,
         position,
         club: pslTeams[Math.floor(Math.random() * pslTeams.length)],
+        nationality: nationalities[Math.floor(Math.random() * nationalities.length)],
         rating,
         pace: Math.round(stats.pace),
         shooting: Math.round(stats.shooting),

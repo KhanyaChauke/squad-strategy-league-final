@@ -14,6 +14,7 @@ interface Player {
   name: string;
   position: 'GK' | 'DEF' | 'MID' | 'ATT';
   club: string;
+  nationality: string;
   rating: number;
   pace: number;
   shooting: number;

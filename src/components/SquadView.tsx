@@ -169,7 +169,7 @@ export const SquadView = () => {
                     {player.name.split(' ').map(n => n[0]).join('')}
                   </div>
                 ))}
-                {Array(1 - positionCounts.GK).fill(0).map((_, index) => (
+                {Array(Math.max(0, 1 - positionCounts.GK)).fill(0).map((_, index) => (
                   <div key={`empty-gk-${index}`} className="border-2 border-dashed border-white/50 rounded-full w-20 h-20 flex items-center justify-center text-white/50 text-sm">
                     GK
                   </div>
@@ -183,7 +183,7 @@ export const SquadView = () => {
                     {player.name.split(' ').map(n => n[0]).join('')}
                   </div>
                 ))}
-                {Array(4 - positionCounts.DEF).fill(0).map((_, index) => (
+                {Array(Math.max(0, 4 - positionCounts.DEF)).fill(0).map((_, index) => (
                   <div key={`empty-def-${index}`} className="border-2 border-dashed border-white/50 rounded-full w-20 h-20 flex items-center justify-center text-white/50 text-sm">
                     DEF
                   </div>
@@ -197,7 +197,7 @@ export const SquadView = () => {
                     {player.name.split(' ').map(n => n[0]).join('')}
                   </div>
                 ))}
-                {Array(4 - positionCounts.MID).fill(0).map((_, index) => (
+                {Array(Math.max(0, 4 - positionCounts.MID)).fill(0).map((_, index) => (
                   <div key={`empty-mid-${index}`} className="border-2 border-dashed border-white/50 rounded-full w-20 h-20 flex items-center justify-center text-white/50 text-sm">
                     MID
                   </div>
@@ -211,7 +211,7 @@ export const SquadView = () => {
                     {player.name.split(' ').map(n => n[0]).join('')}
                   </div>
                 ))}
-                {Array(2 - positionCounts.ATT).fill(0).map((_, index) => (
+                {Array(Math.max(0, 2 - positionCounts.ATT)).fill(0).map((_, index) => (
                   <div key={`empty-att-${index}`} className="border-2 border-dashed border-white/50 rounded-full w-20 h-20 flex items-center justify-center text-white/50 text-sm">
                     ATT
                   </div>

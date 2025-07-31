@@ -7,6 +7,14 @@ import { Trash2, Users, TrendingUp, Target, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TeamChemistry } from '@/components/TeamChemistry';
 
+// Import jersey images
+import sundownsJersey from '@/assets/jerseys/sundowns-jersey.png';
+import piratesJersey from '@/assets/jerseys/pirates-jersey.png';
+import chiefsJersey from '@/assets/jerseys/chiefs-jersey.png';
+import capeTownCityJersey from '@/assets/jerseys/cape-town-city-jersey.png';
+import supersportJersey from '@/assets/jerseys/supersport-jersey.png';
+import defaultJersey from '@/assets/jerseys/default-jersey.png';
+
 export const SquadView = () => {
   const { user, removePlayerFromSquad } = useAuth();
   const { toast } = useToast();
@@ -48,6 +56,16 @@ export const SquadView = () => {
     }
   };
 
+  const getJerseyImage = (clubName: string) => {
+    const club = clubName.toLowerCase();
+    if (club.includes('sundowns')) return sundownsJersey;
+    if (club.includes('pirates')) return piratesJersey;
+    if (club.includes('chiefs')) return chiefsJersey;
+    if (club.includes('cape town city')) return capeTownCityJersey;
+    if (club.includes('supersport')) return supersportJersey;
+    return defaultJersey;
+  };
+
   const getRatingColor = (rating: number) => {
     if (rating >= 85) return 'text-green-600';
     if (rating >= 80) return 'text-blue-600';
@@ -73,8 +91,8 @@ export const SquadView = () => {
   const JerseyIcon = ({ player, isEmpty = false }: { player?: any, isEmpty?: boolean }) => {
     if (isEmpty) {
       return (
-        <div className="flex flex-col items-center space-y-1">
-          <div className="w-16 h-20 border-2 border-dashed border-white/50 rounded-lg flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-2">
+          <div className="w-20 h-24 border-2 border-dashed border-white/50 rounded-lg flex items-center justify-center">
             <span className="text-white/50 text-xs font-bold">EMPTY</span>
           </div>
         </div>
@@ -83,26 +101,28 @@ export const SquadView = () => {
 
     if (!player) return null;
 
+    const playerNumber = user?.squad.findIndex(p => p.id === player.id) + 1;
+    const lastName = player.name.split(' ').pop() || player.name;
+
     return (
-      <div className="flex flex-col items-center space-y-1">
-        <div 
-          className="w-16 h-20 rounded-lg flex flex-col items-center justify-center text-white font-bold shadow-lg border-2 relative"
-          style={{ 
-            backgroundColor: getJerseyColor(player.position),
-            borderColor: 'rgba(255,255,255,0.3)'
-          }}
-        >
-          {/* Jersey number */}
-          <div className="text-lg font-black mb-1">
-            {user?.squad.findIndex(p => p.id === player.id) + 1}
-          </div>
-          {/* Player initials */}
-          <div className="text-xs leading-tight text-center">
-            {player.name.split(' ').map(n => n[0]).join('')}
+      <div className="flex flex-col items-center space-y-2">
+        <div className="relative w-20 h-24">
+          {/* Jersey Image */}
+          <img 
+            src={getJerseyImage(player.club)} 
+            alt={`${player.club} jersey`}
+            className="w-full h-full object-contain"
+          />
+          {/* Jersey Number Overlay */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <div className="text-lg font-black text-white drop-shadow-lg" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+              {playerNumber}
+            </div>
           </div>
         </div>
+        {/* Player Surname */}
         <div className="text-xs text-white font-medium text-center max-w-20 truncate">
-          {player.name.split(' ')[0]}
+          {lastName.toUpperCase()}
         </div>
       </div>
     );

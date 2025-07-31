@@ -152,7 +152,7 @@ export const SquadView = () => {
           <CardDescription>Visual representation of your team setup</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="field-bg rounded-lg p-8 min-h-[500px] relative overflow-hidden">
+          <div className="field-bg rounded-lg p-8 min-h-[600px] relative overflow-hidden">
             {/* Field lines */}
             <div className="absolute inset-0 opacity-20">
               <div className="absolute top-1/2 left-0 right-0 h-px bg-white"></div>
@@ -162,57 +162,57 @@ export const SquadView = () => {
             
             {/* Players positioned on field */}
             <div className="relative h-full">
-              {/* Goalkeepers - moved up from bottom */}
-              <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 flex space-x-2">
+              {/* Goalkeepers */}
+              <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 flex space-x-3">
                 {getPlayersByPosition('GK').map((player, index) => (
-                  <div key={player.id} className="bg-yellow-400 text-yellow-900 rounded-full w-14 h-14 flex items-center justify-center text-xs font-bold shadow-lg">
+                  <div key={player.id} className="bg-yellow-400 text-yellow-900 rounded-full w-20 h-20 flex items-center justify-center text-sm font-bold shadow-lg border-2 border-yellow-600">
                     {player.name.split(' ').map(n => n[0]).join('')}
                   </div>
                 ))}
                 {Array(1 - positionCounts.GK).fill(0).map((_, index) => (
-                  <div key={`empty-gk-${index}`} className="border-2 border-dashed border-white/50 rounded-full w-14 h-14 flex items-center justify-center text-white/50 text-xs">
+                  <div key={`empty-gk-${index}`} className="border-2 border-dashed border-white/50 rounded-full w-20 h-20 flex items-center justify-center text-white/50 text-sm">
                     GK
                   </div>
                 ))}
               </div>
               
-              {/* Defenders - moved up */}
-              <div className="absolute bottom-32 left-1/2 transform -translate-x-1/2 flex space-x-4">
+              {/* Defenders */}
+              <div className="absolute bottom-40 left-1/2 transform -translate-x-1/2 flex space-x-6 justify-center">
                 {getPlayersByPosition('DEF').map((player, index) => (
-                  <div key={player.id} className="bg-blue-400 text-blue-900 rounded-full w-14 h-14 flex items-center justify-center text-xs font-bold shadow-lg">
+                  <div key={player.id} className="bg-blue-400 text-blue-900 rounded-full w-20 h-20 flex items-center justify-center text-sm font-bold shadow-lg border-2 border-blue-600">
                     {player.name.split(' ').map(n => n[0]).join('')}
                   </div>
                 ))}
-                {Array(Math.max(0, 4 - positionCounts.DEF)).fill(0).map((_, index) => (
-                  <div key={`empty-def-${index}`} className="border-2 border-dashed border-white/50 rounded-full w-14 h-14 flex items-center justify-center text-white/50 text-xs">
+                {Array(4 - positionCounts.DEF).fill(0).map((_, index) => (
+                  <div key={`empty-def-${index}`} className="border-2 border-dashed border-white/50 rounded-full w-20 h-20 flex items-center justify-center text-white/50 text-sm">
                     DEF
                   </div>
                 ))}
               </div>
               
-              {/* Midfielders - slightly moved down */}
-              <div className="absolute top-32 left-1/2 transform -translate-x-1/2 flex space-x-4">
+              {/* Midfielders */}
+              <div className="absolute top-40 left-1/2 transform -translate-x-1/2 flex space-x-6 justify-center">
                 {getPlayersByPosition('MID').map((player, index) => (
-                  <div key={player.id} className="bg-green-400 text-green-900 rounded-full w-14 h-14 flex items-center justify-center text-xs font-bold shadow-lg">
+                  <div key={player.id} className="bg-green-400 text-green-900 rounded-full w-20 h-20 flex items-center justify-center text-sm font-bold shadow-lg border-2 border-green-600">
                     {player.name.split(' ').map(n => n[0]).join('')}
                   </div>
                 ))}
-                {Array(Math.max(0, 4 - positionCounts.MID)).fill(0).map((_, index) => (
-                  <div key={`empty-mid-${index}`} className="border-2 border-dashed border-white/50 rounded-full w-14 h-14 flex items-center justify-center text-white/50 text-xs">
+                {Array(4 - positionCounts.MID).fill(0).map((_, index) => (
+                  <div key={`empty-mid-${index}`} className="border-2 border-dashed border-white/50 rounded-full w-20 h-20 flex items-center justify-center text-white/50 text-sm">
                     MID
                   </div>
                 ))}
               </div>
               
-              {/* Attackers - moved down */}
-              <div className="absolute top-16 left-1/2 transform -translate-x-1/2 flex space-x-4">
+              {/* Attackers */}
+              <div className="absolute top-20 left-1/2 transform -translate-x-1/2 flex space-x-8 justify-center">
                 {getPlayersByPosition('ATT').map((player, index) => (
-                  <div key={player.id} className="bg-red-400 text-red-900 rounded-full w-14 h-14 flex items-center justify-center text-xs font-bold shadow-lg">
+                  <div key={player.id} className="bg-red-400 text-red-900 rounded-full w-20 h-20 flex items-center justify-center text-sm font-bold shadow-lg border-2 border-red-600">
                     {player.name.split(' ').map(n => n[0]).join('')}
                   </div>
                 ))}
-                {Array(Math.max(0, 3 - positionCounts.ATT)).fill(0).map((_, index) => (
-                  <div key={`empty-att-${index}`} className="border-2 border-dashed border-white/50 rounded-full w-14 h-14 flex items-center justify-center text-white/50 text-xs">
+                {Array(2 - positionCounts.ATT).fill(0).map((_, index) => (
+                  <div key={`empty-att-${index}`} className="border-2 border-dashed border-white/50 rounded-full w-20 h-20 flex items-center justify-center text-white/50 text-sm">
                     ATT
                   </div>
                 ))}

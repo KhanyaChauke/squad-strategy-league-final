@@ -38,6 +38,16 @@ export const SquadView = () => {
     }
   };
 
+  const getJerseyColor = (position: string) => {
+    switch (position) {
+      case 'GK': return '#fbbf24'; // Yellow
+      case 'DEF': return '#3b82f6'; // Blue
+      case 'MID': return '#22c55e'; // Green
+      case 'ATT': return '#ef4444'; // Red
+      default: return '#6b7280'; // Gray
+    }
+  };
+
   const getRatingColor = (rating: number) => {
     if (rating >= 85) return 'text-green-600';
     if (rating >= 80) return 'text-blue-600';
@@ -58,6 +68,44 @@ export const SquadView = () => {
     DEF: getPlayersByPosition('DEF').length,
     MID: getPlayersByPosition('MID').length,
     ATT: getPlayersByPosition('ATT').length,
+  };
+
+  const JerseyIcon = ({ player, isEmpty = false }: { player?: any, isEmpty?: boolean }) => {
+    if (isEmpty) {
+      return (
+        <div className="flex flex-col items-center space-y-1">
+          <div className="w-16 h-20 border-2 border-dashed border-white/50 rounded-lg flex items-center justify-center">
+            <span className="text-white/50 text-xs font-bold">EMPTY</span>
+          </div>
+        </div>
+      );
+    }
+
+    if (!player) return null;
+
+    return (
+      <div className="flex flex-col items-center space-y-1">
+        <div 
+          className="w-16 h-20 rounded-lg flex flex-col items-center justify-center text-white font-bold shadow-lg border-2 relative"
+          style={{ 
+            backgroundColor: getJerseyColor(player.position),
+            borderColor: 'rgba(255,255,255,0.3)'
+          }}
+        >
+          {/* Jersey number */}
+          <div className="text-lg font-black mb-1">
+            {user?.squad.findIndex(p => p.id === player.id) + 1}
+          </div>
+          {/* Player initials */}
+          <div className="text-xs leading-tight text-center">
+            {player.name.split(' ').map(n => n[0]).join('')}
+          </div>
+        </div>
+        <div className="text-xs text-white font-medium text-center max-w-20 truncate">
+          {player.name.split(' ')[0]}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -149,72 +197,68 @@ export const SquadView = () => {
       <Card>
         <CardHeader>
           <CardTitle>Squad Formation</CardTitle>
-          <CardDescription>Visual representation of your team setup</CardDescription>
+          <CardDescription>Visual representation of your team setup with jerseys</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="field-bg rounded-lg p-8 min-h-[600px] relative overflow-hidden">
+          <div 
+            className="rounded-lg p-8 min-h-[700px] relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(180deg, #16a34a 0%, #22c55e 50%, #16a34a 100%)',
+              backgroundImage: `
+                repeating-linear-gradient(0deg, rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 1px, transparent 1px, transparent 40px),
+                repeating-linear-gradient(90deg, rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 1px, transparent 1px, transparent 60px)
+              `
+            }}
+          >
             {/* Field lines */}
-            <div className="absolute inset-0 opacity-20">
-              <div className="absolute top-1/2 left-0 right-0 h-px bg-white"></div>
-              <div className="absolute top-1/2 left-1/2 w-px h-full bg-white transform -translate-x-1/2"></div>
-              <div className="absolute top-1/2 left-1/2 w-20 h-20 border border-white rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
+            <div className="absolute inset-0 opacity-30">
+              <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white"></div>
+              <div className="absolute top-1/2 left-1/2 w-0.5 h-full bg-white transform -translate-x-1/2"></div>
+              <div className="absolute top-1/2 left-1/2 w-24 h-24 border border-white rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
+              {/* Goal areas */}
+              <div className="absolute bottom-0 left-1/2 w-32 h-16 border-t border-l border-r border-white transform -translate-x-1/2"></div>
+              <div className="absolute top-0 left-1/2 w-32 h-16 border-b border-l border-r border-white transform -translate-x-1/2"></div>
             </div>
             
             {/* Players positioned on field */}
-            <div className="relative h-full">
-              {/* Goalkeepers */}
-              <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 flex space-x-3">
-                {getPlayersByPosition('GK').map((player, index) => (
-                  <div key={player.id} className="bg-yellow-400 text-yellow-900 rounded-full w-20 h-20 flex items-center justify-center text-sm font-bold shadow-lg border-2 border-yellow-600">
-                    {player.name.split(' ').map(n => n[0]).join('')}
-                  </div>
+            <div className="relative h-full flex flex-col justify-between py-8">
+              {/* Attackers (Top) */}
+              <div className="flex justify-center space-x-12">
+                {getPlayersByPosition('ATT').slice(0, 2).map((player, index) => (
+                  <JerseyIcon key={player.id} player={player} />
                 ))}
-                {Array(Math.max(0, 1 - positionCounts.GK)).fill(0).map((_, index) => (
-                  <div key={`empty-gk-${index}`} className="border-2 border-dashed border-white/50 rounded-full w-20 h-20 flex items-center justify-center text-white/50 text-sm">
-                    GK
-                  </div>
-                ))}
-              </div>
-              
-              {/* Defenders */}
-              <div className="absolute bottom-40 left-1/2 transform -translate-x-1/2 flex space-x-6 justify-center">
-                {getPlayersByPosition('DEF').map((player, index) => (
-                  <div key={player.id} className="bg-blue-400 text-blue-900 rounded-full w-20 h-20 flex items-center justify-center text-sm font-bold shadow-lg border-2 border-blue-600">
-                    {player.name.split(' ').map(n => n[0]).join('')}
-                  </div>
-                ))}
-                {Array(Math.max(0, 4 - positionCounts.DEF)).fill(0).map((_, index) => (
-                  <div key={`empty-def-${index}`} className="border-2 border-dashed border-white/50 rounded-full w-20 h-20 flex items-center justify-center text-white/50 text-sm">
-                    DEF
-                  </div>
+                {Array(Math.max(0, 2 - positionCounts.ATT)).fill(0).map((_, index) => (
+                  <JerseyIcon key={`empty-att-${index}`} isEmpty />
                 ))}
               </div>
               
               {/* Midfielders */}
-              <div className="absolute top-40 left-1/2 transform -translate-x-1/2 flex space-x-6 justify-center">
-                {getPlayersByPosition('MID').map((player, index) => (
-                  <div key={player.id} className="bg-green-400 text-green-900 rounded-full w-20 h-20 flex items-center justify-center text-sm font-bold shadow-lg border-2 border-green-600">
-                    {player.name.split(' ').map(n => n[0]).join('')}
-                  </div>
+              <div className="flex justify-center space-x-8">
+                {getPlayersByPosition('MID').slice(0, 4).map((player, index) => (
+                  <JerseyIcon key={player.id} player={player} />
                 ))}
                 {Array(Math.max(0, 4 - positionCounts.MID)).fill(0).map((_, index) => (
-                  <div key={`empty-mid-${index}`} className="border-2 border-dashed border-white/50 rounded-full w-20 h-20 flex items-center justify-center text-white/50 text-sm">
-                    MID
-                  </div>
+                  <JerseyIcon key={`empty-mid-${index}`} isEmpty />
                 ))}
               </div>
               
-              {/* Attackers */}
-              <div className="absolute top-20 left-1/2 transform -translate-x-1/2 flex space-x-8 justify-center">
-                {getPlayersByPosition('ATT').map((player, index) => (
-                  <div key={player.id} className="bg-red-400 text-red-900 rounded-full w-20 h-20 flex items-center justify-center text-sm font-bold shadow-lg border-2 border-red-600">
-                    {player.name.split(' ').map(n => n[0]).join('')}
-                  </div>
+              {/* Defenders */}
+              <div className="flex justify-center space-x-6">
+                {getPlayersByPosition('DEF').slice(0, 4).map((player, index) => (
+                  <JerseyIcon key={player.id} player={player} />
                 ))}
-                {Array(Math.max(0, 2 - positionCounts.ATT)).fill(0).map((_, index) => (
-                  <div key={`empty-att-${index}`} className="border-2 border-dashed border-white/50 rounded-full w-20 h-20 flex items-center justify-center text-white/50 text-sm">
-                    ATT
-                  </div>
+                {Array(Math.max(0, 4 - positionCounts.DEF)).fill(0).map((_, index) => (
+                  <JerseyIcon key={`empty-def-${index}`} isEmpty />
+                ))}
+              </div>
+              
+              {/* Goalkeepers (Bottom) */}
+              <div className="flex justify-center">
+                {getPlayersByPosition('GK').slice(0, 1).map((player, index) => (
+                  <JerseyIcon key={player.id} player={player} />
+                ))}
+                {Array(Math.max(0, 1 - positionCounts.GK)).fill(0).map((_, index) => (
+                  <JerseyIcon key={`empty-gk-${index}`} isEmpty />
                 ))}
               </div>
             </div>

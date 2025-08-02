@@ -217,63 +217,108 @@ export const SquadView = () => {
       <Card>
         <CardHeader>
           <CardTitle>Squad Formation</CardTitle>
-          <CardDescription>Visual representation of your team setup with jerseys</CardDescription>
+          <CardDescription>Visual representation of your team setup on the pitch</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div 
-            className="rounded-lg p-8 min-h-[700px] relative overflow-hidden"
+            className="relative w-full h-[800px] overflow-hidden"
             style={{
-              background: 'linear-gradient(180deg, #16a34a 0%, #22c55e 50%, #16a34a 100%)',
+              background: 'linear-gradient(180deg, #2d7a2d 0%, #4ade80 30%, #22c55e 50%, #4ade80 70%, #2d7a2d 100%)',
               backgroundImage: `
-                repeating-linear-gradient(0deg, rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 1px, transparent 1px, transparent 40px),
-                repeating-linear-gradient(90deg, rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 1px, transparent 1px, transparent 60px)
+                repeating-linear-gradient(90deg, transparent 0, transparent 49px, rgba(255,255,255,0.1) 49px, rgba(255,255,255,0.1) 51px),
+                repeating-linear-gradient(0deg, transparent 0, transparent 49px, rgba(255,255,255,0.1) 49px, rgba(255,255,255,0.1) 51px)
               `
             }}
           >
-            {/* Field lines */}
-            <div className="absolute inset-0 opacity-30">
-              <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white"></div>
-              <div className="absolute top-1/2 left-1/2 w-0.5 h-full bg-white transform -translate-x-1/2"></div>
-              <div className="absolute top-1/2 left-1/2 w-24 h-24 border border-white rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
-              {/* Goal areas */}
-              <div className="absolute bottom-0 left-1/2 w-32 h-16 border-t border-l border-r border-white transform -translate-x-1/2"></div>
-              <div className="absolute top-0 left-1/2 w-32 h-16 border-b border-l border-r border-white transform -translate-x-1/2"></div>
+            {/* Soccer pitch markings */}
+            <div className="absolute inset-0">
+              {/* Outer boundary */}
+              <div className="absolute inset-4 border-2 border-white/80 rounded-sm"></div>
+              
+              {/* Center line */}
+              <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-white/80 transform -translate-y-0.5"></div>
+              
+              {/* Center circle */}
+              <div className="absolute top-1/2 left-1/2 w-32 h-32 border-2 border-white/80 rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
+              <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-white/80 rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
+              
+              {/* Goal area (bottom - our goal) */}
+              <div className="absolute bottom-4 left-1/2 w-48 h-16 border-2 border-white/80 border-b-0 transform -translate-x-1/2"></div>
+              
+              {/* 6-yard box (bottom) */}
+              <div className="absolute bottom-4 left-1/2 w-24 h-8 border-2 border-white/80 border-b-0 transform -translate-x-1/2"></div>
+              
+              {/* Penalty area (bottom) */}
+              <div className="absolute bottom-4 left-1/2 w-56 h-20 border-2 border-white/80 border-b-0 transform -translate-x-1/2"></div>
+              
+              {/* Penalty spot (bottom) */}
+              <div className="absolute bottom-16 left-1/2 w-2 h-2 bg-white/80 rounded-full transform -translate-x-1/2"></div>
+              
+              {/* Goal posts (bottom) */}
+              <div className="absolute bottom-4 left-1/2 w-16 h-1 bg-white transform -translate-x-1/2"></div>
+              
+              {/* Goal area (top - opponent goal) */}
+              <div className="absolute top-4 left-1/2 w-48 h-16 border-2 border-white/80 border-t-0 transform -translate-x-1/2"></div>
+              
+              {/* 6-yard box (top) */}
+              <div className="absolute top-4 left-1/2 w-24 h-8 border-2 border-white/80 border-t-0 transform -translate-x-1/2"></div>
+              
+              {/* Penalty area (top) */}
+              <div className="absolute top-4 left-1/2 w-56 h-20 border-2 border-white/80 border-t-0 transform -translate-x-1/2"></div>
+              
+              {/* Penalty spot (top) */}
+              <div className="absolute top-16 left-1/2 w-2 h-2 bg-white/80 rounded-full transform -translate-x-1/2"></div>
+              
+              {/* Goal posts (top) */}
+              <div className="absolute top-4 left-1/2 w-16 h-1 bg-white transform -translate-x-1/2"></div>
+              
+              {/* Corner arcs */}
+              <div className="absolute top-4 left-4 w-8 h-8 border-2 border-white/80 border-r-0 border-b-0 rounded-tl-full"></div>
+              <div className="absolute top-4 right-4 w-8 h-8 border-2 border-white/80 border-l-0 border-b-0 rounded-tr-full"></div>
+              <div className="absolute bottom-4 left-4 w-8 h-8 border-2 border-white/80 border-r-0 border-t-0 rounded-bl-full"></div>
+              <div className="absolute bottom-4 right-4 w-8 h-8 border-2 border-white/80 border-l-0 border-t-0 rounded-br-full"></div>
             </div>
             
             {/* Players positioned on field */}
-            <div className="relative h-full flex flex-col justify-between py-8">
-              {/* Attackers (Top) */}
-              <div className="flex justify-center space-x-12">
-                {getPlayersByPosition('ATT').slice(0, 2).map((player, index) => (
-                  <JerseyIcon key={player.id} player={player} />
-                ))}
-                {Array(Math.max(0, 2 - positionCounts.ATT)).fill(0).map((_, index) => (
-                  <JerseyIcon key={`empty-att-${index}`} isEmpty />
-                ))}
+            <div className="absolute inset-0 flex flex-col justify-between py-12 px-8">
+              {/* Attackers (Forward line) */}
+              <div className="flex justify-center items-center h-20">
+                <div className="flex space-x-16">
+                  {getPlayersByPosition('ATT').slice(0, 3).map((player, index) => (
+                    <JerseyIcon key={player.id} player={player} />
+                  ))}
+                  {Array(Math.max(0, 3 - positionCounts.ATT)).fill(0).map((_, index) => (
+                    <JerseyIcon key={`empty-att-${index}`} isEmpty />
+                  ))}
+                </div>
               </div>
               
-              {/* Midfielders */}
-              <div className="flex justify-center space-x-8">
-                {getPlayersByPosition('MID').slice(0, 4).map((player, index) => (
-                  <JerseyIcon key={player.id} player={player} />
-                ))}
-                {Array(Math.max(0, 4 - positionCounts.MID)).fill(0).map((_, index) => (
-                  <JerseyIcon key={`empty-mid-${index}`} isEmpty />
-                ))}
+              {/* Midfielders (Middle line) */}
+              <div className="flex justify-center items-center h-20">
+                <div className="flex space-x-12">
+                  {getPlayersByPosition('MID').slice(0, 4).map((player, index) => (
+                    <JerseyIcon key={player.id} player={player} />
+                  ))}
+                  {Array(Math.max(0, 4 - positionCounts.MID)).fill(0).map((_, index) => (
+                    <JerseyIcon key={`empty-mid-${index}`} isEmpty />
+                  ))}
+                </div>
               </div>
               
-              {/* Defenders */}
-              <div className="flex justify-center space-x-6">
-                {getPlayersByPosition('DEF').slice(0, 4).map((player, index) => (
-                  <JerseyIcon key={player.id} player={player} />
-                ))}
-                {Array(Math.max(0, 4 - positionCounts.DEF)).fill(0).map((_, index) => (
-                  <JerseyIcon key={`empty-def-${index}`} isEmpty />
-                ))}
+              {/* Defenders (Defense line) */}
+              <div className="flex justify-center items-center h-20">
+                <div className="flex space-x-10">
+                  {getPlayersByPosition('DEF').slice(0, 4).map((player, index) => (
+                    <JerseyIcon key={player.id} player={player} />
+                  ))}
+                  {Array(Math.max(0, 4 - positionCounts.DEF)).fill(0).map((_, index) => (
+                    <JerseyIcon key={`empty-def-${index}`} isEmpty />
+                  ))}
+                </div>
               </div>
               
-              {/* Goalkeepers (Bottom) */}
-              <div className="flex justify-center">
+              {/* Goalkeeper (Goal line) */}
+              <div className="flex justify-center items-end h-16 pb-4">
                 {getPlayersByPosition('GK').slice(0, 1).map((player, index) => (
                   <JerseyIcon key={player.id} player={player} />
                 ))}

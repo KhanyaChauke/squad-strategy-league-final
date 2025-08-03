@@ -16,7 +16,7 @@ import supersportJersey from '@/assets/jerseys/supersport-jersey.png';
 import defaultJersey from '@/assets/jerseys/default-jersey.png';
 
 export const SquadView = () => {
-  const { user, removePlayerFromSquad } = useAuth();
+  const { user, removePlayerFromSquad, removePlayerFromBench, substitutePlayer } = useAuth();
   const { toast } = useToast();
 
   const formatCurrency = (amount: number) => {
@@ -34,6 +34,30 @@ export const SquadView = () => {
       title: "Player Removed",
       description: `${player.name} has been removed from your squad.`
     });
+  };
+
+  const handleRemoveBenchPlayer = (player: any) => {
+    removePlayerFromBench(player.id);
+    toast({
+      title: "Player Removed",
+      description: `${player.name} has been removed from your bench.`
+    });
+  };
+
+  const handleSubstitution = (squadPlayer: any, benchPlayer: any) => {
+    const success = substitutePlayer(squadPlayer.id, benchPlayer.id);
+    if (success) {
+      toast({
+        title: "Substitution Made",
+        description: `${benchPlayer.name} has replaced ${squadPlayer.name} on the field.`
+      });
+    } else {
+      toast({
+        title: "Substitution Failed",
+        description: "Players must be in the same position to be substituted.",
+        variant: "destructive"
+      });
+    }
   };
 
   const getPositionColor = (position: string) => {
@@ -415,6 +439,101 @@ export const SquadView = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Bench Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Users className="h-5 w-5" />
+            <span>Substitutes Bench</span>
+          </CardTitle>
+          <CardDescription>
+            Your bench players (Max 4) - Click to substitute with field players of the same position
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {user?.bench && user.bench.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {user.bench.map((benchPlayer) => (
+                <Card key={benchPlayer.id} className="relative border-2 border-dashed border-orange-300 bg-orange-50">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-sm">{benchPlayer.name}</CardTitle>
+                        <CardDescription className="text-xs">
+                          <Badge className={getPositionColor(benchPlayer.position)} variant="secondary">
+                            {benchPlayer.position}
+                          </Badge>
+                        </CardDescription>
+                      </div>
+                      <div className={`text-lg font-bold ${getRatingColor(benchPlayer.rating)}`}>
+                        {benchPlayer.rating}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-3">
+                    {/* Available substitutions */}
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium text-gray-700">Can substitute:</div>
+                      {getPlayersByPosition(benchPlayer.position).map((squadPlayer) => (
+                        <Button
+                          key={squadPlayer.id}
+                          onClick={() => handleSubstitution(squadPlayer, benchPlayer)}
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs h-8"
+                        >
+                          ↔ {squadPlayer.name}
+                        </Button>
+                      ))}
+                      {getPlayersByPosition(benchPlayer.position).length === 0 && (
+                        <p className="text-xs text-gray-500">No players in same position on field</p>
+                      )}
+                    </div>
+                    
+                    {/* Remove from bench */}
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <div className="text-xs text-green-600 font-medium">
+                        {formatCurrency(benchPlayer.cost)}
+                      </div>
+                      <Button
+                        onClick={() => handleRemoveBenchPlayer(benchPlayer)}
+                        variant="destructive"
+                        size="sm"
+                        className="h-6 px-2"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              
+              {/* Empty bench slots */}
+              {Array(Math.max(0, 4 - (user?.bench.length || 0))).fill(0).map((_, index) => (
+                <Card key={`empty-bench-${index}`} className="border-2 border-dashed border-gray-300 bg-gray-50">
+                  <CardContent className="text-center py-8">
+                    <Users className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-500 text-sm">Empty Bench Slot</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-4 gap-4">
+              {Array(4).fill(0).map((_, index) => (
+                <Card key={`empty-bench-${index}`} className="border-2 border-dashed border-gray-300 bg-gray-50">
+                  <CardContent className="text-center py-8">
+                    <Users className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-500 text-sm">Empty Bench Slot</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

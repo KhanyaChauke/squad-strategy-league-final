@@ -7,6 +7,7 @@ interface User {
   email: string;
   budget: number;
   squad: Player[];
+  bench: Player[];
 }
 
 interface Player {
@@ -33,6 +34,9 @@ interface AuthContextType {
   logout: () => void;
   addPlayerToSquad: (player: Player) => boolean;
   removePlayerFromSquad: (playerId: string) => void;
+  addPlayerToBench: (player: Player) => boolean;
+  removePlayerFromBench: (playerId: string) => void;
+  substitutePlayer: (squadPlayerId: string, benchPlayerId: string) => boolean;
   isLoading: boolean;
 }
 
@@ -81,7 +85,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fullName: 'Demo User',
         email: 'demo@fpsl.com',
         budget: 1000000000, // Increased budget for new pricing
-        squad: []
+        squad: [],
+        bench: []
       };
       
       // Ensure adequate budget
@@ -119,7 +124,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email,
       password,
       budget: 1000000000, // Increased starting budget
-      squad: []
+      squad: [],
+      bench: []
     };
     
     storedUsers.push(newUser);
@@ -130,7 +136,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       fullName: newUser.fullName,
       email: newUser.email,
       budget: newUser.budget,
-      squad: newUser.squad
+      squad: newUser.squad,
+      bench: newUser.bench
     };
     
     setUser(userData);
@@ -186,6 +193,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('fpsl_user', JSON.stringify(updatedUser));
   };
 
+  const addPlayerToBench = (player: Player): boolean => {
+    if (!user) return false;
+    
+    if (user.bench.length >= 4) {
+      return false; // Bench full
+    }
+    
+    if (user.budget < player.cost) {
+      return false; // Insufficient budget
+    }
+    
+    if (user.squad.some(p => p.id === player.id) || user.bench.some(p => p.id === player.id)) {
+      return false; // Player already in squad or bench
+    }
+    
+    const updatedUser = {
+      ...user,
+      budget: user.budget - player.cost,
+      bench: [...user.bench, player]
+    };
+    
+    setUser(updatedUser);
+    localStorage.setItem('fpsl_user', JSON.stringify(updatedUser));
+    return true;
+  };
+
+  const removePlayerFromBench = (playerId: string) => {
+    if (!user) return;
+    
+    const playerToRemove = user.bench.find(p => p.id === playerId);
+    if (!playerToRemove) return;
+    
+    const updatedUser = {
+      ...user,
+      budget: user.budget + playerToRemove.cost,
+      bench: user.bench.filter(p => p.id !== playerId)
+    };
+    
+    setUser(updatedUser);
+    localStorage.setItem('fpsl_user', JSON.stringify(updatedUser));
+  };
+
+  const substitutePlayer = (squadPlayerId: string, benchPlayerId: string): boolean => {
+    if (!user) return false;
+    
+    const squadPlayer = user.squad.find(p => p.id === squadPlayerId);
+    const benchPlayer = user.bench.find(p => p.id === benchPlayerId);
+    
+    if (!squadPlayer || !benchPlayer) return false;
+    
+    // Check if positions match (optional rule)
+    if (squadPlayer.position !== benchPlayer.position) {
+      return false; // Can only substitute players in same position
+    }
+    
+    const updatedUser = {
+      ...user,
+      squad: user.squad.map(p => p.id === squadPlayerId ? benchPlayer : p),
+      bench: user.bench.map(p => p.id === benchPlayerId ? squadPlayer : p)
+    };
+    
+    setUser(updatedUser);
+    localStorage.setItem('fpsl_user', JSON.stringify(updatedUser));
+    return true;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -195,6 +268,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         addPlayerToSquad,
         removePlayerFromSquad,
+        addPlayerToBench,
+        removePlayerFromBench,
+        substitutePlayer,
         isLoading
       }}
     >

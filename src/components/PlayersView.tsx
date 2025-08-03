@@ -14,7 +14,7 @@ export const PlayersView = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [positionFilter, setPositionFilter] = useState('all');
   const [sortBy, setSortBy] = useState('rating');
-  const { user, addPlayerToSquad } = useAuth();
+  const { user, addPlayerToSquad, addPlayerToBench } = useAuth();
   const { toast } = useToast();
 
   const getFilteredPlayers = () => {
@@ -90,6 +90,33 @@ export const PlayersView = () => {
     }
   };
 
+  const handleAddToBench = (player: any) => {
+    const success = addPlayerToBench(player);
+    
+    if (success) {
+      toast({
+        title: "Player Added to Bench!",
+        description: `${player.name} has been added to your bench.`
+      });
+    } else {
+      let message = "Failed to add player to bench.";
+      
+      if (user?.bench.length >= 4) {
+        message = "Your bench is full (4 players maximum).";
+      } else if (user?.budget && user.budget < player.cost) {
+        message = "Insufficient budget for this player.";
+      } else if (user?.squad.some(p => p.id === player.id) || user?.bench.some(p => p.id === player.id)) {
+        message = "Player is already in your squad or bench.";
+      }
+      
+      toast({
+        title: "Cannot Add Player to Bench",
+        description: message,
+        variant: "destructive"
+      });
+    }
+  };
+
   const getPositionColor = (position: string) => {
     switch (position) {
       case 'GK': return 'bg-yellow-100 text-yellow-800';
@@ -129,6 +156,12 @@ export const PlayersView = () => {
               <span className="text-gray-600">Squad:</span>
               <span className="font-bold">
                 {user?.squad.length || 0}/11
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-gray-600">Bench:</span>
+              <span className="font-bold">
+                {user?.bench?.length || 0}/4
               </span>
             </div>
           </div>
@@ -245,19 +278,37 @@ export const PlayersView = () => {
                   </div>
                 </div>
                 
-                <Button
-                  onClick={() => handleAddPlayer(player)}
-                  disabled={
-                    user?.squad.some(p => p.id === player.id) ||
-                    (user?.squad.length || 0) >= 11 ||
-                    (user?.budget || 0) < player.cost
-                  }
-                  className="gradient-bg hover:opacity-90"
-                  size="sm"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add
-                </Button>
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => handleAddPlayer(player)}
+                    disabled={
+                      user?.squad.some(p => p.id === player.id) ||
+                      user?.bench?.some(p => p.id === player.id) ||
+                      (user?.squad.length || 0) >= 11 ||
+                      (user?.budget || 0) < player.cost
+                    }
+                    className="gradient-bg hover:opacity-90"
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Squad
+                  </Button>
+                  
+                  <Button
+                    onClick={() => handleAddToBench(player)}
+                    disabled={
+                      user?.squad.some(p => p.id === player.id) ||
+                      user?.bench?.some(p => p.id === player.id) ||
+                      (user?.bench?.length || 0) >= 4 ||
+                      (user?.budget || 0) < player.cost
+                    }
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Bench
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

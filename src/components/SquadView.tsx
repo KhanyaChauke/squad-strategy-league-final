@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { Trash2, Users, TrendingUp, Target, Star } from 'lucide-react';
+import { Trash2, Users, TrendingUp, Target, Star, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TeamChemistry } from '@/components/TeamChemistry';
+import { FormationSelector, formations, Formation } from '@/components/FormationSelector';
 
 // Import jersey images
 import sundownsJersey from '@/assets/jerseys/sundowns-jersey.png';
@@ -16,8 +17,18 @@ import supersportJersey from '@/assets/jerseys/supersport-jersey.png';
 import defaultJersey from '@/assets/jerseys/default-jersey.png';
 
 export const SquadView = () => {
-  const { user, removePlayerFromSquad, removePlayerFromBench, substitutePlayer } = useAuth();
+  const { user, removePlayerFromSquad, removePlayerFromBench, substitutePlayer, setFormation } = useAuth();
   const { toast } = useToast();
+  const [showFormationSelector, setShowFormationSelector] = useState(!user?.selectedFormation);
+
+  const handleFormationSelect = (formation: Formation) => {
+    setFormation(formation);
+    setShowFormationSelector(false);
+    toast({
+      title: "Formation Selected",
+      description: `You've selected the ${formation.name} formation. Now build your squad accordingly.`
+    });
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', {
@@ -152,28 +163,56 @@ export const SquadView = () => {
     );
   };
 
+  // Show formation selector if no formation is selected
+  if (showFormationSelector) {
+    return (
+      <div className="space-y-6">
+        <FormationSelector
+          selectedFormation={user?.selectedFormation ? formations.find(f => f.id === user.selectedFormation?.id) || null : null}
+          onFormationSelect={handleFormationSelect}
+          currentSquad={user?.squad || []}
+        />
+      </div>
+    );
+  }
+
+  const selectedFormation = user?.selectedFormation ? formations.find(f => f.id === user.selectedFormation.id) : null;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
         <div>
           <h2 className="text-3xl font-bold text-gray-900">My Squad</h2>
-          <p className="text-gray-600">Manage your fantasy team</p>
+          <p className="text-gray-600">
+            {selectedFormation ? `Formation: ${selectedFormation.name} (${selectedFormation.style})` : 'Manage your fantasy team'}
+          </p>
         </div>
         
         <div className="bg-white rounded-lg p-4 shadow-sm border">
-          <div className="flex items-center space-x-4 text-sm">
-            <div className="flex items-center space-x-2">
-              <span className="text-gray-600">Players:</span>
-              <span className="font-bold">
-                {user?.squad.length || 0}/11
-              </span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4 text-sm">
+              <div className="flex items-center space-x-2">
+                <span className="text-gray-600">Players:</span>
+                <span className="font-bold">
+                  {user?.squad.length || 0}/{selectedFormation ? Object.values(selectedFormation.positions).reduce((a, b) => a + b, 0) : 11}
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-gray-600">Budget Left:</span>
+                <span className="font-bold text-green-600">
+                  {formatCurrency(user?.budget || 0)}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-gray-600">Budget Left:</span>
-              <span className="font-bold text-green-600">
-                {formatCurrency(user?.budget || 0)}
-              </span>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFormationSelector(true)}
+              className="flex items-center space-x-2"
+            >
+              <Settings className="h-4 w-4" />
+              <span>Change Formation</span>
+            </Button>
           </div>
         </div>
       </div>
@@ -217,10 +256,10 @@ export const SquadView = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {positionCounts.GK}-{positionCounts.DEF}-{positionCounts.MID}-{positionCounts.ATT}
+              {selectedFormation?.name || `${positionCounts.GK}-${positionCounts.DEF}-${positionCounts.MID}-${positionCounts.ATT}`}
             </div>
             <p className="text-xs text-muted-foreground">
-              Current setup
+              {selectedFormation?.style || 'Current setup'}
             </p>
           </CardContent>
         </Card>
@@ -305,10 +344,10 @@ export const SquadView = () => {
               {/* Attackers (Forward line) */}
               <div className="flex justify-center items-center h-20">
                 <div className="flex space-x-16">
-                  {getPlayersByPosition('ATT').slice(0, 3).map((player, index) => (
+                  {getPlayersByPosition('ATT').slice(0, selectedFormation?.positions.ATT || 3).map((player, index) => (
                     <JerseyIcon key={player.id} player={player} />
                   ))}
-                  {Array(Math.max(0, 3 - positionCounts.ATT)).fill(0).map((_, index) => (
+                  {Array(Math.max(0, (selectedFormation?.positions.ATT || 3) - positionCounts.ATT)).fill(0).map((_, index) => (
                     <JerseyIcon key={`empty-att-${index}`} isEmpty />
                   ))}
                 </div>
@@ -317,10 +356,10 @@ export const SquadView = () => {
               {/* Midfielders (Middle line) */}
               <div className="flex justify-center items-center h-20">
                 <div className="flex space-x-12">
-                  {getPlayersByPosition('MID').slice(0, 4).map((player, index) => (
+                  {getPlayersByPosition('MID').slice(0, selectedFormation?.positions.MID || 4).map((player, index) => (
                     <JerseyIcon key={player.id} player={player} />
                   ))}
-                  {Array(Math.max(0, 4 - positionCounts.MID)).fill(0).map((_, index) => (
+                  {Array(Math.max(0, (selectedFormation?.positions.MID || 4) - positionCounts.MID)).fill(0).map((_, index) => (
                     <JerseyIcon key={`empty-mid-${index}`} isEmpty />
                   ))}
                 </div>
@@ -329,10 +368,10 @@ export const SquadView = () => {
               {/* Defenders (Defense line) */}
               <div className="flex justify-center items-center h-20">
                 <div className="flex space-x-10">
-                  {getPlayersByPosition('DEF').slice(0, 4).map((player, index) => (
+                  {getPlayersByPosition('DEF').slice(0, selectedFormation?.positions.DEF || 4).map((player, index) => (
                     <JerseyIcon key={player.id} player={player} />
                   ))}
-                  {Array(Math.max(0, 4 - positionCounts.DEF)).fill(0).map((_, index) => (
+                  {Array(Math.max(0, (selectedFormation?.positions.DEF || 4) - positionCounts.DEF)).fill(0).map((_, index) => (
                     <JerseyIcon key={`empty-def-${index}`} isEmpty />
                   ))}
                 </div>
@@ -340,10 +379,10 @@ export const SquadView = () => {
               
               {/* Goalkeeper (Goal line) */}
               <div className="flex justify-center items-end h-16 pb-4">
-                {getPlayersByPosition('GK').slice(0, 1).map((player, index) => (
+                {getPlayersByPosition('GK').slice(0, selectedFormation?.positions.GK || 1).map((player, index) => (
                   <JerseyIcon key={player.id} player={player} />
                 ))}
-                {Array(Math.max(0, 1 - positionCounts.GK)).fill(0).map((_, index) => (
+                {Array(Math.max(0, (selectedFormation?.positions.GK || 1) - positionCounts.GK)).fill(0).map((_, index) => (
                   <JerseyIcon key={`empty-gk-${index}`} isEmpty />
                 ))}
               </div>

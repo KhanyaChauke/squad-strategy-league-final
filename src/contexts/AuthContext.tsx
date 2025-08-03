@@ -8,6 +8,16 @@ interface User {
   budget: number;
   squad: Player[];
   bench: Player[];
+  selectedFormation?: {
+    id: string;
+    name: string;
+    positions: {
+      GK: number;
+      DEF: number;
+      MID: number;
+      ATT: number;
+    };
+  };
 }
 
 interface Player {
@@ -37,6 +47,7 @@ interface AuthContextType {
   addPlayerToBench: (player: Player) => boolean;
   removePlayerFromBench: (playerId: string) => void;
   substitutePlayer: (squadPlayerId: string, benchPlayerId: string) => boolean;
+  setFormation: (formation: { id: string; name: string; positions: { GK: number; DEF: number; MID: number; ATT: number } }) => void;
   isLoading: boolean;
 }
 
@@ -154,8 +165,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addPlayerToSquad = (player: Player): boolean => {
     if (!user) return false;
     
-    if (user.squad.length >= 11) {
-      return false; // Squad full
+    // Check formation constraints if formation is selected
+    if (user.selectedFormation) {
+      const currentPositionCount = user.squad.filter(p => p.position === player.position).length;
+      const maxForPosition = user.selectedFormation.positions[player.position as keyof typeof user.selectedFormation.positions];
+      
+      if (currentPositionCount >= maxForPosition) {
+        return false; // Position full for this formation
+      }
+    } else {
+      if (user.squad.length >= 11) {
+        return false; // Squad full
+      }
     }
     
     if (user.budget < player.cost) {
@@ -259,6 +280,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return true;
   };
 
+  const setFormation = (formation: { id: string; name: string; positions: { GK: number; DEF: number; MID: number; ATT: number } }) => {
+    if (!user) return;
+    
+    const updatedUser = {
+      ...user,
+      selectedFormation: formation
+    };
+    
+    setUser(updatedUser);
+    localStorage.setItem('fpsl_user', JSON.stringify(updatedUser));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -271,6 +304,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addPlayerToBench,
         removePlayerFromBench,
         substitutePlayer,
+        setFormation,
         isLoading
       }}
     >

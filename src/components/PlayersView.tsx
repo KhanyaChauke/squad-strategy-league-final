@@ -16,6 +16,8 @@ export const PlayersView = () => {
   const [sortBy, setSortBy] = useState('rating');
   const { user, addPlayerToSquad, addPlayerToBench } = useAuth();
   const { toast } = useToast();
+  
+  const selectedFormation = user?.selectedFormation;
 
   const getFilteredPlayers = () => {
     let players = playersDatabase;
@@ -74,12 +76,24 @@ export const PlayersView = () => {
     } else {
       let message = "Failed to add player.";
       
-      if (user?.squad.length >= 11) {
-        message = "Your squad is full (11 players maximum).";
-      } else if (user?.budget && user.budget < player.cost) {
-        message = "Insufficient budget for this player.";
-      } else if (user?.squad.some(p => p.id === player.id)) {
-        message = "Player is already in your squad.";
+      if (selectedFormation) {
+        const currentPositionCount = user?.squad.filter(p => p.position === player.position).length || 0;
+        const maxForPosition = selectedFormation.positions[player.position as keyof typeof selectedFormation.positions];
+        if (currentPositionCount >= maxForPosition) {
+          message = `Your ${selectedFormation.name} formation only allows ${maxForPosition} ${player.position} players.`;
+        } else if (user?.budget && user.budget < player.cost) {
+          message = "Insufficient budget for this player.";
+        } else if (user?.squad.some(p => p.id === player.id)) {
+          message = "Player is already in your squad.";
+        }
+      } else {
+        if (user?.squad.length >= 11) {
+          message = "Your squad is full (11 players maximum).";
+        } else if (user?.budget && user.budget < player.cost) {
+          message = "Insufficient budget for this player.";
+        } else if (user?.squad.some(p => p.id === player.id)) {
+          message = "Player is already in your squad.";
+        }
       }
       
       toast({

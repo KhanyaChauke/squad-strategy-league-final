@@ -219,15 +219,12 @@ export const SquadView = () => {
           <CardTitle>Squad Formation</CardTitle>
           <CardDescription>Visual representation of your team setup on the pitch</CardDescription>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-4">
           <div 
-            className="relative w-full h-[800px] overflow-hidden"
+            className="relative w-full h-[600px] rounded-lg overflow-hidden border-2 border-white"
             style={{
-              background: 'linear-gradient(180deg, #2d7a2d 0%, #4ade80 30%, #22c55e 50%, #4ade80 70%, #2d7a2d 100%)',
-              backgroundImage: `
-                repeating-linear-gradient(90deg, transparent 0, transparent 49px, rgba(255,255,255,0.1) 49px, rgba(255,255,255,0.1) 51px),
-                repeating-linear-gradient(0deg, transparent 0, transparent 49px, rgba(255,255,255,0.1) 49px, rgba(255,255,255,0.1) 51px)
-              `
+              background: 'linear-gradient(180deg, #1e5128 0%, #2d7a2d 20%, #4ade80 40%, #22c55e 60%, #4ade80 80%, #2d7a2d 100%)',
+              backgroundSize: '100% 100%'
             }}
           >
             {/* Soccer pitch markings */}

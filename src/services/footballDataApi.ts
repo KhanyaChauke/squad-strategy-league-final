@@ -158,29 +158,41 @@ export const getEnhancedPSLData = (): TransformedPlayer[] => {
     'Maritzburg United', 'Chippa United', 'Baroka FC', 'TS Galaxy', 'Swallows FC'
   ];
 
-  const playerNames = [
-    // Goalkeepers
-    'Ronwen Williams', 'Itumeleng Khune', 'Veli Mothwa', 'Brandon Petersen', 'Siyabonga Mbatha',
-    'Rushwin Dortley', 'Darren Keet', 'Jody February', 'Daniel Akpeyi', 'Bruce Bvuma',
-    
-    // Defenders  
+  // Accurate PSL player names by position
+  const goalkeepers = [
+    'Ronwen Williams', 'Itumeleng Khune', 'Veli Mothwa', 'Brandon Petersen', 'Jody February',
+    'Daniel Akpeyi', 'Bruce Bvuma', 'Darren Keet', 'Washington Arubi', 'Jackson Mabokgwane',
+    'Ricardo Goss', 'Boalefa Pule', 'Oscarine Masuluke', 'King Ndlovu', 'Thabo Babaitsile'
+  ];
+
+  const defenders = [
     'Rushine De Reuck', 'Grant Kekana', 'Innocent Maela', 'Nkosinathi Sibisi', 'Siyanda Xulu',
     'Njabulo Ngcobo', 'Ramahlwe Mphahlele', 'Happy Jele', 'Thulani Hlatshwayo', 'Clayton Daniels',
     'Luke Fleurs', 'Terrence Mashego', 'Divine Lunga', 'Nyiko Mobbie', 'Sbonelo Cele',
     'Abdelmounaim Boutouil', 'Tebogo Tlolane', 'Sandile Mthethwa', 'Mothobi Mvala', 'Lorenzo Gordinho',
-    
-    // Midfielders
+    'Thabiso Kutumela', 'Khuliso Mudau', 'Lyle Lakay', 'Aubrey Modiba', 'Paseka Mako',
+    'Olisa Ndah', 'Tapelo Xoki', 'Bandile Shandu', 'Keagan Johannes', 'Fagrie Lakay',
+    'Shane Roberts', 'Thabo Moloisane', 'Kwanda Mngonyama', 'Zitha Kwinika', 'Rivaldo Coetzee',
+    'Makhehlene Makhaula', 'Taariq Fielies', 'Keenan Phillips', 'Tercious Malepe', 'Deolin Mekoa'
+  ];
+
+  const midfielders = [
     'Themba Zwane', 'Teboho Mokoena', 'Keagan Dolly', 'Goodman Mosele', 'Monnapule Saleng',
-    'Siphelele Ntshangase', 'Kermit Erasmus', 'Khama Billiat', 'Lebohang Maboe', 'Sphelele Mkhulise',
-    'Vincent Pule', 'Thabo Qalinge', 'Bandile Shandu', 'Fortune Makaringe', 'Ben Motshwari',
-    'George Maluleka', 'Cole Alexander', 'Dumisani Zuma', 'Yusuf Maart', 'Kabelo Mahlasela',
-    'Keletso Makgalwa', 'Ethan Brooks', 'Thabang Monare', 'Njabulo Blom', 'Ashley Du Preez',
-    
-    // Attackers
+    'Khama Billiat', 'Lebohang Maboe', 'Sphelele Mkhulise', 'Vincent Pule', 'Thabo Qalinge',
+    'Fortune Makaringe', 'Ben Motshwari', 'George Maluleka', 'Dumisani Zuma', 'Yusuf Maart',
+    'Kabelo Mahlasela', 'Keletso Makgalwa', 'Ethan Brooks', 'Thabang Monare', 'Njabulo Blom',
+    'Ashley Du Preez', 'Siphelele Ntshangase', 'Neo Maema', 'Marcelo Allende', 'Grant Margeman',
+    'Thabo Cele', 'Miguel Timm', 'Jesse Donn', 'Bathusi Aubaas', 'Chumani Butsaka',
+    'Siphesihle Ndlovu', 'Phathutshedzo Nange', 'Sipho Mbule', 'Kermit Erasmus', 'Linda Mntambo'
+  ];
+
+  const attackers = [
     'Peter Shalulile', 'Evidence Makgopa', 'Ranga Chivaviro', 'Khanyisa Mayo', 'Iqraam Rayners',
-    'Cassius Mailula', 'Zakhele Lepasa', 'Gabadinho Mhango', 'Kermit Erasmus', 'Victor Letsoalo',
-    'Lyle Foster', 'Luther Singh', 'Fagrie Lakay', 'Bradley Grobler', 'Bongokuhle Hlongwane',
-    'Judas Moseamedi', 'Sipho Mbule', 'Tshegofatso Mabasa', 'Kwame Peprah', 'Bienvenu Eva Nga'
+    'Cassius Mailula', 'Zakhele Lepasa', 'Gabadinho Mhango', 'Victor Letsoalo', 'Lyle Foster',
+    'Luther Singh', 'Bradley Grobler', 'Bongokuhle Hlongwane', 'Judas Moseamedi', 'Tshegofatso Mabasa',
+    'Kwame Peprah', 'Bienvenu Eva Nga', 'Ndumiso Mabena', 'Kermit Erasmus', 'Kgaogelo Sekgota',
+    'Thabiso Kutumela', 'Lerato Lamola', 'Fagrie Lakay', 'Samkelo Zwane', 'Augustine Mulenga',
+    'Terrence Dzvukamanja', 'Ryan Moon', 'Kobamelo Kodisang', 'Tumisang Orebonye', 'Thabo Nodada'
   ];
 
   const nationalities = [
@@ -194,9 +206,11 @@ export const getEnhancedPSLData = (): TransformedPlayer[] => {
 
   // Generate players for each position ensuring balanced squad building
   const positionCounts = { GK: 15, DEF: 40, MID: 35, ATT: 30 };
+  const positionNames = { GK: goalkeepers, DEF: defenders, MID: midfielders, ATT: attackers };
   
   Object.entries(positionCounts).forEach(([pos, count]) => {
     const position = pos as 'GK' | 'DEF' | 'MID' | 'ATT';
+    const namesPool = positionNames[position];
     
     for (let i = 0; i < count; i++) {
       const stats = generatePlayerStats(position);
@@ -205,7 +219,7 @@ export const getEnhancedPSLData = (): TransformedPlayer[] => {
       
       players.push({
         id: `psl_${position.toLowerCase()}_${i + 1}`,
-        name: playerNames[playerIndex % playerNames.length] || `${position} Player ${i + 1}`,
+        name: namesPool[i % namesPool.length] || `${position} Player ${i + 1}`,
         position,
         club: pslTeams[Math.floor(Math.random() * pslTeams.length)],
         nationality: nationalities[Math.floor(Math.random() * nationalities.length)],
@@ -218,8 +232,6 @@ export const getEnhancedPSLData = (): TransformedPlayer[] => {
         physical: Math.round(stats.physical),
         cost
       });
-      
-      playerIndex++;
     }
   });
 

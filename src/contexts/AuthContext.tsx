@@ -174,7 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false; // Position full for this formation
       }
     } else {
-      if (user.squad.length >= 11) {
+      if (user.squad.length >= 15) {
         return false; // Squad full
       }
     }

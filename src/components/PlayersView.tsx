@@ -87,8 +87,8 @@ export const PlayersView = () => {
           message = "Player is already in your squad.";
         }
       } else {
-        if (user?.squad.length >= 11) {
-          message = "Your squad is full (11 players maximum).";
+        if ((user?.squad.length || 0) + (user?.bench.length || 0) >= 15) {
+          message = "Your total squad is full (15 players maximum).";
         } else if (user?.budget && user.budget < player.cost) {
           message = "Insufficient budget for this player.";
         } else if (user?.squad.some(p => p.id === player.id)) {
@@ -115,7 +115,9 @@ export const PlayersView = () => {
     } else {
       let message = "Failed to add player to bench.";
       
-      if (user?.bench.length >= 4) {
+      if ((user?.squad.length || 0) + (user?.bench.length || 0) >= 15) {
+        message = "Your total squad is full (15 players maximum).";
+      } else if (user?.bench.length >= 4) {
         message = "Your bench is full (4 players maximum).";
       } else if (user?.budget && user.budget < player.cost) {
         message = "Insufficient budget for this player.";
@@ -167,9 +169,15 @@ export const PlayersView = () => {
               </span>
             </div>
             <div className="flex items-center space-x-2">
-              <span className="text-gray-600">Squad:</span>
+              <span className="text-gray-600">Total Players:</span>
               <span className="font-bold">
-                {user?.squad.length || 0}/11
+                {(user?.squad.length || 0) + (user?.bench.length || 0)}/15
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-gray-600">Starting XI:</span>
+              <span className="font-bold">
+                {user?.squad.length || 0}/{selectedFormation ? Object.values(selectedFormation.positions).reduce((a, b) => a + b, 0) : 11}
               </span>
             </div>
             <div className="flex items-center space-x-2">
@@ -298,7 +306,8 @@ export const PlayersView = () => {
                     disabled={
                       user?.squad.some(p => p.id === player.id) ||
                       user?.bench?.some(p => p.id === player.id) ||
-                      (user?.squad.length || 0) >= 11 ||
+                      (selectedFormation && (user?.squad.filter(p => p.position === player.position).length || 0) >= selectedFormation.positions[player.position as keyof typeof selectedFormation.positions]) ||
+                      (!selectedFormation && (user?.squad.length || 0) >= 11) ||
                       (user?.budget || 0) < player.cost
                     }
                     className="gradient-bg hover:opacity-90"
@@ -313,6 +322,7 @@ export const PlayersView = () => {
                     disabled={
                       user?.squad.some(p => p.id === player.id) ||
                       user?.bench?.some(p => p.id === player.id) ||
+                      ((user?.squad.length || 0) + (user?.bench.length || 0)) >= 15 ||
                       (user?.bench?.length || 0) >= 4 ||
                       (user?.budget || 0) < player.cost
                     }

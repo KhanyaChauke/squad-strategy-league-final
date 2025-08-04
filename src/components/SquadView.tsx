@@ -194,7 +194,7 @@ export const SquadView = () => {
               <div className="flex items-center space-x-2">
                 <span className="text-gray-600">Players:</span>
                 <span className="font-bold">
-                  {user?.squad.length || 0}/{selectedFormation ? Object.values(selectedFormation.positions).reduce((a, b) => a + b, 0) : 11}
+                  {(user?.squad.length || 0) + (user?.bench.length || 0)}/15
                 </span>
               </div>
               <div className="flex items-center space-x-2">
@@ -391,94 +391,6 @@ export const SquadView = () => {
         </CardContent>
       </Card>
 
-      {/* Player List */}
-      {user?.squad && user.squad.length > 0 ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {user.squad.map((player) => (
-            <Card key={player.id} className="card-hover">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{player.name}</CardTitle>
-                    <CardDescription className="flex items-center space-x-2">
-                      <span>{player.club}</span>
-                      <Badge className={getPositionColor(player.position)} variant="secondary">
-                        {player.position}
-                      </Badge>
-                    </CardDescription>
-                  </div>
-                  <div className="text-right">
-                    <div className={`text-2xl font-bold ${getRatingColor(player.rating)}`}>
-                      {player.rating}
-                    </div>
-                    <div className="flex items-center text-yellow-500">
-                      <Star className="h-3 w-3 fill-current" />
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="space-y-4">
-                {/* Player Stats */}
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  <div className="text-center">
-                    <div className="text-lg font-semibold">{player.pace}</div>
-                    <div className="text-gray-500">PAC</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-semibold">{player.shooting}</div>
-                    <div className="text-gray-500">SHO</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-semibold">{player.passing}</div>
-                    <div className="text-gray-500">PAS</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-semibold">{player.defending}</div>
-                    <div className="text-gray-500">DEF</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-semibold">{player.dribbling}</div>
-                    <div className="text-gray-500">DRI</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-semibold">{player.physical}</div>
-                    <div className="text-gray-500">PHY</div>
-                  </div>
-                </div>
-                
-                {/* Cost and Remove Button */}
-                <div className="flex items-center justify-between pt-2 border-t">
-                  <div>
-                    <div className="text-sm text-gray-500">Cost</div>
-                    <div className="font-bold text-green-600">
-                      {formatCurrency(player.cost)}
-                    </div>
-                  </div>
-                  
-                  <Button
-                    onClick={() => handleRemovePlayer(player)}
-                    variant="destructive"
-                    size="sm"
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Remove
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="text-center py-12">
-            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 mb-2">Your squad is empty</p>
-            <p className="text-gray-400 text-sm">Start building your dream team by browsing players!</p>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Bench Section */}
       <Card>
         <CardHeader>
@@ -573,6 +485,94 @@ export const SquadView = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Player List */}
+      {user?.squad && user.squad.length > 0 ? (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {user.squad.map((player) => (
+            <Card key={player.id} className="card-hover">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle className="text-lg">{player.name}</CardTitle>
+                    <CardDescription className="flex items-center space-x-2">
+                      <span>{player.club}</span>
+                      <Badge className={getPositionColor(player.position)} variant="secondary">
+                        {player.position}
+                      </Badge>
+                    </CardDescription>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-2xl font-bold ${getRatingColor(player.rating)}`}>
+                      {player.rating}
+                    </div>
+                    <div className="flex items-center text-yellow-500">
+                      <Star className="h-3 w-3 fill-current" />
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              
+              <CardContent className="space-y-4">
+                {/* Player Stats */}
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="text-center">
+                    <div className="text-lg font-semibold">{player.pace}</div>
+                    <div className="text-gray-500">PAC</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold">{player.shooting}</div>
+                    <div className="text-gray-500">SHO</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold">{player.passing}</div>
+                    <div className="text-gray-500">PAS</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold">{player.defending}</div>
+                    <div className="text-gray-500">DEF</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold">{player.dribbling}</div>
+                    <div className="text-gray-500">DRI</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold">{player.physical}</div>
+                    <div className="text-gray-500">PHY</div>
+                  </div>
+                </div>
+                
+                {/* Cost and Remove Button */}
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <div>
+                    <div className="text-sm text-gray-500">Cost</div>
+                    <div className="font-bold text-green-600">
+                      {formatCurrency(player.cost)}
+                    </div>
+                  </div>
+                  
+                  <Button
+                    onClick={() => handleRemovePlayer(player)}
+                    variant="destructive"
+                    size="sm"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Remove
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="text-center py-12">
+            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 mb-2">Your squad is empty</p>
+            <p className="text-gray-400 text-sm">Start building your dream team by browsing players!</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

@@ -138,7 +138,6 @@ export type Database = {
       }
       players: {
         Row: {
-          created_at: string | null
           id: string
           name: string
           position: string
@@ -147,7 +146,6 @@ export type Database = {
           team: string
         }
         Insert: {
-          created_at?: string | null
           id?: string
           name: string
           position: string
@@ -156,7 +154,6 @@ export type Database = {
           team: string
         }
         Update: {
-          created_at?: string | null
           id?: string
           name?: string
           position?: string
@@ -212,7 +209,6 @@ export type Database = {
         Row: {
           created_at: string | null
           gameweek_id: number | null
-          id: string
           is_captain: boolean | null
           is_starting: boolean | null
           is_vice_captain: boolean | null
@@ -222,7 +218,6 @@ export type Database = {
         Insert: {
           created_at?: string | null
           gameweek_id?: number | null
-          id?: string
           is_captain?: boolean | null
           is_starting?: boolean | null
           is_vice_captain?: boolean | null
@@ -232,7 +227,6 @@ export type Database = {
         Update: {
           created_at?: string | null
           gameweek_id?: number | null
-          id?: string
           is_captain?: boolean | null
           is_starting?: boolean | null
           is_vice_captain?: boolean | null
@@ -265,19 +259,25 @@ export type Database = {
       }
       users: {
         Row: {
+          budget: number | null
           created_at: string | null
+          formation: string | null
           id: string
           team_name: string | null
           username: string
         }
         Insert: {
+          budget?: number | null
           created_at?: string | null
+          formation?: string | null
           id?: string
           team_name?: string | null
           username: string
         }
         Update: {
+          budget?: number | null
           created_at?: string | null
+          formation?: string | null
           id?: string
           team_name?: string | null
           username?: string

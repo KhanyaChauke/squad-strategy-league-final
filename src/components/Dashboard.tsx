@@ -69,6 +69,34 @@ const Dashboard = () => {
     }
   };
 
+  const handleMigrateLocalData = async () => {
+    setIsPopulating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('migrate-local-data');
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to migrate local data",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: data.message || "Local data migrated successfully",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error", 
+        description: "Failed to connect to the migration service",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPopulating(false);
+    }
+  };
+
   const renderNavigation = () => (
     <div className="bg-white shadow-sm border-b">
       <div className="container mx-auto px-4">
@@ -267,6 +295,15 @@ const Dashboard = () => {
             >
               <Database className="h-4 w-4 mr-2" />
               {isPopulating ? 'Populating...' : 'Populate Database'}
+            </Button>
+            <Button 
+              variant="outline"
+              className="w-full"
+              onClick={handleMigrateLocalData}
+              disabled={isPopulating}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {isPopulating ? 'Migrating...' : 'Migrate Local Data'}
             </Button>
           </CardContent>
         </Card>

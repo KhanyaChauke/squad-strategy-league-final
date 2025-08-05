@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { PlayersView } from '@/components/PlayersView';
 import { SquadView } from '@/components/SquadView';
 import { 
@@ -13,14 +15,18 @@ import {
   Target,
   LogOut,
   Home,
-  UserCircle
+  UserCircle,
+  Database,
+  Download
 } from 'lucide-react';
 
 type DashboardView = 'home' | 'players' | 'squad';
 
 const Dashboard = () => {
   const [currentView, setCurrentView] = useState<DashboardView>('home');
+  const [isPopulating, setIsPopulating] = useState(false);
   const { user, logout } = useAuth();
+  const { toast } = useToast();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', {
@@ -33,6 +39,34 @@ const Dashboard = () => {
 
   const getPositionCount = (position: string) => {
     return user?.squad.filter(player => player.position === position).length || 0;
+  };
+
+  const handlePopulateDatabase = async () => {
+    setIsPopulating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('populate-database');
+      
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to populate database",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: data.message || "Database populated successfully",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error", 
+        description: "Failed to connect to the database service",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPopulating(false);
+    }
   };
 
   const renderNavigation = () => (
@@ -224,6 +258,15 @@ const Dashboard = () => {
             >
               <Target className="h-4 w-4 mr-2" />
               View My Squad
+            </Button>
+            <Button 
+              variant="secondary"
+              className="w-full"
+              onClick={handlePopulateDatabase}
+              disabled={isPopulating}
+            >
+              <Database className="h-4 w-4 mr-2" />
+              {isPopulating ? 'Populating...' : 'Populate Database'}
             </Button>
           </CardContent>
         </Card>

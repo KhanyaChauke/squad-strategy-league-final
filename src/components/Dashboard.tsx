@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { PlayersView } from '@/components/PlayersView';
 import { SquadView } from '@/components/SquadView';
+import { PSLDashboard } from '@/components/PSLDashboard';
 import { 
   Trophy, 
   Users, 
@@ -20,7 +21,7 @@ import {
   Download
 } from 'lucide-react';
 
-type DashboardView = 'home' | 'players' | 'squad';
+type DashboardView = 'home' | 'players' | 'squad' | 'psl';
 
 const Dashboard = () => {
   const [currentView, setCurrentView] = useState<DashboardView>('home');
@@ -131,6 +132,14 @@ const Dashboard = () => {
               >
                 <Target className="h-4 w-4" />
                 <span>My Squad</span>
+              </Button>
+              <Button
+                variant={currentView === 'psl' ? 'default' : 'ghost'}
+                onClick={() => setCurrentView('psl')}
+                className="flex items-center space-x-2"
+              >
+                <Trophy className="h-4 w-4" />
+                <span>PSL Table</span>
               </Button>
             </nav>
           </div>
@@ -319,6 +328,7 @@ const Dashboard = () => {
         {currentView === 'home' && renderHomeView()}
         {currentView === 'players' && <PlayersView />}
         {currentView === 'squad' && <SquadView />}
+        {currentView === 'psl' && <PSLDashboard />}
       </div>
     </div>
   );

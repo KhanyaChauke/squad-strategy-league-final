@@ -77,21 +77,21 @@ export const PlayersView = () => {
       let message = "Failed to add player.";
       
       if (selectedFormation) {
-        const currentPositionCount = user?.squad.filter(p => p.position === player.position).length || 0;
+        const currentPositionCount = user?.squad?.filter(p => p.position === player.position).length || 0;
         const maxForPosition = selectedFormation.positions[player.position as keyof typeof selectedFormation.positions];
         if (currentPositionCount >= maxForPosition) {
           message = `Your ${selectedFormation.name} formation only allows ${maxForPosition} ${player.position} players.`;
         } else if (user?.budget && user.budget < player.cost) {
           message = "Insufficient budget for this player.";
-        } else if (user?.squad.some(p => p.id === player.id)) {
+        } else if (user?.squad?.some(p => p.id === player.id)) {
           message = "Player is already in your squad.";
         }
       } else {
-        if ((user?.squad.length || 0) + (user?.bench.length || 0) >= 15) {
+        if ((user?.squad?.length || 0) + (user?.bench?.length || 0) >= 15) {
           message = "Your total squad is full (15 players maximum).";
         } else if (user?.budget && user.budget < player.cost) {
           message = "Insufficient budget for this player.";
-        } else if (user?.squad.some(p => p.id === player.id)) {
+        } else if (user?.squad?.some(p => p.id === player.id)) {
           message = "Player is already in your squad.";
         }
       }
@@ -115,13 +115,13 @@ export const PlayersView = () => {
     } else {
       let message = "Failed to add player to bench.";
       
-      if ((user?.squad.length || 0) + (user?.bench.length || 0) >= 15) {
+      if ((user?.squad?.length || 0) + (user?.bench?.length || 0) >= 15) {
         message = "Your total squad is full (15 players maximum).";
-      } else if (user?.bench.length >= 4) {
+      } else if (user?.bench?.length >= 4) {
         message = "Your bench is full (4 players maximum).";
       } else if (user?.budget && user.budget < player.cost) {
         message = "Insufficient budget for this player.";
-      } else if (user?.squad.some(p => p.id === player.id) || user?.bench.some(p => p.id === player.id)) {
+      } else if (user?.squad?.some(p => p.id === player.id) || user?.bench?.some(p => p.id === player.id)) {
         message = "Player is already in your squad or bench.";
       }
       
@@ -171,13 +171,13 @@ export const PlayersView = () => {
             <div className="flex items-center space-x-2">
               <span className="text-gray-600">Total Players:</span>
               <span className="font-bold">
-                {(user?.squad.length || 0) + (user?.bench.length || 0)}/15
+                {(user?.squad?.length || 0) + (user?.bench?.length || 0)}/15
               </span>
             </div>
             <div className="flex items-center space-x-2">
               <span className="text-gray-600">Starting XI:</span>
               <span className="font-bold">
-                {user?.squad.length || 0}/{selectedFormation ? Object.values(selectedFormation.positions).reduce((a, b) => a + b, 0) : 11}
+                {user?.squad?.length || 0}/{selectedFormation ? Object.values(selectedFormation.positions).reduce((a, b) => a + b, 0) : 11}
               </span>
             </div>
             <div className="flex items-center space-x-2">
@@ -304,10 +304,10 @@ export const PlayersView = () => {
                   <Button
                     onClick={() => handleAddPlayer(player)}
                     disabled={
-                      user?.squad.some(p => p.id === player.id) ||
+                      user?.squad?.some(p => p.id === player.id) ||
                       user?.bench?.some(p => p.id === player.id) ||
-                      (selectedFormation && (user?.squad.filter(p => p.position === player.position).length || 0) >= selectedFormation.positions[player.position as keyof typeof selectedFormation.positions]) ||
-                      (!selectedFormation && (user?.squad.length || 0) >= 11) ||
+                      (selectedFormation && (user?.squad?.filter(p => p.position === player.position).length || 0) >= selectedFormation.positions[player.position as keyof typeof selectedFormation.positions]) ||
+                      (!selectedFormation && (user?.squad?.length || 0) >= 11) ||
                       (user?.budget || 0) < player.cost
                     }
                     className="gradient-bg hover:opacity-90"
@@ -320,9 +320,9 @@ export const PlayersView = () => {
                   <Button
                     onClick={() => handleAddToBench(player)}
                     disabled={
-                      user?.squad.some(p => p.id === player.id) ||
+                      user?.squad?.some(p => p.id === player.id) ||
                       user?.bench?.some(p => p.id === player.id) ||
-                      ((user?.squad.length || 0) + (user?.bench.length || 0)) >= 15 ||
+                      ((user?.squad?.length || 0) + (user?.bench?.length || 0)) >= 15 ||
                       (user?.bench?.length || 0) >= 4 ||
                       (user?.budget || 0) < player.cost
                     }

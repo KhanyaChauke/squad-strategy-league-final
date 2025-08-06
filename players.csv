@@ -1,0 +1,21 @@
+id,name,position,club,nationality,rating,pace,shooting,passing,defending,dribbling,physical,cost
+a7e0178c-b4bc-414e-b16e-2974c9c8f77b,Brandon Petersen,GK,Kaizer Chiefs,South Africa,77,48,28,60,46,45,64,74000000
+61902b8d-bbd0-4480-9b45-a7d4ad5c1253,Deon Hotto,MID,Orlando Pirates,Namibia,81,83,75,76,60,80,70,86000000
+c34f3f4c-222f-4846-ac16-9aeab10b6440,Evidence Makgopa,ATT,Orlando Pirates,South Africa,77,74,72,68,50,73,74,76000000
+267dd06c-a8bb-4aaa-944d-1778bc1c593c,Goodman Mosele,MID,Orlando Pirates,South Africa,79,72,65,76,69,74,73,81000000
+f19f8c37-a22f-40e1-8edf-7edfcd066424,Iqraam Rayners,ATT,Stellenbosch FC,South Africa,78,79,76,70,54,72,72,80000000
+5322b412-9579-4232-be40-9414a3df703e,Keagan Dolly,MID,Kaizer Chiefs,South Africa,80,77,72,78,60,80,70,90000000
+702b1950-2def-475a-b86f-4fda4aa55f5c,Lehlohonolo Majoro,ATT,AmaZulu FC,South Africa,78,76,74,68,50,72,70,77000000
+937ddccd-2472-4be6-aea3-de3be4b02817,Lyle Lakay,DEF,Cape Town City,South Africa,78,75,60,74,78,70,74,79000000
+e547ccc2-f617-4636-8f63-1ab2d2343436,Mduduzi Mdantsane,MID,Cape Town City,South Africa,80,75,70,77,64,79,71,87000000
+fe9a0500-da1f-42b0-b02f-523843c911d6,Monnapule Saleng,ATT,Orlando Pirates,South Africa,82,85,77,72,58,83,69,93000000
+fb1847b9-1b4f-4f2c-a94f-095376f28343,Patrick Maswanganyi,MID,SuperSport United,South Africa,78,74,70,73,62,75,70,79000000
+6f6a32c2-b08a-4f46-8ac9-f5f268b1ba10,Reeve Frosler,DEF,Kaizer Chiefs,South Africa,76,78,55,70,75,65,72,75000000
+2579c9f1-8fb5-4945-ba13-815d11c83333,Ronwen Williams,GK,Mamelodi Sundowns,South Africa,83,50,30,65,45,40,60,85000000
+f36f8bc7-1b68-4d94-8c5c-7a90d8125d05,Sipho Mbule,MID,Mamelodi Sundowns,South Africa,80,76,70,79,65,78,72,85000000
+56fcc084-9a6e-4fd8-8205-65c730d28a51,Siyanda Xulu,DEF,SuperSport United,South Africa,79,70,40,68,82,62,76,78000000
+1936d7c6-f689-4ff4-8130-943917f45ea4,Terrence Dzvukamanja,ATT,Orlando Pirates,Zimbabwe,79,76,78,70,58,74,72,83000000
+84547674-635c-4b05-9568-4131cbde239c,Thapelo Morena,DEF,Mamelodi Sundowns,South Africa,80,87,58,72,77,75,76,88000000
+eafb92ef-b38a-4d8e-ae5a-9fca29902cf0,Themba Zwane,MID,Mamelodi Sundowns,South Africa,85,78,75,80,68,82,74,95000000
+ce712468-e28c-46bc-946e-046e8d91e613,Veli Mothwa,GK,AmaZulu FC,South Africa,78,52,32,62,50,48,66,78000000
+28f7b4fb-ff92-443b-9847-4d32c627c55d,Victor Letsoalo,ATT,Sekhukhune United,South Africa,81,82,79,70,55,78,75,88000000

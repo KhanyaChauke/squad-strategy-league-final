@@ -2,13 +2,13 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { playersDatabase, searchPlayers, getPlayersByPosition } from '@/data/playersData';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Search, TrendingUp, Star } from 'lucide-react';
+import { Search, TrendingUp } from 'lucide-react';
+import { FifaCardDetailed } from '@/components/FifaCard';
 
 export const PlayersView = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -237,105 +237,46 @@ export const PlayersView = () => {
       </Card>
 
       {/* Players Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 justify-items-center">
         {filteredPlayers.map((player) => (
-          <Card key={player.id} className="card-hover">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-lg">{player.name}</CardTitle>
-                  <CardDescription className="flex items-center space-x-2">
-                    <span>{player.club}</span>
-                    <Badge className={getPositionColor(player.position)} variant="secondary">
-                      {player.position}
-                    </Badge>
-                  </CardDescription>
-                </div>
-                <div className="text-right">
-                  <div className={`text-2xl font-bold ${getRatingColor(player.rating)}`}>
-                    {player.rating}
-                  </div>
-                  <div className="flex items-center text-yellow-500">
-                    <Star className="h-3 w-3 fill-current" />
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
+          <div key={player.id} className="relative group">
+            <FifaCardDetailed
+              player={player}
+            />
             
-            <CardContent className="space-y-4">
-              {/* Player Stats */}
-              <div className="grid grid-cols-3 gap-2 text-xs">
-                <div className="text-center">
-                  <div className="text-lg font-semibold">{player.pace}</div>
-                  <div className="text-gray-500">PAC</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-semibold">{player.shooting}</div>
-                  <div className="text-gray-500">SHO</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-semibold">{player.passing}</div>
-                  <div className="text-gray-500">PAS</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-semibold">{player.defending}</div>
-                  <div className="text-gray-500">DEF</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-semibold">{player.dribbling}</div>
-                  <div className="text-gray-500">DRI</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-semibold">{player.physical}</div>
-                  <div className="text-gray-500">PHY</div>
-                </div>
+            {/* Action Buttons Overlay */}
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-xl flex flex-col justify-end p-4">
+              <div className="space-y-2">
+                <Button
+                  onClick={() => handleAddPlayer(player)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={
+                    user?.squad?.some(p => p.id === player.id) ||
+                    user?.bench?.some(p => p.id === player.id) ||
+                    (selectedFormation && (user?.squad?.filter(p => p.position === player.position).length || 0) >= selectedFormation.positions[player.position as keyof typeof selectedFormation.positions]) ||
+                    (!selectedFormation && (user?.squad?.length || 0) >= 11) ||
+                    (user?.budget || 0) < player.cost
+                  }
+                >
+                  Add to Squad
+                </Button>
+                <Button
+                  onClick={() => handleAddToBench(player)}
+                  variant="outline"
+                  className="w-full bg-white/90 text-black border-white hover:bg-white"
+                  disabled={
+                    user?.squad?.some(p => p.id === player.id) ||
+                    user?.bench?.some(p => p.id === player.id) ||
+                    ((user?.squad?.length || 0) + (user?.bench?.length || 0)) >= 15 ||
+                    (user?.bench?.length || 0) >= 4 ||
+                    (user?.budget || 0) < player.cost
+                  }
+                >
+                  Add to Bench
+                </Button>
               </div>
-              
-              {/* Cost and Add Button */}
-              <div className="flex items-center justify-between pt-2 border-t">
-                <div>
-                  <div className="text-sm text-gray-500">Cost</div>
-                  <div className="font-bold text-green-600">
-                    {formatCurrency(player.cost)}
-                  </div>
-                </div>
-                
-                <div className="flex space-x-2">
-                  <Button
-                    onClick={() => handleAddPlayer(player)}
-                    disabled={
-                      user?.squad?.some(p => p.id === player.id) ||
-                      user?.bench?.some(p => p.id === player.id) ||
-                      (selectedFormation && (user?.squad?.filter(p => p.position === player.position).length || 0) >= selectedFormation.positions[player.position as keyof typeof selectedFormation.positions]) ||
-                      (!selectedFormation && (user?.squad?.length || 0) >= 11) ||
-                      (user?.budget || 0) < player.cost
-                    }
-                    className="gradient-bg hover:opacity-90"
-                    size="sm"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Squad
-                  </Button>
-                  
-                  <Button
-                    onClick={() => handleAddToBench(player)}
-                    disabled={
-                      user?.squad?.some(p => p.id === player.id) ||
-                      user?.bench?.some(p => p.id === player.id) ||
-                      ((user?.squad?.length || 0) + (user?.bench?.length || 0)) >= 15 ||
-                      (user?.bench?.length || 0) >= 4 ||
-                      (user?.budget || 0) < player.cost
-                    }
-                    variant="outline"
-                    size="sm"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Bench
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         ))}
       </div>
 

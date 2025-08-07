@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { TeamChemistry } from '@/components/TeamChemistry';
 import { FormationSelector, formations, Formation } from '@/components/FormationSelector';
 import { playersDatabase, Player } from '@/data/playersData';
+import { FifaCard } from '@/components/FifaCard';
 
 // Import jersey images
 import sundownsJersey from '@/assets/jerseys/sundowns-jersey.png';
@@ -163,62 +164,6 @@ export const SquadView = () => {
     ATT: getPlayersByPosition('ATT').length,
   };
 
-  const JerseyIcon = ({ player, isEmpty = false, position, onEmptyClick, onPlayerClick }: { 
-    player?: any, 
-    isEmpty?: boolean,
-    position?: 'GK' | 'DEF' | 'MID' | 'ATT',
-    onEmptyClick?: (position: 'GK' | 'DEF' | 'MID' | 'ATT') => void,
-    onPlayerClick?: (player: any) => void 
-  }) => {
-    if (isEmpty) {
-      return (
-        <div className="flex flex-col items-center space-y-2">
-          <button
-            onClick={() => position && onEmptyClick?.(position)}
-            className="w-20 h-24 border-2 border-dashed border-white/50 rounded-lg flex flex-col items-center justify-center hover:border-white/80 hover:bg-white/10 transition-all duration-200 group"
-          >
-            <Plus className="h-6 w-6 text-white/50 group-hover:text-white/80 mb-1" />
-            <span className="text-white/50 group-hover:text-white/80 text-xs font-bold">ADD</span>
-          </button>
-        </div>
-      );
-    }
-
-    if (!player) return null;
-
-    const playerNumber = user?.squad.findIndex(p => p.id === player.id) + 1;
-    const lastName = player.name.split(' ').pop() || player.name;
-
-    return (
-      <div className="flex flex-col items-center space-y-2">
-        <button
-          onClick={() => onPlayerClick?.(player)}
-          className="relative w-20 h-24 group"
-        >
-          {/* Jersey Image */}
-          <img 
-            src={getJerseyImage(player.club)} 
-            alt={`${player.club} jersey`}
-            className="w-full h-full object-contain"
-          />
-          {/* Jersey Number Overlay */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <div className="text-lg font-black text-white drop-shadow-lg" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
-              {playerNumber}
-            </div>
-          </div>
-          {/* Remove overlay on hover */}
-          <div className="absolute inset-0 bg-red-500/80 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <X className="h-6 w-6 text-white" />
-          </div>
-        </button>
-        {/* Player Surname */}
-        <div className="text-xs text-white font-medium text-center max-w-20 truncate">
-          {lastName.toUpperCase()}
-        </div>
-      </div>
-    );
-  };
 
   // Show formation selector if no formation is selected
   if (showFormationSelector) {
@@ -341,7 +286,7 @@ export const SquadView = () => {
         </CardHeader>
         <CardContent className="p-4">
           <div 
-            className="relative w-full h-[600px] rounded-lg overflow-hidden border-2 border-white"
+            className="relative w-full h-[700px] rounded-lg overflow-hidden border-2 border-white"
             style={{
               background: 'linear-gradient(180deg, #1e5128 0%, #2d7a2d 20%, #4ade80 40%, #22c55e 60%, #4ade80 80%, #2d7a2d 100%)',
               backgroundSize: '100% 100%'
@@ -399,83 +344,91 @@ export const SquadView = () => {
             {/* Players positioned on field */}
             <div className="absolute inset-0 flex flex-col justify-between py-12 px-8">
               {/* Attackers (Forward line) */}
-              <div className="flex justify-center items-center h-20">
-                <div className="flex space-x-16">
+              <div className="flex justify-center items-center h-32">
+                <div className="flex space-x-6">
                   {getPlayersByPosition('ATT').slice(0, selectedFormation?.positions.ATT || 3).map((player, index) => (
-                    <JerseyIcon 
+                    <FifaCard
                       key={player.id} 
-                      player={player} 
+                      player={player}
+                      size="small"
                       onPlayerClick={handleRemovePlayer}
+                      showRemoveOverlay
                     />
                   ))}
                   {Array(Math.max(0, (selectedFormation?.positions.ATT || 3) - positionCounts.ATT)).fill(0).map((_, index) => (
-                    <JerseyIcon 
+                    <FifaCard
                       key={`empty-att-${index}`} 
-                      isEmpty 
-                      position="ATT"
-                      onEmptyClick={handleEmptySlotClick}
+                      isEmpty
+                      size="small"
+                      onEmptyClick={() => handleEmptySlotClick('ATT')}
                     />
                   ))}
                 </div>
               </div>
               
               {/* Midfielders (Middle line) */}
-              <div className="flex justify-center items-center h-20">
-                <div className="flex space-x-12">
+              <div className="flex justify-center items-center h-32">
+                <div className="flex space-x-4">
                   {getPlayersByPosition('MID').slice(0, selectedFormation?.positions.MID || 4).map((player, index) => (
-                    <JerseyIcon 
+                    <FifaCard
                       key={player.id} 
-                      player={player} 
+                      player={player}
+                      size="small"
                       onPlayerClick={handleRemovePlayer}
+                      showRemoveOverlay
                     />
                   ))}
                   {Array(Math.max(0, (selectedFormation?.positions.MID || 4) - positionCounts.MID)).fill(0).map((_, index) => (
-                    <JerseyIcon 
+                    <FifaCard
                       key={`empty-mid-${index}`} 
-                      isEmpty 
-                      position="MID"
-                      onEmptyClick={handleEmptySlotClick}
+                      isEmpty
+                      size="small"
+                      onEmptyClick={() => handleEmptySlotClick('MID')}
                     />
                   ))}
                 </div>
               </div>
               
               {/* Defenders (Defense line) */}
-              <div className="flex justify-center items-center h-20">
-                <div className="flex space-x-10">
+              <div className="flex justify-center items-center h-32">
+                <div className="flex space-x-3">
                   {getPlayersByPosition('DEF').slice(0, selectedFormation?.positions.DEF || 4).map((player, index) => (
-                    <JerseyIcon 
+                    <FifaCard
                       key={player.id} 
-                      player={player} 
+                      player={player}
+                      size="small"
                       onPlayerClick={handleRemovePlayer}
+                      showRemoveOverlay
                     />
                   ))}
                   {Array(Math.max(0, (selectedFormation?.positions.DEF || 4) - positionCounts.DEF)).fill(0).map((_, index) => (
-                    <JerseyIcon 
+                    <FifaCard
                       key={`empty-def-${index}`} 
-                      isEmpty 
-                      position="DEF"
-                      onEmptyClick={handleEmptySlotClick}
+                      isEmpty
+                      size="small"
+                      onEmptyClick={() => handleEmptySlotClick('DEF')}
                     />
                   ))}
                 </div>
               </div>
               
               {/* Goalkeeper (Goal line) */}
-              <div className="flex justify-center items-end h-16 pb-4">
+              <div className="flex justify-center items-end h-32 pb-4">
                 {getPlayersByPosition('GK').slice(0, selectedFormation?.positions.GK || 1).map((player, index) => (
-                  <JerseyIcon 
+                  <FifaCard
                     key={player.id} 
-                    player={player} 
+                    player={player}
+                    size="small"
                     onPlayerClick={handleRemovePlayer}
+                    showRemoveOverlay
                   />
                 ))}
                 {Array(Math.max(0, (selectedFormation?.positions.GK || 1) - positionCounts.GK)).fill(0).map((_, index) => (
-                  <JerseyIcon 
+                  <FifaCard
                     key={`empty-gk-${index}`} 
-                    isEmpty 
-                    position="GK"
-                    onEmptyClick={handleEmptySlotClick}
+                    isEmpty
+                    size="small"
+                    onEmptyClick={() => handleEmptySlotClick('GK')}
                   />
                 ))}
               </div>
@@ -685,45 +638,16 @@ export const SquadView = () => {
           <div className="grid gap-4 max-h-96 overflow-y-auto">
             {playerSelectionDialog.position && 
               getAvailablePlayersForPosition(playerSelectionDialog.position).map((player) => (
-                <Card 
-                  key={player.id} 
-                  className="cursor-pointer hover:bg-accent/50 transition-colors"
+                <div
+                  key={player.id}
+                  className="flex items-center justify-center cursor-pointer"
                   onClick={() => handlePlayerSelect(player)}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-16">
-                          <img 
-                            src={getJerseyImage(player.club)} 
-                            alt={`${player.club} jersey`}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold">{player.name}</h4>
-                          <p className="text-sm text-muted-foreground">{player.club}</p>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <Badge variant="secondary" className={getPositionColor(player.position)}>
-                              {player.position}
-                            </Badge>
-                            <span className={`text-sm font-medium ${getRatingColor(player.rating)}`}>
-                              {player.rating} OVR
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-green-600">
-                          {formatCurrency(player.cost)}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Pace: {player.pace} | Shooting: {player.shooting}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  <FifaCard
+                    player={player}
+                    size="medium"
+                  />
+                </div>
               ))
             }
             {playerSelectionDialog.position && 

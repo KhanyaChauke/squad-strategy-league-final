@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { Trash2, Users, TrendingUp, Target, Star, Settings } from 'lucide-react';
+import { Trash2, Users, TrendingUp, Target, Star, Settings, Plus, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TeamChemistry } from '@/components/TeamChemistry';
 import { FormationSelector, formations, Formation } from '@/components/FormationSelector';
+import { playersDatabase, Player } from '@/data/playersData';
 
 // Import jersey images
 import sundownsJersey from '@/assets/jerseys/sundowns-jersey.png';
@@ -17,9 +19,13 @@ import supersportJersey from '@/assets/jerseys/supersport-jersey.png';
 import defaultJersey from '@/assets/jerseys/default-jersey.png';
 
 export const SquadView = () => {
-  const { user, removePlayerFromSquad, removePlayerFromBench, substitutePlayer, setFormation } = useAuth();
+  const { user, removePlayerFromSquad, removePlayerFromBench, substitutePlayer, setFormation, addPlayerToSquad } = useAuth();
   const { toast } = useToast();
   const [showFormationSelector, setShowFormationSelector] = useState(!user?.selectedFormation);
+  const [playerSelectionDialog, setPlayerSelectionDialog] = useState<{
+    isOpen: boolean;
+    position: 'GK' | 'DEF' | 'MID' | 'ATT' | null;
+  }>({ isOpen: false, position: null });
 
   const handleFormationSelect = (formation: Formation) => {
     setFormation(formation);
@@ -69,6 +75,40 @@ export const SquadView = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const handleEmptySlotClick = (position: 'GK' | 'DEF' | 'MID' | 'ATT') => {
+    setPlayerSelectionDialog({ isOpen: true, position });
+  };
+
+  const handlePlayerSelect = (player: Player) => {
+    if (!player || !playerSelectionDialog.position) return;
+    
+    const success = addPlayerToSquad(player);
+    if (success) {
+      toast({
+        title: "Player Added",
+        description: `${player.name} has been added to your squad.`
+      });
+      setPlayerSelectionDialog({ isOpen: false, position: null });
+    } else {
+      toast({
+        title: "Cannot Add Player",
+        description: "Check your budget, formation limits, or if the player is already in your team.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getAvailablePlayersForPosition = (position: 'GK' | 'DEF' | 'MID' | 'ATT') => {
+    return playersDatabase
+      .filter(player => 
+        player.position === position &&
+        !user?.squad?.some(squadPlayer => squadPlayer.id === player.id) &&
+        !user?.bench?.some(benchPlayer => benchPlayer.id === player.id) &&
+        player.cost <= (user?.budget || 0)
+      )
+      .sort((a, b) => b.rating - a.rating);
   };
 
   const getPositionColor = (position: string) => {
@@ -123,13 +163,23 @@ export const SquadView = () => {
     ATT: getPlayersByPosition('ATT').length,
   };
 
-  const JerseyIcon = ({ player, isEmpty = false }: { player?: any, isEmpty?: boolean }) => {
+  const JerseyIcon = ({ player, isEmpty = false, position, onEmptyClick, onPlayerClick }: { 
+    player?: any, 
+    isEmpty?: boolean,
+    position?: 'GK' | 'DEF' | 'MID' | 'ATT',
+    onEmptyClick?: (position: 'GK' | 'DEF' | 'MID' | 'ATT') => void,
+    onPlayerClick?: (player: any) => void 
+  }) => {
     if (isEmpty) {
       return (
         <div className="flex flex-col items-center space-y-2">
-          <div className="w-20 h-24 border-2 border-dashed border-white/50 rounded-lg flex items-center justify-center">
-            <span className="text-white/50 text-xs font-bold">EMPTY</span>
-          </div>
+          <button
+            onClick={() => position && onEmptyClick?.(position)}
+            className="w-20 h-24 border-2 border-dashed border-white/50 rounded-lg flex flex-col items-center justify-center hover:border-white/80 hover:bg-white/10 transition-all duration-200 group"
+          >
+            <Plus className="h-6 w-6 text-white/50 group-hover:text-white/80 mb-1" />
+            <span className="text-white/50 group-hover:text-white/80 text-xs font-bold">ADD</span>
+          </button>
         </div>
       );
     }
@@ -141,7 +191,10 @@ export const SquadView = () => {
 
     return (
       <div className="flex flex-col items-center space-y-2">
-        <div className="relative w-20 h-24">
+        <button
+          onClick={() => onPlayerClick?.(player)}
+          className="relative w-20 h-24 group"
+        >
           {/* Jersey Image */}
           <img 
             src={getJerseyImage(player.club)} 
@@ -154,7 +207,11 @@ export const SquadView = () => {
               {playerNumber}
             </div>
           </div>
-        </div>
+          {/* Remove overlay on hover */}
+          <div className="absolute inset-0 bg-red-500/80 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <X className="h-6 w-6 text-white" />
+          </div>
+        </button>
         {/* Player Surname */}
         <div className="text-xs text-white font-medium text-center max-w-20 truncate">
           {lastName.toUpperCase()}
@@ -345,10 +402,19 @@ export const SquadView = () => {
               <div className="flex justify-center items-center h-20">
                 <div className="flex space-x-16">
                   {getPlayersByPosition('ATT').slice(0, selectedFormation?.positions.ATT || 3).map((player, index) => (
-                    <JerseyIcon key={player.id} player={player} />
+                    <JerseyIcon 
+                      key={player.id} 
+                      player={player} 
+                      onPlayerClick={handleRemovePlayer}
+                    />
                   ))}
                   {Array(Math.max(0, (selectedFormation?.positions.ATT || 3) - positionCounts.ATT)).fill(0).map((_, index) => (
-                    <JerseyIcon key={`empty-att-${index}`} isEmpty />
+                    <JerseyIcon 
+                      key={`empty-att-${index}`} 
+                      isEmpty 
+                      position="ATT"
+                      onEmptyClick={handleEmptySlotClick}
+                    />
                   ))}
                 </div>
               </div>
@@ -357,10 +423,19 @@ export const SquadView = () => {
               <div className="flex justify-center items-center h-20">
                 <div className="flex space-x-12">
                   {getPlayersByPosition('MID').slice(0, selectedFormation?.positions.MID || 4).map((player, index) => (
-                    <JerseyIcon key={player.id} player={player} />
+                    <JerseyIcon 
+                      key={player.id} 
+                      player={player} 
+                      onPlayerClick={handleRemovePlayer}
+                    />
                   ))}
                   {Array(Math.max(0, (selectedFormation?.positions.MID || 4) - positionCounts.MID)).fill(0).map((_, index) => (
-                    <JerseyIcon key={`empty-mid-${index}`} isEmpty />
+                    <JerseyIcon 
+                      key={`empty-mid-${index}`} 
+                      isEmpty 
+                      position="MID"
+                      onEmptyClick={handleEmptySlotClick}
+                    />
                   ))}
                 </div>
               </div>
@@ -369,10 +444,19 @@ export const SquadView = () => {
               <div className="flex justify-center items-center h-20">
                 <div className="flex space-x-10">
                   {getPlayersByPosition('DEF').slice(0, selectedFormation?.positions.DEF || 4).map((player, index) => (
-                    <JerseyIcon key={player.id} player={player} />
+                    <JerseyIcon 
+                      key={player.id} 
+                      player={player} 
+                      onPlayerClick={handleRemovePlayer}
+                    />
                   ))}
                   {Array(Math.max(0, (selectedFormation?.positions.DEF || 4) - positionCounts.DEF)).fill(0).map((_, index) => (
-                    <JerseyIcon key={`empty-def-${index}`} isEmpty />
+                    <JerseyIcon 
+                      key={`empty-def-${index}`} 
+                      isEmpty 
+                      position="DEF"
+                      onEmptyClick={handleEmptySlotClick}
+                    />
                   ))}
                 </div>
               </div>
@@ -380,10 +464,19 @@ export const SquadView = () => {
               {/* Goalkeeper (Goal line) */}
               <div className="flex justify-center items-end h-16 pb-4">
                 {getPlayersByPosition('GK').slice(0, selectedFormation?.positions.GK || 1).map((player, index) => (
-                  <JerseyIcon key={player.id} player={player} />
+                  <JerseyIcon 
+                    key={player.id} 
+                    player={player} 
+                    onPlayerClick={handleRemovePlayer}
+                  />
                 ))}
                 {Array(Math.max(0, (selectedFormation?.positions.GK || 1) - positionCounts.GK)).fill(0).map((_, index) => (
-                  <JerseyIcon key={`empty-gk-${index}`} isEmpty />
+                  <JerseyIcon 
+                    key={`empty-gk-${index}`} 
+                    isEmpty 
+                    position="GK"
+                    onEmptyClick={handleEmptySlotClick}
+                  />
                 ))}
               </div>
             </div>
@@ -573,6 +666,77 @@ export const SquadView = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Player Selection Dialog */}
+      <Dialog 
+        open={playerSelectionDialog.isOpen} 
+        onOpenChange={(open) => setPlayerSelectionDialog({ isOpen: open, position: null })}
+      >
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Select {playerSelectionDialog.position} Player
+            </DialogTitle>
+            <DialogDescription>
+              Choose a player to add to your squad from available {playerSelectionDialog.position} players within your budget.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 max-h-96 overflow-y-auto">
+            {playerSelectionDialog.position && 
+              getAvailablePlayersForPosition(playerSelectionDialog.position).map((player) => (
+                <Card 
+                  key={player.id} 
+                  className="cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={() => handlePlayerSelect(player)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-16">
+                          <img 
+                            src={getJerseyImage(player.club)} 
+                            alt={`${player.club} jersey`}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold">{player.name}</h4>
+                          <p className="text-sm text-muted-foreground">{player.club}</p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <Badge variant="secondary" className={getPositionColor(player.position)}>
+                              {player.position}
+                            </Badge>
+                            <span className={`text-sm font-medium ${getRatingColor(player.rating)}`}>
+                              {player.rating} OVR
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-green-600">
+                          {formatCurrency(player.cost)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Pace: {player.pace} | Shooting: {player.shooting}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            }
+            {playerSelectionDialog.position && 
+             getAvailablePlayersForPosition(playerSelectionDialog.position).length === 0 && (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">
+                  No {playerSelectionDialog.position} players available within your budget.
+                </p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

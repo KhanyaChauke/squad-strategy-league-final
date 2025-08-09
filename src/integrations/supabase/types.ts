@@ -49,8 +49,6 @@ export type Database = {
       }
       players: {
         Row: {
-          club: string
-          cost: number | null
           defending: number | null
           dribbling: number | null
           id: string
@@ -60,12 +58,12 @@ export type Database = {
           passing: number | null
           physical: number | null
           position: string
+          price: number | null
           rating: number | null
           shooting: number | null
+          team: string
         }
         Insert: {
-          club: string
-          cost?: number | null
           defending?: number | null
           dribbling?: number | null
           id?: string
@@ -75,12 +73,12 @@ export type Database = {
           passing?: number | null
           physical?: number | null
           position: string
+          price?: number | null
           rating?: number | null
           shooting?: number | null
+          team: string
         }
         Update: {
-          club?: string
-          cost?: number | null
           defending?: number | null
           dribbling?: number | null
           id?: string
@@ -90,8 +88,10 @@ export type Database = {
           passing?: number | null
           physical?: number | null
           position?: string
+          price?: number | null
           rating?: number | null
           shooting?: number | null
+          team?: string
         }
         Relationships: []
       }

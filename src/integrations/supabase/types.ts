@@ -14,7 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      "Fantasy league": {
+      Fantasy_leaderboard: {
         Row: {
           created_at: string
           id: number
@@ -29,258 +29,186 @@ export type Database = {
         }
         Relationships: []
       }
-      fantasy_points: {
+      Fpsl_teams: {
         Row: {
-          calculated_at: string | null
-          id: string
-          player_stat_id: string | null
-          points: number | null
-        }
-        Insert: {
-          calculated_at?: string | null
-          id?: string
-          player_stat_id?: string | null
-          points?: number | null
-        }
-        Update: {
-          calculated_at?: string | null
-          id?: string
-          player_stat_id?: string | null
-          points?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fantasy_points_player_stat_id_fkey"
-            columns: ["player_stat_id"]
-            isOneToOne: false
-            referencedRelation: "player_stats"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      gameweeks: {
-        Row: {
-          created_at: string | null
-          deadline: string
+          created_at: string
+          fpsl_team_names: string | null
           id: number
-          is_active: boolean | null
-          number: number
         }
         Insert: {
-          created_at?: string | null
-          deadline: string
+          created_at?: string
+          fpsl_team_names?: string | null
           id?: number
-          is_active?: boolean | null
-          number: number
         }
         Update: {
-          created_at?: string | null
-          deadline?: string
+          created_at?: string
+          fpsl_team_names?: string | null
           id?: number
-          is_active?: boolean | null
-          number?: number
         }
         Relationships: []
-      }
-      player_stats: {
-        Row: {
-          assists: number | null
-          clean_sheet: boolean | null
-          created_at: string | null
-          gameweek_id: number | null
-          goals: number | null
-          id: string
-          minutes_played: number | null
-          player_id: string | null
-          red_cards: number | null
-          yellow_cards: number | null
-        }
-        Insert: {
-          assists?: number | null
-          clean_sheet?: boolean | null
-          created_at?: string | null
-          gameweek_id?: number | null
-          goals?: number | null
-          id?: string
-          minutes_played?: number | null
-          player_id?: string | null
-          red_cards?: number | null
-          yellow_cards?: number | null
-        }
-        Update: {
-          assists?: number | null
-          clean_sheet?: boolean | null
-          created_at?: string | null
-          gameweek_id?: number | null
-          goals?: number | null
-          id?: string
-          minutes_played?: number | null
-          player_id?: string | null
-          red_cards?: number | null
-          yellow_cards?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "player_stats_gameweek_id_fkey"
-            columns: ["gameweek_id"]
-            isOneToOne: false
-            referencedRelation: "gameweeks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "player_stats_player_id_fkey"
-            columns: ["player_id"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       players: {
         Row: {
+          club: string
+          cost: number | null
+          defending: number | null
+          dribbling: number | null
           id: string
           name: string
+          nationality: string
+          pace: number | null
+          passing: number | null
+          physical: number | null
           position: string
-          price: number
-          status: string | null
-          team: string
+          rating: number | null
+          shooting: number | null
         }
         Insert: {
+          club: string
+          cost?: number | null
+          defending?: number | null
+          dribbling?: number | null
           id?: string
           name: string
+          nationality: string
+          pace?: number | null
+          passing?: number | null
+          physical?: number | null
           position: string
-          price: number
-          status?: string | null
-          team: string
+          rating?: number | null
+          shooting?: number | null
         }
         Update: {
+          club?: string
+          cost?: number | null
+          defending?: number | null
+          dribbling?: number | null
           id?: string
           name?: string
+          nationality?: string
+          pace?: number | null
+          passing?: number | null
+          physical?: number | null
           position?: string
-          price?: number
-          status?: string | null
-          team?: string
+          rating?: number | null
+          shooting?: number | null
         }
         Relationships: []
       }
-      user_chips: {
+      profiles: {
         Row: {
-          chip_type: string | null
-          created_at: string | null
-          gameweek_id: number | null
+          budget: number | null
+          created_at: string
+          formation: string | null
+          full_name: string | null
           id: string
-          used: boolean | null
-          user_id: string | null
+          team_name: string | null
+          updated_at: string
+          user_id: string
         }
         Insert: {
-          chip_type?: string | null
-          created_at?: string | null
-          gameweek_id?: number | null
+          budget?: number | null
+          created_at?: string
+          formation?: string | null
+          full_name?: string | null
           id?: string
-          used?: boolean | null
-          user_id?: string | null
+          team_name?: string | null
+          updated_at?: string
+          user_id: string
         }
         Update: {
-          chip_type?: string | null
-          created_at?: string | null
-          gameweek_id?: number | null
+          budget?: number | null
+          created_at?: string
+          formation?: string | null
+          full_name?: string | null
           id?: string
-          used?: boolean | null
-          user_id?: string | null
+          team_name?: string | null
+          updated_at?: string
+          user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_chips_gameweek_id_fkey"
-            columns: ["gameweek_id"]
-            isOneToOne: false
-            referencedRelation: "gameweeks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_chips_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
+      }
+      psl_standings: {
+        Row: {
+          draw: number
+          goalDifference: number
+          goalsAgainst: number
+          goalsFor: number
+          id: string | null
+          loss: number
+          played: number
+          points: number
+          rank: number
+          team: string
+          win: number
+        }
+        Insert: {
+          draw: number
+          goalDifference: number
+          goalsAgainst: number
+          goalsFor: number
+          id?: string | null
+          loss: number
+          played: number
+          points: number
+          rank: number
+          team: string
+          win: number
+        }
+        Update: {
+          draw?: number
+          goalDifference?: number
+          goalsAgainst?: number
+          goalsFor?: number
+          id?: string | null
+          loss?: number
+          played?: number
+          points?: number
+          rank?: number
+          team?: string
+          win?: number
+        }
+        Relationships: []
       }
       user_teams: {
         Row: {
-          created_at: string | null
-          gameweek_id: number | null
-          is_captain: boolean | null
-          is_starting: boolean | null
-          is_vice_captain: boolean | null
-          player_id: string | null
-          user_id: string | null
+          created_at: string
+          id: number
         }
         Insert: {
-          created_at?: string | null
-          gameweek_id?: number | null
-          is_captain?: boolean | null
-          is_starting?: boolean | null
-          is_vice_captain?: boolean | null
-          player_id?: string | null
-          user_id?: string | null
+          created_at?: string
+          id?: number
         }
         Update: {
-          created_at?: string | null
-          gameweek_id?: number | null
-          is_captain?: boolean | null
-          is_starting?: boolean | null
-          is_vice_captain?: boolean | null
-          player_id?: string | null
-          user_id?: string | null
+          created_at?: string
+          id?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_teams_gameweek_id_fkey"
-            columns: ["gameweek_id"]
-            isOneToOne: false
-            referencedRelation: "gameweeks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_teams_player_id_fkey"
-            columns: ["player_id"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_teams_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       users: {
         Row: {
           budget: number | null
           created_at: string | null
+          Email: string
           formation: string | null
           id: string
           team_name: string | null
-          username: string
         }
         Insert: {
           budget?: number | null
           created_at?: string | null
+          Email: string
           formation?: string | null
           id?: string
           team_name?: string | null
-          username: string
         }
         Update: {
           budget?: number | null
           created_at?: string | null
+          Email?: string
           formation?: string | null
           id?: string
           team_name?: string | null
-          username?: string
         }
         Relationships: []
       }
@@ -289,10 +217,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -419,6 +357,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

@@ -1,7 +1,1 @@
 project_id = "tpqjbmpxmhuqrribtist"
-
-[functions.populate-database]
-verify_jwt = false
-
-[functions.migrate-local-data]
-verify_jwt = false

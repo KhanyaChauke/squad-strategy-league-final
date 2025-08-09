@@ -210,7 +210,7 @@ const Dashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">
               {formatCurrency(
-                user?.squad.reduce((total, player) => total + player.cost, 0) || 0
+                user?.squad.reduce((total, player) => total + player.price, 0) || 0
               )}
             </div>
             <p className="text-xs text-muted-foreground">

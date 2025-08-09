@@ -107,7 +107,7 @@ export const SquadView = () => {
         player.position === position &&
         !user?.squad?.some(squadPlayer => squadPlayer.id === player.id) &&
         !user?.bench?.some(benchPlayer => benchPlayer.id === player.id) &&
-        player.cost <= (user?.budget || 0)
+        player.price <= (user?.budget || 0)
       )
       .sort((a, b) => b.rating - a.rating);
   };
@@ -153,7 +153,7 @@ export const SquadView = () => {
     return user?.squad.filter(player => player.position === position) || [];
   };
 
-  const squadValue = user?.squad.reduce((total, player) => total + player.cost, 0) || 0;
+  const squadValue = user?.squad.reduce((total, player) => total + player.price, 0) || 0;
   const averageRating = user?.squad.length ? 
     Math.round(user.squad.reduce((sum, player) => sum + player.rating, 0) / user.squad.length) : 0;
 
@@ -272,10 +272,10 @@ export const SquadView = () => {
         squad={user?.squad.map(player => ({
           id: player.id,
           name: player.name,
-          club: player.club,
+          club: player.team,
           nationality: player.nationality,
           position: player.position
-        })) || []} 
+        })) || []}
       />
 
       {/* Formation Visualization */}
@@ -492,7 +492,7 @@ export const SquadView = () => {
                     {/* Remove from bench */}
                     <div className="flex items-center justify-between pt-2 border-t">
                       <div className="text-xs text-green-600 font-medium">
-                        {formatCurrency(benchPlayer.cost)}
+                        {formatCurrency(benchPlayer.price)}
                       </div>
                       <Button
                         onClick={() => handleRemoveBenchPlayer(benchPlayer)}
@@ -542,7 +542,7 @@ export const SquadView = () => {
                   <div>
                     <CardTitle className="text-lg">{player.name}</CardTitle>
                     <CardDescription className="flex items-center space-x-2">
-                      <span>{player.club}</span>
+                      <span>{player.team}</span>
                       <Badge className={getPositionColor(player.position)} variant="secondary">
                         {player.position}
                       </Badge>
@@ -593,7 +593,7 @@ export const SquadView = () => {
                   <div>
                     <div className="text-sm text-gray-500">Cost</div>
                     <div className="font-bold text-green-600">
-                      {formatCurrency(player.cost)}
+                      {formatCurrency(player.price)}
                     </div>
                   </div>
                   

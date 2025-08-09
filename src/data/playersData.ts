@@ -19,7 +19,7 @@ export interface Player {
 }
 
 // Generate enhanced PSL database with proper budget balancing
-const rawPlayersData: Player[] = getEnhancedPSLData();
+const rawPlayersData = getEnhancedPSLData();
 
 // Ensure budget is balanced for a starting 11
 // Average cost per player should be around 90-100M for a 1B budget

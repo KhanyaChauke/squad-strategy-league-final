@@ -17,7 +17,7 @@ interface TransformedPlayer {
   id: string;
   name: string;
   position: 'GK' | 'DEF' | 'MID' | 'ATT';
-  club: string;
+  team: string;
   nationality: string;
   rating: number;
   pace: number;
@@ -26,7 +26,7 @@ interface TransformedPlayer {
   defending: number;
   dribbling: number;
   physical: number;
-  cost: number;
+  price: number;
   imageUrl?: string;
 }
 
@@ -124,7 +124,7 @@ export const fetchTeamData = async (competitionId: number = 2019): Promise<Trans
                 id: `api_${player.id}`,
                 name: player.name,
                 position,
-                club: team.name,
+                team: team.name,
                 nationality: player.nationality || 'Unknown',
                 rating: Math.round(stats.rating),
                 pace: Math.round(stats.pace),
@@ -133,7 +133,7 @@ export const fetchTeamData = async (competitionId: number = 2019): Promise<Trans
                 defending: Math.round(stats.defending),
                 dribbling: Math.round(stats.dribbling),
                 physical: Math.round(stats.physical),
-                cost
+                price: cost
               });
             }
           });
@@ -221,7 +221,7 @@ export const getEnhancedPSLData = (): TransformedPlayer[] => {
         id: `psl_${position.toLowerCase()}_${i + 1}`,
         name: namesPool[i % namesPool.length] || `${position} Player ${i + 1}`,
         position,
-        club: pslTeams[Math.floor(Math.random() * pslTeams.length)],
+        team: pslTeams[Math.floor(Math.random() * pslTeams.length)],
         nationality: nationalities[Math.floor(Math.random() * nationalities.length)],
         rating,
         pace: Math.round(stats.pace),
@@ -230,7 +230,7 @@ export const getEnhancedPSLData = (): TransformedPlayer[] => {
         defending: Math.round(stats.defending),
         dribbling: Math.round(stats.dribbling),
         physical: Math.round(stats.physical),
-        cost
+        price: cost
       });
     }
   });

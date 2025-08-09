@@ -13,7 +13,7 @@ interface Player {
   id: string;
   name: string;
   position: 'GK' | 'DEF' | 'MID' | 'ATT';
-  club: string;
+  team: string;
   nationality: string;
   rating: number;
   pace: number;
@@ -22,7 +22,7 @@ interface Player {
   defending: number;
   dribbling: number;
   physical: number;
-  cost: number;
+  price: number;
 }
 
 interface FifaCardProps {
@@ -34,13 +34,13 @@ interface FifaCardProps {
   showRemoveOverlay?: boolean;
 }
 
-const getPlayerImage = (clubName: string) => {
-  const club = clubName.toLowerCase();
-  if (club.includes('sundowns')) return sundownsJersey;
-  if (club.includes('pirates')) return piratesJersey;
-  if (club.includes('chiefs')) return chiefsJersey;
-  if (club.includes('cape town city')) return capeTownCityJersey;
-  if (club.includes('supersport')) return supersportJersey;
+const getPlayerImage = (teamName: string) => {
+  const team = teamName.toLowerCase();
+  if (team.includes('sundowns')) return sundownsJersey;
+  if (team.includes('pirates')) return piratesJersey;
+  if (team.includes('chiefs')) return chiefsJersey;
+  if (team.includes('cape town city')) return capeTownCityJersey;
+  if (team.includes('supersport')) return supersportJersey;
   return defaultJersey;
 };
 
@@ -169,7 +169,7 @@ export const FifaCard: React.FC<FifaCardProps> = ({
       <div className="flex justify-center items-center mt-6 mb-2">
         <div className={`${sizeClasses.image} relative`}>
           <img 
-            src={getPlayerImage(player.club)} 
+            src={getPlayerImage(player.team)}
             alt={player.name}
             className="w-full h-full object-contain drop-shadow-lg"
           />
@@ -259,7 +259,7 @@ export const FifaCardDetailed: React.FC<{ player: Player; onClick?: () => void }
       <div className="flex justify-center items-center mt-16 mb-4">
         <div className="w-32 h-40 relative">
           <img 
-            src={getPlayerImage(player.club)} 
+            src={getPlayerImage(player.team)} 
             alt={player.name}
             className="w-full h-full object-contain drop-shadow-2xl"
           />
@@ -272,7 +272,7 @@ export const FifaCardDetailed: React.FC<{ player: Player; onClick?: () => void }
           {player.name.toUpperCase()}
         </div>
         <div className="text-sm text-white/90 text-center drop-shadow-lg">
-          {player.club}
+          {player.team}
         </div>
       </div>
 
@@ -311,7 +311,7 @@ export const FifaCardDetailed: React.FC<{ player: Player; onClick?: () => void }
       {/* Cost indicator */}
       <div className="absolute top-16 left-4 z-10">
         <div className="text-xs font-bold text-white/90 bg-black/30 rounded px-2 py-1">
-          {formatCurrency(player.cost)}
+          {formatCurrency(player.price)}
         </div>
       </div>
     </div>

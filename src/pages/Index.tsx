@@ -3,6 +3,7 @@ import React from 'react';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import LandingPage from '@/components/LandingPage';
 import Dashboard from '@/components/Dashboard';
+import { TeamNameSetup } from '@/components/TeamNameSetup';
 
 const AppContent = () => {
   const { user, isLoading } = useAuth();
@@ -18,7 +19,16 @@ const AppContent = () => {
     );
   }
 
-  return user ? <Dashboard /> : <LandingPage />;
+  if (!user) {
+    return <LandingPage />;
+  }
+
+  // Show team name setup if user doesn't have a team name
+  if (!user.teamName) {
+    return <TeamNameSetup onComplete={() => window.location.reload()} />;
+  }
+
+  return <Dashboard />;
 };
 
 const Index = () => {

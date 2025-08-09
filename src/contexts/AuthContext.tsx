@@ -8,6 +8,7 @@ interface User {
   budget: number;
   squad: Player[];
   bench: Player[];
+  teamName?: string;
   selectedFormation?: {
     id: string;
     name: string;

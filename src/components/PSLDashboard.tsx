@@ -38,7 +38,6 @@ interface Player {
   position: string;
   team: string;
   price: number;
-  status: string | null;
 }
 
 export const PSLDashboard = () => {
@@ -236,8 +235,8 @@ export const PSLDashboard = () => {
                 <div className="pt-2 border-t">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-500">Status</span>
-                    <Badge variant={player.status === 'available' ? 'default' : 'secondary'}>
-                      {player.status || 'Available'}
+                    <Badge variant="default">
+                      Available
                     </Badge>
                   </div>
                 </div>

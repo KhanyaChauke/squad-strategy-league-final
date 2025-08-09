@@ -24,7 +24,7 @@ interface Player {
   id: string;
   name: string;
   position: 'GK' | 'DEF' | 'MID' | 'ATT';
-  club: string;
+  team: string;
   nationality: string;
   rating: number;
   pace: number;
@@ -33,7 +33,7 @@ interface Player {
   defending: number;
   dribbling: number;
   physical: number;
-  cost: number;
+  price: number;
   imageUrl?: string;
 }
 
@@ -179,7 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
     
-    if (user.budget < player.cost) {
+    if (user.budget < player.price) {
       return false; // Insufficient budget
     }
     
@@ -189,7 +189,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     const updatedUser = {
       ...user,
-      budget: user.budget - player.cost,
+      budget: user.budget - player.price,
       squad: [...user.squad, player]
     };
     
@@ -206,7 +206,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     const updatedUser = {
       ...user,
-      budget: user.budget + playerToRemove.cost,
+      budget: user.budget + playerToRemove.price,
       squad: user.squad.filter(p => p.id !== playerId)
     };
     
@@ -221,7 +221,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return false; // Bench full
     }
     
-    if (user.budget < player.cost) {
+    if (user.budget < player.price) {
       return false; // Insufficient budget
     }
     
@@ -231,7 +231,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     const updatedUser = {
       ...user,
-      budget: user.budget - player.cost,
+      budget: user.budget - player.price,
       bench: [...user.bench, player]
     };
     
@@ -248,7 +248,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     const updatedUser = {
       ...user,
-      budget: user.budget + playerToRemove.cost,
+      budget: user.budget + playerToRemove.price,
       bench: user.bench.filter(p => p.id !== playerId)
     };
     

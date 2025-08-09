@@ -33,7 +33,7 @@ export const PlayersView = () => {
       if (searchQuery.trim()) {
         players = players.filter(player => 
           player.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          player.club.toLowerCase().includes(searchQuery.toLowerCase())
+          player.team.toLowerCase().includes(searchQuery.toLowerCase())
         );
       }
     }
@@ -43,8 +43,8 @@ export const PlayersView = () => {
       case 'rating':
         players.sort((a, b) => b.rating - a.rating);
         break;
-      case 'cost':
-        players.sort((a, b) => b.cost - a.cost);
+      case 'price':
+        players.sort((a, b) => b.price - a.price);
         break;
       case 'name':
         players.sort((a, b) => a.name.localeCompare(b.name));
@@ -81,7 +81,7 @@ export const PlayersView = () => {
         const maxForPosition = selectedFormation.positions[player.position as keyof typeof selectedFormation.positions];
         if (currentPositionCount >= maxForPosition) {
           message = `Your ${selectedFormation.name} formation only allows ${maxForPosition} ${player.position} players.`;
-        } else if (user?.budget && user.budget < player.cost) {
+        } else if (user?.budget && user.budget < player.price) {
           message = "Insufficient budget for this player.";
         } else if (user?.squad?.some(p => p.id === player.id)) {
           message = "Player is already in your squad.";
@@ -89,7 +89,7 @@ export const PlayersView = () => {
       } else {
         if ((user?.squad?.length || 0) + (user?.bench?.length || 0) >= 15) {
           message = "Your total squad is full (15 players maximum).";
-        } else if (user?.budget && user.budget < player.cost) {
+        } else if (user?.budget && user.budget < player.price) {
           message = "Insufficient budget for this player.";
         } else if (user?.squad?.some(p => p.id === player.id)) {
           message = "Player is already in your squad.";
@@ -119,7 +119,7 @@ export const PlayersView = () => {
         message = "Your total squad is full (15 players maximum).";
       } else if (user?.bench?.length >= 4) {
         message = "Your bench is full (4 players maximum).";
-      } else if (user?.budget && user.budget < player.cost) {
+      } else if (user?.budget && user.budget < player.price) {
         message = "Insufficient budget for this player.";
       } else if (user?.squad?.some(p => p.id === player.id) || user?.bench?.some(p => p.id === player.id)) {
         message = "Player is already in your squad or bench.";
@@ -228,7 +228,7 @@ export const PlayersView = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="rating">Rating</SelectItem>
-                <SelectItem value="cost">Cost</SelectItem>
+                <SelectItem value="price">Price</SelectItem>
                 <SelectItem value="name">Name</SelectItem>
               </SelectContent>
             </Select>
@@ -255,7 +255,7 @@ export const PlayersView = () => {
                     user?.bench?.some(p => p.id === player.id) ||
                     (selectedFormation && (user?.squad?.filter(p => p.position === player.position).length || 0) >= selectedFormation.positions[player.position as keyof typeof selectedFormation.positions]) ||
                     (!selectedFormation && (user?.squad?.length || 0) >= 11) ||
-                    (user?.budget || 0) < player.cost
+                    (user?.budget || 0) < player.price
                   }
                 >
                   Add to Squad
@@ -269,7 +269,7 @@ export const PlayersView = () => {
                     user?.bench?.some(p => p.id === player.id) ||
                     ((user?.squad?.length || 0) + (user?.bench?.length || 0)) >= 15 ||
                     (user?.bench?.length || 0) >= 4 ||
-                    (user?.budget || 0) < player.cost
+                    (user?.budget || 0) < player.price
                   }
                 >
                   Add to Bench

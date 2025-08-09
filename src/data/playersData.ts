@@ -5,7 +5,7 @@ export interface Player {
   id: string;
   name: string;
   position: 'GK' | 'DEF' | 'MID' | 'ATT';
-  club: string;
+  team: string;
   nationality: string;
   rating: number;
   pace: number;
@@ -14,7 +14,7 @@ export interface Player {
   defending: number;
   dribbling: number;
   physical: number;
-  cost: number;
+  price: number;
   imageUrl?: string;
 }
 
@@ -44,7 +44,7 @@ const adjustedPlayers = rawPlayersData.map(player => {
   
   return {
     ...player,
-    cost: Math.max(20000000, Math.round(adjustedCost / 5000000) * 5000000) // Minimum 20M, round to 5M
+    price: Math.max(20000000, Math.round(adjustedCost / 5000000) * 5000000) // Minimum 20M, round to 5M
   };
 });
 
@@ -64,7 +64,7 @@ export const searchPlayers = (query: string) => {
   const lowercaseQuery = query.toLowerCase();
   return adjustedPlayers.filter(player => 
     player.name.toLowerCase().includes(lowercaseQuery) ||
-    player.club.toLowerCase().includes(lowercaseQuery) ||
+    player.team.toLowerCase().includes(lowercaseQuery) ||
     player.position.toLowerCase().includes(lowercaseQuery)
   );
 };
@@ -78,7 +78,7 @@ export const getBudgetOptimizedSquad = (budget: number = 1000000000) => {
   // Sort players by value for money (rating per cost)
   const valueForMoney = adjustedPlayers.map(player => ({
     ...player,
-    valueRatio: player.rating / (player.cost / 1000000)
+    valueRatio: player.rating / (player.price / 1000000)
   })).sort((a, b) => b.valueRatio - a.valueRatio);
   
   // Fill each position with best value players
@@ -90,11 +90,11 @@ export const getBudgetOptimizedSquad = (budget: number = 1000000000) => {
     );
     
     for (let i = 0; i < count && positionPlayers.length > 0; i++) {
-      const affordablePlayers = positionPlayers.filter(p => p.cost <= remainingBudget);
+      const affordablePlayers = positionPlayers.filter(p => p.price <= remainingBudget);
       if (affordablePlayers.length > 0) {
         const selectedPlayer = affordablePlayers[0];
         squad.push(selectedPlayer);
-        remainingBudget -= selectedPlayer.cost;
+        remainingBudget -= selectedPlayer.price;
       }
     }
   });

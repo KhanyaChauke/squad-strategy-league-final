@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Trophy, CheckCircle } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TeamNameSetupProps {
   onComplete: () => void;
@@ -14,8 +14,20 @@ interface TeamNameSetupProps {
 export const TeamNameSetup: React.FC<TeamNameSetupProps> = ({ onComplete }) => {
   const [teamName, setTeamName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuth();
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string>('');
   const { toast } = useToast();
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+        setUserEmail(user.email || '');
+      }
+    };
+    getUser();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,15 +59,47 @@ export const TeamNameSetup: React.FC<TeamNameSetupProps> = ({ onComplete }) => {
       return;
     }
 
+    if (!userId) {
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to create your team.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
-      // Store team name in localStorage for now
-      const userData = localStorage.getItem('fpsl_user');
-      if (userData) {
-        const user = JSON.parse(userData);
-        user.teamName = teamName.trim();
-        localStorage.setItem('fpsl_user', JSON.stringify(user));
+      // Check if team name already exists
+      const { data: existingTeam, error: checkError } = await supabase
+        .from('profiles')
+        .select('team_name')
+        .eq('team_name', teamName.trim())
+        .maybeSingle();
+
+      if (checkError) {
+        throw checkError;
+      }
+
+      if (existingTeam) {
+        toast({
+          title: "Team Name Taken",
+          description: "This team name is already in use. Please choose a different name.",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Update profile with team name
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ team_name: teamName.trim() })
+        .eq('user_id', userId);
+
+      if (updateError) {
+        throw updateError;
       }
 
       toast({
@@ -64,10 +108,11 @@ export const TeamNameSetup: React.FC<TeamNameSetupProps> = ({ onComplete }) => {
       });
 
       onComplete();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error saving team name:', error);
       toast({
         title: "Error",
-        description: "Failed to save team name. Please try again.",
+        description: error.message || "Failed to save team name. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -125,7 +170,7 @@ export const TeamNameSetup: React.FC<TeamNameSetupProps> = ({ onComplete }) => {
                     {teamName.trim()}
                   </div>
                   <div className="text-sm text-green-600">
-                    Manager: {user?.fullName || 'Unknown Manager'}
+                    Manager: {userEmail || 'Unknown Manager'}
                   </div>
                 </div>
               </div>

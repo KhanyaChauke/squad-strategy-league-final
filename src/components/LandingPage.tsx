@@ -11,7 +11,7 @@ import { Trophy, Users, Target, Shield } from 'lucide-react';
 
 const LandingPage = () => {
   const [loginData, setLoginData] = useState({ email: '', password: '' });
-  const [registerData, setRegisterData] = useState({ fullName: '', email: '', password: '' });
+  const [registerData, setRegisterData] = useState({ fullName: '', email: '', password: '', confirmPassword: '' });
   const { login, register, isLoading } = useAuth();
   const { toast } = useToast();
 
@@ -27,17 +27,25 @@ const LandingPage = () => {
       return;
     }
 
-    const success = await login(loginData.email, loginData.password);
-    
-    if (success) {
-      toast({
-        title: "Welcome back!",
-        description: "Successfully logged in to FPSL"
-      });
-    } else {
+    try {
+      const success = await login(loginData.email, loginData.password);
+      
+      if (success) {
+        toast({
+          title: "Welcome back!",
+          description: "Successfully logged in to FPSL"
+        });
+      } else {
+        toast({
+          title: "Login Failed",
+          description: "Invalid email or password.",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
       toast({
         title: "Login Failed",
-        description: "Invalid email or password. Try demo@fpsl.com / demo123",
+        description: error.message || "Please verify your email before logging in.",
         variant: "destructive"
       });
     }
@@ -46,7 +54,7 @@ const LandingPage = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!registerData.fullName || !registerData.email || !registerData.password) {
+    if (!registerData.fullName || !registerData.email || !registerData.password || !registerData.confirmPassword) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -55,17 +63,35 @@ const LandingPage = () => {
       return;
     }
 
-    const success = await register(registerData.fullName, registerData.email, registerData.password);
-    
-    if (success) {
-      toast({
-        title: "Welcome to FPSL!",
-        description: "Account created successfully"
-      });
-    } else {
+    if (registerData.password !== registerData.confirmPassword) {
       toast({
         title: "Registration Failed",
-        description: "Email already exists",
+        description: "Passwords do not match.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const success = await register(registerData.fullName, registerData.email, registerData.password);
+      
+      if (success) {
+        toast({
+          title: "Check your email!",
+          description: "We've sent you a verification link. Please verify your email before logging in."
+        });
+        setRegisterData({ fullName: '', email: '', password: '', confirmPassword: '' });
+      } else {
+        toast({
+          title: "Registration Failed",
+          description: "Email already exists or invalid credentials.",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Registration Failed",
+        description: error.message || "An error occurred during registration.",
         variant: "destructive"
       });
     }
@@ -217,6 +243,16 @@ const LandingPage = () => {
                           placeholder="Create a password"
                           value={registerData.password}
                           onChange={(e) => setRegisterData({...registerData, password: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">Confirm Password</Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          placeholder="Confirm your password"
+                          value={registerData.confirmPassword}
+                          onChange={(e) => setRegisterData({...registerData, confirmPassword: e.target.value})}
                         />
                       </div>
                       <Button 

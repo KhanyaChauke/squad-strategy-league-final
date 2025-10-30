@@ -1,5 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 interface User {
   id: string;
@@ -9,6 +11,7 @@ interface User {
   squad: Player[];
   bench: Player[];
   teamName?: string;
+  emailVerified: boolean;
   selectedFormation?: {
     id: string;
     name: string;
@@ -64,103 +67,132 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Check for existing session
-    const storedUser = localStorage.getItem('fpsl_user');
-    if (storedUser) {
-      const userData = JSON.parse(storedUser);
-      // Ensure budget is adequate for new pricing structure
-      if (userData.budget < 1000000000) {
-        userData.budget = 1000000000; // Reset to 1B if less
-        localStorage.setItem('fpsl_user', JSON.stringify(userData));
-      }
+  // Load user data from profiles table
+  const loadUserProfile = async (authUser: SupabaseUser) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .single();
+
+      if (error) throw error;
+
+      const userData: User = {
+        id: authUser.id,
+        fullName: profile?.full_name || '',
+        email: authUser.email || '',
+        budget: profile?.budget || 1000000000,
+        squad: [],
+        bench: [],
+        teamName: profile?.team_name,
+        emailVerified: authUser.email_confirmed_at !== null
+      };
+
       setUser(userData);
+    } catch (error) {
+      console.error('Error loading profile:', error);
     }
-    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        
+        if (session?.user) {
+          setTimeout(() => {
+            loadUserProfile(session.user);
+          }, 0);
+        } else {
+          setUser(null);
+        }
+        
+        setIsLoading(false);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      
+      if (session?.user) {
+        loadUserProfile(session.user);
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Check stored users or use demo credentials
-    const storedUsers = JSON.parse(localStorage.getItem('fpsl_users') || '[]');
-    const existingUser = storedUsers.find((u: any) => u.email === email && u.password === password);
-    
-    if (existingUser || (email === 'demo@fpsl.com' && password === 'demo123')) {
-      const userData: User = existingUser || {
-        id: 'demo-user',
-        fullName: 'Demo User',
-        email: 'demo@fpsl.com',
-        budget: 1000000000, // Increased budget for new pricing
-        squad: [],
-        bench: []
-      };
-      
-      // Ensure adequate budget
-      if (userData.budget < 1000000000) {
-        userData.budget = 1000000000;
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        setIsLoading(false);
+        return false;
       }
-      
-      setUser(userData);
-      localStorage.setItem('fpsl_user', JSON.stringify(userData));
+
+      if (data.user && !data.user.email_confirmed_at) {
+        // Email not verified
+        await supabase.auth.signOut();
+        setIsLoading(false);
+        throw new Error('Please verify your email before logging in. Check your inbox for the verification link.');
+      }
+
       setIsLoading(false);
       return true;
+    } catch (error: any) {
+      setIsLoading(false);
+      throw error;
     }
-    
-    setIsLoading(false);
-    return false;
   };
 
   const register = async (fullName: string, email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const storedUsers = JSON.parse(localStorage.getItem('fpsl_users') || '[]');
-    const existingUser = storedUsers.find((u: any) => u.email === email);
-    
-    if (existingUser) {
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: fullName,
+          }
+        }
+      });
+
+      if (error) {
+        setIsLoading(false);
+        throw error;
+      }
+
       setIsLoading(false);
-      return false;
+      return true;
+    } catch (error: any) {
+      setIsLoading(false);
+      throw error;
     }
-    
-    const newUser = {
-      id: Date.now().toString(),
-      fullName,
-      email,
-      password,
-      budget: 1000000000, // Increased starting budget
-      squad: [],
-      bench: []
-    };
-    
-    storedUsers.push(newUser);
-    localStorage.setItem('fpsl_users', JSON.stringify(storedUsers));
-    
-    const userData: User = {
-      id: newUser.id,
-      fullName: newUser.fullName,
-      email: newUser.email,
-      budget: newUser.budget,
-      squad: newUser.squad,
-      bench: newUser.bench
-    };
-    
-    setUser(userData);
-    localStorage.setItem('fpsl_user', JSON.stringify(userData));
-    setIsLoading(false);
-    return true;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('fpsl_user');
+    setSession(null);
   };
 
   const addPlayerToSquad = (player: Player): boolean => {
@@ -195,7 +227,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     setUser(updatedUser);
-    localStorage.setItem('fpsl_user', JSON.stringify(updatedUser));
+    // TODO: Sync with database
     return true;
   };
 
@@ -212,7 +244,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     setUser(updatedUser);
-    localStorage.setItem('fpsl_user', JSON.stringify(updatedUser));
+    // TODO: Sync with database
   };
 
   const addPlayerToBench = (player: Player): boolean => {
@@ -237,7 +269,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     setUser(updatedUser);
-    localStorage.setItem('fpsl_user', JSON.stringify(updatedUser));
+    // TODO: Sync with database
     return true;
   };
 
@@ -254,7 +286,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     setUser(updatedUser);
-    localStorage.setItem('fpsl_user', JSON.stringify(updatedUser));
+    // TODO: Sync with database
   };
 
   const substitutePlayer = (squadPlayerId: string, benchPlayerId: string): boolean => {
@@ -277,7 +309,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     setUser(updatedUser);
-    localStorage.setItem('fpsl_user', JSON.stringify(updatedUser));
+    // TODO: Sync with database
     return true;
   };
 
@@ -290,7 +322,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     setUser(updatedUser);
-    localStorage.setItem('fpsl_user', JSON.stringify(updatedUser));
+    // TODO: Sync with database
   };
 
   return (

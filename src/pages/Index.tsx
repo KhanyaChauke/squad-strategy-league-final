@@ -23,6 +23,24 @@ const AppContent = () => {
     return <LandingPage />;
   }
 
+  // Check if email is verified
+  if (!user.emailVerified) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center max-w-md p-8 bg-white rounded-lg shadow-lg">
+          <h2 className="text-2xl font-bold mb-4">Email Verification Required</h2>
+          <p className="text-gray-600 mb-4">
+            Please verify your email address before accessing the app. 
+            Check your inbox for the verification link we sent to <strong>{user.email}</strong>.
+          </p>
+          <p className="text-sm text-gray-500">
+            Didn't receive the email? Check your spam folder or contact support.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Show team name setup if user doesn't have a team name
   if (!user.teamName) {
     return <TeamNameSetup onComplete={() => window.location.reload()} />;

@@ -17,7 +17,7 @@ const LandingPage = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!loginData.email || !loginData.password) {
       toast({
         title: "Error",
@@ -29,7 +29,7 @@ const LandingPage = () => {
 
     try {
       const success = await login(loginData.email, loginData.password);
-      
+
       if (success) {
         toast({
           title: "Welcome back!",
@@ -53,7 +53,7 @@ const LandingPage = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!registerData.fullName || !registerData.email || !registerData.password || !registerData.confirmPassword) {
       toast({
         title: "Error",
@@ -74,13 +74,13 @@ const LandingPage = () => {
 
     try {
       const success = await register(registerData.fullName, registerData.email, registerData.password);
-      
+
       if (success) {
         toast({
-          title: "Check your email!",
-          description: "We've sent you a verification link. Please verify your email before logging in."
+          title: "Welcome!",
+          description: "Account created successfully."
         });
-        setRegisterData({ fullName: '', email: '', password: '', confirmPassword: '' });
+        // No need to clear data or switch tabs, the app will redirect to Team Name Setup
       } else {
         toast({
           title: "Registration Failed",
@@ -109,10 +109,10 @@ const LandingPage = () => {
               </div>
             </div>
             <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white to-green-200 bg-clip-text text-transparent">
-              FPSL
+              PSL
             </h1>
             <p className="text-xl md:text-2xl mb-4 text-green-100">
-              Fantasy Premier Soccer League
+              Premier Soccer League Fantasy
             </p>
             <p className="text-lg mb-8 text-green-200 max-w-2xl mx-auto">
               Build your dream PSL squad, manage your budget, and compete with the best players from South African football.
@@ -177,7 +177,7 @@ const LandingPage = () => {
                     <TabsTrigger value="login">Login</TabsTrigger>
                     <TabsTrigger value="register">Register</TabsTrigger>
                   </TabsList>
-                  
+
                   <TabsContent value="login">
                     <form onSubmit={handleLogin} className="space-y-4">
                       <div className="space-y-2">
@@ -187,7 +187,7 @@ const LandingPage = () => {
                           type="email"
                           placeholder="Enter your email"
                           value={loginData.email}
-                          onChange={(e) => setLoginData({...loginData, email: e.target.value})}
+                          onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                         />
                       </div>
                       <div className="space-y-2">
@@ -197,11 +197,11 @@ const LandingPage = () => {
                           type="password"
                           placeholder="Enter your password"
                           value={loginData.password}
-                          onChange={(e) => setLoginData({...loginData, password: e.target.value})}
+                          onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                         />
                       </div>
-                      <Button 
-                        type="submit" 
+                      <Button
+                        type="submit"
                         className="w-full gradient-bg hover:opacity-90"
                         disabled={isLoading}
                       >
@@ -212,7 +212,7 @@ const LandingPage = () => {
                       </p>
                     </form>
                   </TabsContent>
-                  
+
                   <TabsContent value="register">
                     <form onSubmit={handleRegister} className="space-y-4">
                       <div className="space-y-2">
@@ -222,7 +222,7 @@ const LandingPage = () => {
                           type="text"
                           placeholder="Enter your full name"
                           value={registerData.fullName}
-                          onChange={(e) => setRegisterData({...registerData, fullName: e.target.value})}
+                          onChange={(e) => setRegisterData({ ...registerData, fullName: e.target.value })}
                         />
                       </div>
                       <div className="space-y-2">
@@ -232,7 +232,7 @@ const LandingPage = () => {
                           type="email"
                           placeholder="Enter your email"
                           value={registerData.email}
-                          onChange={(e) => setRegisterData({...registerData, email: e.target.value})}
+                          onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                         />
                       </div>
                       <div className="space-y-2">
@@ -242,7 +242,7 @@ const LandingPage = () => {
                           type="password"
                           placeholder="Create a password"
                           value={registerData.password}
-                          onChange={(e) => setRegisterData({...registerData, password: e.target.value})}
+                          onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                         />
                       </div>
                       <div className="space-y-2">
@@ -252,11 +252,11 @@ const LandingPage = () => {
                           type="password"
                           placeholder="Confirm your password"
                           value={registerData.confirmPassword}
-                          onChange={(e) => setRegisterData({...registerData, confirmPassword: e.target.value})}
+                          onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
                         />
                       </div>
-                      <Button 
-                        type="submit" 
+                      <Button
+                        type="submit"
                         className="w-full gradient-bg hover:opacity-90"
                         disabled={isLoading}
                       >

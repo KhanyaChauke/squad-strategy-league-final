@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Trophy, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TeamNameSetupProps {
   onComplete: () => void;
@@ -14,24 +14,12 @@ interface TeamNameSetupProps {
 export const TeamNameSetup: React.FC<TeamNameSetupProps> = ({ onComplete }) => {
   const [teamName, setTeamName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [userEmail, setUserEmail] = useState<string>('');
+  const { user, updateTeamName } = useAuth();
   const { toast } = useToast();
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserId(user.id);
-        setUserEmail(user.email || '');
-      }
-    };
-    getUser();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!teamName.trim()) {
       toast({
         title: "Team Name Required",
@@ -43,7 +31,7 @@ export const TeamNameSetup: React.FC<TeamNameSetupProps> = ({ onComplete }) => {
 
     if (teamName.trim().length < 3) {
       toast({
-        title: "Team Name Too Short", 
+        title: "Team Name Too Short",
         description: "Team name must be at least 3 characters long.",
         variant: "destructive"
       });
@@ -59,7 +47,7 @@ export const TeamNameSetup: React.FC<TeamNameSetupProps> = ({ onComplete }) => {
       return;
     }
 
-    if (!userId) {
+    if (!user) {
       toast({
         title: "Authentication Error",
         description: "Please log in to create your team.",
@@ -69,37 +57,12 @@ export const TeamNameSetup: React.FC<TeamNameSetupProps> = ({ onComplete }) => {
     }
 
     setIsSubmitting(true);
-    
+
     try {
-      // Check if team name already exists
-      const { data: existingTeam, error: checkError } = await supabase
-        .from('profiles')
-        .select('team_name')
-        .eq('team_name', teamName.trim())
-        .maybeSingle();
+      const success = await updateTeamName(teamName.trim());
 
-      if (checkError) {
-        throw checkError;
-      }
-
-      if (existingTeam) {
-        toast({
-          title: "Team Name Taken",
-          description: "This team name is already in use. Please choose a different name.",
-          variant: "destructive"
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Update profile with team name
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ team_name: teamName.trim() })
-        .eq('user_id', userId);
-
-      if (updateError) {
-        throw updateError;
+      if (!success) {
+        throw new Error("Failed to update team name");
       }
 
       toast({
@@ -136,7 +99,7 @@ export const TeamNameSetup: React.FC<TeamNameSetupProps> = ({ onComplete }) => {
             Before you start building your dream team, give your squad a name that will strike fear into your opponents.
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
@@ -170,7 +133,7 @@ export const TeamNameSetup: React.FC<TeamNameSetupProps> = ({ onComplete }) => {
                     {teamName.trim()}
                   </div>
                   <div className="text-sm text-green-600">
-                    Manager: {userEmail || 'Unknown Manager'}
+                    Manager: {user?.email || 'Unknown Manager'}
                   </div>
                 </div>
               </div>

@@ -1,4 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
+              import { db } from "@/integrations/firebase/client";
+import { collection, addDoc } from "firebase/firestore";
 
 /**
  * Example of uploading one player to the database
@@ -10,7 +11,7 @@ export async function uploadSinglePlayerExample() {
     name: "Percy Tau",
     position: "ATT",
     team: "Mamelodi Sundowns",
-    nationality: "South Africa", 
+    nationality: "South Africa",
     rating: 85,
     pace: 88,
     shooting: 82,
@@ -22,21 +23,12 @@ export async function uploadSinglePlayerExample() {
   };
 
   try {
-    const { data, error } = await supabase
-      .from('players')
-      .insert([examplePlayer])
-      .select();
-
-    if (error) {
-      console.error('Error uploading player:', error);
-      return { success: false, error: error.message };
-    }
-
-    console.log('Player uploaded successfully:', data);
-    return { success: true, data };
-  } catch (err) {
+    const docRef = await addDoc(collection(db, "players"), examplePlayer);
+    console.log('Player uploaded successfully with ID:', docRef.id);
+    return { success: true, data: { id: docRef.id, ...examplePlayer } };
+  } catch (err: any) {
     console.error('Unexpected error:', err);
-    return { success: false, error: 'Unexpected error occurred' };
+    return { success: false, error: err.message || 'Unexpected error occurred' };
   }
 }
 
@@ -58,20 +50,15 @@ export async function uploadMultiplePlayers(players: Array<{
   price: number;
 }>) {
   try {
-    const { data, error } = await supabase
-      .from('players')
-      .insert(players)
-      .select();
+    const playersCollection = collection(db, "players");
+    const uploadPromises = players.map(player => addDoc(playersCollection, player));
 
-    if (error) {
-      console.error('Error uploading players:', error);
-      return { success: false, error: error.message };
-    }
+    const results = await Promise.all(uploadPromises);
 
-    console.log(`${players.length} players uploaded successfully`);
-    return { success: true, data };
-  } catch (err) {
+    console.log(`${results.length} players uploaded successfully`);
+    return { success: true, data: results.map(r => r.id) };
+  } catch (err: any) {
     console.error('Unexpected error:', err);
-    return { success: false, error: 'Unexpected error occurred' };
+    return { success: false, error: err.message || 'Unexpected error occurred' };
   }
 }

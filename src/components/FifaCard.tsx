@@ -1,5 +1,6 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Shield, Flag, Trophy } from 'lucide-react';
 
 // Import jersey images for player representation
 import sundownsJersey from '@/assets/jerseys/sundowns-jersey.png';
@@ -44,59 +45,51 @@ const getPlayerImage = (teamName: string) => {
   return defaultJersey;
 };
 
-const getCardColor = (rating: number) => {
-  if (rating >= 90) return 'from-yellow-400 to-yellow-600'; // Icon
-  if (rating >= 85) return 'from-purple-400 to-purple-600'; // Hero/TOTW
-  if (rating >= 80) return 'from-blue-400 to-blue-600'; // Rare
-  if (rating >= 75) return 'from-green-400 to-green-600'; // Non-rare
-  return 'from-gray-400 to-gray-600'; // Bronze
-};
-
-const getPositionColor = (position: string) => {
-  switch (position) {
-    case 'GK': return 'bg-yellow-500 text-black';
-    case 'DEF': return 'bg-blue-500 text-white';
-    case 'MID': return 'bg-green-500 text-white';
-    case 'ATT': return 'bg-red-500 text-white';
-    default: return 'bg-gray-500 text-white';
-  }
-};
+// Gold card colors
+// TOTS (Blue/Cyan) Card Style based on user image
+const CARD_BG = 'bg-gradient-to-br from-[#0f172a] via-[#1e3a8a] to-[#172554]'; // Deep Navy to Royal Blue
+const CARD_BORDER = 'border-[#22d3ee] shadow-[0_0_15px_rgba(34,211,238,0.5)]'; // Cyan glow
+const TEXT_GOLD = 'text-[#facc15]'; // Yellow/Gold for stats
+const TEXT_CYAN = 'text-[#22d3ee]'; // Cyan accents
 
 const getSizeClasses = (size: 'small' | 'medium' | 'large') => {
   switch (size) {
     case 'small':
       return {
-        container: 'w-24 h-32',
-        rating: 'text-lg',
-        position: 'text-xs',
-        name: 'text-xs',
-        stats: 'text-xs',
-        image: 'w-12 h-16'
+        container: 'w-24 h-36 md:w-28 md:h-40', // Slightly smaller for grid
+        rating: 'text-lg md:text-xl',
+        position: 'text-[10px] md:text-xs',
+        name: 'text-[10px] md:text-xs',
+        stats: 'text-[8px] md:text-[9px]',
+        image: 'w-12 h-12 md:w-16 md:h-16',
+        iconSize: 10
       };
-    case 'medium':
+    case 'medium': // Used in Grid
       return {
-        container: 'w-32 h-44',
-        rating: 'text-xl',
+        container: 'w-full aspect-[2/3] max-w-[180px]', // Fluid width
+        rating: 'text-2xl',
         position: 'text-sm',
-        name: 'text-sm',
-        stats: 'text-xs',
-        image: 'w-16 h-20'
+        name: 'text-sm md:text-base',
+        stats: 'text-[10px] md:text-xs',
+        image: 'w-20 h-20 md:w-24 md:h-24',
+        iconSize: 14
       };
     case 'large':
       return {
-        container: 'w-48 h-64',
-        rating: 'text-3xl',
-        position: 'text-base',
-        name: 'text-base',
-        stats: 'text-sm',
-        image: 'w-24 h-32'
+        container: 'w-64 h-96',
+        rating: 'text-5xl',
+        position: 'text-xl',
+        name: 'text-2xl',
+        stats: 'text-base',
+        image: 'w-40 h-40',
+        iconSize: 24
       };
   }
 };
 
-export const FifaCard: React.FC<FifaCardProps> = ({ 
-  player, 
-  isEmpty = false, 
+export const FifaCard: React.FC<FifaCardProps> = ({
+  player,
+  isEmpty = false,
   size = 'medium',
   onEmptyClick,
   onPlayerClick,
@@ -107,16 +100,16 @@ export const FifaCard: React.FC<FifaCardProps> = ({
   if (isEmpty) {
     return (
       <div
-        className={`${sizeClasses.container} bg-gradient-to-br from-gray-200 to-gray-400 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:from-gray-300 hover:to-gray-500 transition-all duration-200 group`}
+        className={`${sizeClasses.container} bg-gray-100 rounded-t-2xl rounded-b-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-200 transition-all duration-200 group relative overflow-hidden`}
         onClick={onEmptyClick}
       >
-        <div className="text-gray-600 group-hover:text-gray-800">
-          <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="text-gray-400 group-hover:text-gray-600">
+          <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
         </div>
-        <span className={`${sizeClasses.name} font-bold text-gray-600 group-hover:text-gray-800`}>
-          ADD
+        <span className="font-bold text-gray-400 group-hover:text-gray-600">
+          ADD PLAYER
         </span>
       </div>
     );
@@ -124,195 +117,154 @@ export const FifaCard: React.FC<FifaCardProps> = ({
 
   if (!player) return null;
 
-  const cardColor = getCardColor(player.rating);
-  const positionColor = getPositionColor(player.position);
-
   return (
     <div
-      className={`${sizeClasses.container} bg-gradient-to-br ${cardColor} rounded-lg shadow-lg border-2 border-white relative overflow-hidden cursor-pointer transform hover:scale-105 transition-transform duration-200 group`}
+      className={`${sizeClasses.container} relative transition-transform duration-200 hover:scale-105 cursor-pointer group font-oswald`}
+      style={{ fontFamily: "'Oswald', sans-serif" }}
       onClick={() => onPlayerClick?.(player)}
     >
-      {/* Card Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <svg className="w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-          <pattern id="hexagons" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-            <polygon points="10,2 18,7 18,13 10,18 2,13 2,7" fill="white" stroke="white" strokeWidth="0.5"/>
-          </pattern>
-          <rect width="100" height="100" fill="url(#hexagons)" />
-        </svg>
-      </div>
+      {/* 
+        Shape Container: 
+        Using clip-path to create the specific FIFA shield shape.
+      */}
+      <div
+        className={`absolute inset-0 ${CARD_BG} z-0`}
+        style={{
+          clipPath: 'polygon(0% 0%, 100% 0%, 100% 85%, 50% 100%, 0% 85%)', // Classic Shield Shape
+        }}
+      >
+        {/* Border Glow Simulation */}
+        <div className="absolute inset-0 bg-[#22d3ee] opacity-30 blur-md"></div>
+        <div className="absolute inset-[2px] bg-gradient-to-b from-[#0f172a] to-[#1e3a8a] z-10"
+          style={{ clipPath: 'polygon(0% 0%, 100% 0%, 100% 85%, 50% 100%, 0% 85%)' }}>
 
-      {/* Remove Overlay */}
-      {showRemoveOverlay && (
-        <div className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
-          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </div>
-      )}
-
-      {/* Rating */}
-      <div className="absolute top-2 left-2 z-10">
-        <div className={`${sizeClasses.rating} font-black text-white drop-shadow-lg`}>
-          {player.rating}
+          {/* Background Texture/Shards */}
+          <div className="absolute inset-0 opacity-40 bg-[linear-gradient(45deg,transparent_25%,rgba(68,255,255,0.1)_50%,transparent_75%,transparent_100%)] bg-[length:20px_20px]"></div>
+          <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(34,211,238,0.2)_0%,transparent_70%)]"></div>
         </div>
       </div>
 
-      {/* Position */}
-      <div className="absolute top-2 right-2 z-10">
-        <Badge className={`${positionColor} ${sizeClasses.position} px-1 py-0 font-bold`}>
-          {player.position}
-        </Badge>
-      </div>
+      {/* Content Layer */}
+      <div className="relative z-20 h-full flex flex-col pointer-events-none">
 
-      {/* Player Image */}
-      <div className="flex justify-center items-center mt-6 mb-2">
-        <div className={`${sizeClasses.image} relative`}>
-          <img 
-            src={getPlayerImage(player.team)}
-            alt={player.name}
-            className="w-full h-full object-contain drop-shadow-lg"
-          />
-        </div>
-      </div>
+        {/* Top Section */}
+        <div className="flex flex-row h-[55%] relative">
 
-      {/* Player Name */}
-      <div className="absolute bottom-8 left-0 right-0 px-2 z-10">
-        <div className={`${sizeClasses.name} font-bold text-white text-center truncate drop-shadow-lg`}>
-          {player.name.toUpperCase()}
-        </div>
-      </div>
+          {/* Left Pillar: Rating, Pos, Country, Club */}
+          <div className="w-[25%] flex flex-col items-center pt-6 pl-2 space-y-1">
+            <span className={`font-bold ${TEXT_GOLD} text-3xl md:text-4xl leading-none`}>
+              {player.rating}
+            </span>
+            <span className={`${TEXT_GOLD} text-xs md:text-sm uppercase font-medium leading-none`}>
+              {player.position}
+            </span>
 
-      {/* Stats (only for medium and large sizes) */}
-      {(size === 'medium' || size === 'large') && (
-        <div className="absolute bottom-1 left-0 right-0 px-1 z-10">
-          <div className={`${sizeClasses.stats} text-white grid grid-cols-3 gap-1 text-center`}>
-            <div>
-              <div className="font-bold">{player.pace}</div>
-              <div className="opacity-80">PAC</div>
+            <div className="w-full flex justify-center py-1">
+              <div className="w-6 h-[1px] bg-cyan-500/30"></div>
             </div>
-            <div>
-              <div className="font-bold">{player.shooting}</div>
-              <div className="opacity-80">SHO</div>
+
+            {/* Country */}
+            <div className="w-6 h-4 relative overflow-hidden rounded-[2px] shadow-sm" title={player.nationality}>
+              <Flag size={sizeClasses.iconSize + 8} className="absolute inset-0 w-full h-full object-cover" />
             </div>
-            <div>
-              <div className="font-bold">{player.passing}</div>
-              <div className="opacity-80">PAS</div>
+
+            {/* Club */}
+            <div className="pt-1">
+              <Shield size={sizeClasses.iconSize + 6} className="text-white fill-white/10" />
+            </div>
+          </div>
+
+          {/* Player Image Area */}
+          <div className="w-[75%] h-full flex items-end justify-center pr-2 pb-1">
+            <img
+              src={getPlayerImage(player.team)}
+              alt={player.name}
+              className="w-full h-[90%] object-contain drop-shadow-[0_0_10px_rgba(0,0,0,0.5)] transform translate-y-2"
+            />
+          </div>
+
+        </div>
+
+        {/* Bottom Section: Name & Stats */}
+        <div className="h-[45%] flex flex-col relative z-20">
+
+          {/* Divider */}
+          <div className="w-[80%] mx-auto h-[1px] bg-gradient-to-r from-transparent via-[#22d3ee] to-transparent opacity-50 mb-1"></div>
+
+          {/* Name */}
+          <div className="flex justify-center items-center pb-1">
+            <span className={`font-bold uppercase tracking-wider ${TEXT_GOLD} ${sizeClasses.name} truncate max-w-[90%] text-center drop-shadow-md`}>
+              {player.name}
+            </span>
+          </div>
+
+          {/* Stats Grid */}
+          <div className={`grid grid-cols-2 gap-x-2 gap-y-0.5 px-4 ${sizeClasses.stats}`}>
+            <div className="flex items-center space-x-1">
+              <span className={`font-bold ${TEXT_GOLD}`}>{player.pace}</span>
+              <span className={`font-light ${TEXT_CYAN}`}>PAC</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className={`font-bold ${TEXT_GOLD}`}>{player.dribbling}</span>
+              <span className={`font-light ${TEXT_CYAN}`}>DRI</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className={`font-bold ${TEXT_GOLD}`}>{player.shooting}</span>
+              <span className={`font-light ${TEXT_CYAN}`}>SHO</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className={`font-bold ${TEXT_GOLD}`}>{player.defending}</span>
+              <span className={`font-light ${TEXT_CYAN}`}>DEF</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className={`font-bold ${TEXT_GOLD}`}>{player.passing}</span>
+              <span className={`font-light ${TEXT_CYAN}`}>PAS</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <span className={`font-bold ${TEXT_GOLD}`}>{player.physical}</span>
+              <span className={`font-light ${TEXT_CYAN}`}>PHY</span>
             </div>
           </div>
         </div>
-      )}
 
-      {/* Club Badge (small indicator) */}
-      <div className="absolute bottom-2 right-2 w-4 h-4 bg-white/20 rounded-full"></div>
+        {/* Remove Overlay */}
+        {showRemoveOverlay && (
+          <div
+            className="absolute inset-0 bg-red-900/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-30"
+            style={{ clipPath: 'polygon(0% 0%, 100% 0%, 100% 85%, 50% 100%, 0% 85%)' }}
+          >
+            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
-// Extended FIFA card for detailed view
-export const FifaCardDetailed: React.FC<{ player: Player; onClick?: () => void }> = ({ 
-  player, 
-  onClick 
+// Extended FIFA card for detailed view - Reusing the same logic but larger
+export const FifaCardDetailed: React.FC<{ player: Player; onClick?: () => void }> = ({
+  player,
+  onClick
 }) => {
-  const cardColor = getCardColor(player.rating);
-  const positionColor = getPositionColor(player.position);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-ZA', {
-      style: 'currency',
-      currency: 'ZAR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
+  // Reuse the main component with 'large' size for consistency,
+  // but wrap it to handle the specific detailed view needs if any.
+  // For now, we'll just render the FifaCard in large mode.
   return (
-    <div
-      className={`w-64 h-80 bg-gradient-to-br ${cardColor} rounded-xl shadow-2xl border-4 border-white relative overflow-hidden cursor-pointer transform hover:scale-105 transition-transform duration-200`}
-      onClick={onClick}
-    >
-      {/* Card Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <svg className="w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-          <pattern id="hexagons-detailed" x="0" y="0" width="15" height="15" patternUnits="userSpaceOnUse">
-            <polygon points="7.5,1.5 13.5,5.25 13.5,9.75 7.5,13.5 1.5,9.75 1.5,5.25" fill="white" stroke="white" strokeWidth="0.3"/>
-          </pattern>
-          <rect width="100" height="100" fill="url(#hexagons-detailed)" />
-        </svg>
-      </div>
+    <div onClick={onClick}>
+      <FifaCard player={player} size="large" />
 
-      {/* Rating */}
-      <div className="absolute top-4 left-4 z-10">
-        <div className="text-4xl font-black text-white drop-shadow-lg">
-          {player.rating}
-        </div>
-      </div>
-
-      {/* Position */}
-      <div className="absolute top-4 right-4 z-10">
-        <Badge className={`${positionColor} text-lg px-2 py-1 font-bold`}>
-          {player.position}
+      {/* Price Tag Overlay for Detailed View */}
+      <div className="mt-4 text-center">
+        <Badge variant="secondary" className="text-lg px-4 py-1 bg-black text-white border border-gold-500">
+          {new Intl.NumberFormat('en-ZA', {
+            style: 'currency',
+            currency: 'ZAR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          }).format(player.price)}
         </Badge>
-      </div>
-
-      {/* Player Image */}
-      <div className="flex justify-center items-center mt-16 mb-4">
-        <div className="w-32 h-40 relative">
-          <img 
-            src={getPlayerImage(player.team)} 
-            alt={player.name}
-            className="w-full h-full object-contain drop-shadow-2xl"
-          />
-        </div>
-      </div>
-
-      {/* Player Name */}
-      <div className="absolute bottom-20 left-0 right-0 px-4 z-10">
-        <div className="text-lg font-bold text-white text-center drop-shadow-lg">
-          {player.name.toUpperCase()}
-        </div>
-        <div className="text-sm text-white/90 text-center drop-shadow-lg">
-          {player.team}
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="absolute bottom-4 left-0 right-0 px-2 z-10">
-        <div className="text-sm text-white grid grid-cols-3 gap-1 text-center">
-          <div>
-            <div className="text-lg font-bold">{player.pace}</div>
-            <div className="opacity-90">PAC</div>
-          </div>
-          <div>
-            <div className="text-lg font-bold">{player.shooting}</div>
-            <div className="opacity-90">SHO</div>
-          </div>
-          <div>
-            <div className="text-lg font-bold">{player.passing}</div>
-            <div className="opacity-90">PAS</div>
-          </div>
-        </div>
-        <div className="text-sm text-white grid grid-cols-3 gap-1 text-center mt-1">
-          <div>
-            <div className="text-lg font-bold">{player.dribbling}</div>
-            <div className="opacity-90">DRI</div>
-          </div>
-          <div>
-            <div className="text-lg font-bold">{player.defending}</div>
-            <div className="opacity-90">DEF</div>
-          </div>
-          <div>
-            <div className="text-lg font-bold">{player.physical}</div>
-            <div className="opacity-90">PHY</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Cost indicator */}
-      <div className="absolute top-16 left-4 z-10">
-        <div className="text-xs font-bold text-white/90 bg-black/30 rounded px-2 py-1">
-          {formatCurrency(player.price)}
-        </div>
       </div>
     </div>
   );

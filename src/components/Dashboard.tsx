@@ -1,30 +1,33 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { PlayersView } from '@/components/PlayersView';
 import { SquadView } from '@/components/SquadView';
 import { PSLDashboard } from '@/components/PSLDashboard';
-import { 
-  Trophy, 
-  Users, 
-  DollarSign, 
+import { NewsView } from '@/components/NewsView';
+import { ApiSetup } from '@/components/ApiSetup';
+import { LiveGamesView } from '@/components/LiveGamesView';
+import {
+  Trophy,
+  Users,
+  DollarSign,
   Target,
   LogOut,
   Home,
   UserCircle,
   Database,
-  Download
+  Download,
+  Newspaper,
+  Layout
 } from 'lucide-react';
 
-type DashboardView = 'home' | 'players' | 'squad' | 'psl';
+type DashboardView = 'home' | 'players' | 'squad' | 'psl' | 'news' | 'live-games' | 'fpls' | 'settings';
 
 const Dashboard = () => {
-  const [currentView, setCurrentView] = useState<DashboardView>('home');
+  const [currentView, setCurrentView] = useState<DashboardView>('news');
   const [isPopulating, setIsPopulating] = useState(false);
   const { user, logout } = useAuth();
   const { toast } = useToast();
@@ -43,26 +46,37 @@ const Dashboard = () => {
   };
 
   const handlePopulateDatabase = async () => {
+    const apiKey = localStorage.getItem('rapid_api_key');
+    if (!apiKey) {
+      toast({
+        title: "API Key Missing",
+        description: "Please connect your RapidAPI key in the Settings tab first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsPopulating(true);
     try {
-      const { data, error } = await supabase.functions.invoke('populate-database');
-      
-      if (error) {
+      const { populateDatabaseWithApiData } = await import('@/utils/populateDatabase');
+      const result = await populateDatabaseWithApiData(apiKey);
+
+      if (!result.success) {
         toast({
           title: "Error",
-          description: error.message || "Failed to populate database",
+          description: result.error || "Failed to populate database",
           variant: "destructive",
         });
       } else {
         toast({
           title: "Success",
-          description: data.message || "Database populated successfully",
+          description: `Database populated with ${result.count} players!`,
         });
       }
     } catch (error) {
       toast({
-        title: "Error", 
-        description: "Failed to connect to the database service",
+        title: "Error",
+        description: "Failed to populate database",
         variant: "destructive",
       });
     } finally {
@@ -71,31 +85,10 @@ const Dashboard = () => {
   };
 
   const handleMigrateLocalData = async () => {
-    setIsPopulating(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('migrate-local-data');
-      
-      if (error) {
-        toast({
-          title: "Error",
-          description: error.message || "Failed to migrate local data",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: data.message || "Local data migrated successfully",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error", 
-        description: "Failed to connect to the migration service",
-        variant: "destructive",
-      });
-    } finally {
-      setIsPopulating(false);
-    }
+    toast({
+      title: "Info",
+      description: "Migration feature coming soon for Firebase",
+    });
   };
 
   const renderNavigation = () => (
@@ -105,33 +98,25 @@ const Dashboard = () => {
           <div className="flex items-center space-x-8">
             <div className="flex items-center space-x-2">
               <Trophy className="h-8 w-8 text-green-600" />
-              <span className="text-2xl font-bold text-green-600">FPSL</span>
+              <span className="text-2xl font-bold text-green-600">PSL</span>
             </div>
-            
+
             <nav className="flex space-x-4">
               <Button
-                variant={currentView === 'home' ? 'default' : 'ghost'}
-                onClick={() => setCurrentView('home')}
+                variant={currentView === 'news' ? 'default' : 'ghost'}
+                onClick={() => setCurrentView('news')}
                 className="flex items-center space-x-2"
               >
-                <Home className="h-4 w-4" />
-                <span>Dashboard</span>
+                <Newspaper className="h-4 w-4" />
+                <span>News</span>
               </Button>
               <Button
-                variant={currentView === 'players' ? 'default' : 'ghost'}
-                onClick={() => setCurrentView('players')}
+                variant={currentView === 'fpls' ? 'default' : 'ghost'}
+                onClick={() => setCurrentView('fpls')}
                 className="flex items-center space-x-2"
               >
-                <Users className="h-4 w-4" />
-                <span>Players</span>
-              </Button>
-              <Button
-                variant={currentView === 'squad' ? 'default' : 'ghost'}
-                onClick={() => setCurrentView('squad')}
-                className="flex items-center space-x-2"
-              >
-                <Target className="h-4 w-4" />
-                <span>My Squad</span>
+                <UserCircle className="h-4 w-4" />
+                <span>Fpls</span>
               </Button>
               <Button
                 variant={currentView === 'psl' ? 'default' : 'ghost'}
@@ -141,9 +126,25 @@ const Dashboard = () => {
                 <Trophy className="h-4 w-4" />
                 <span>PSL Table</span>
               </Button>
+              <Button
+                variant={currentView === 'live-games' ? 'default' : 'ghost'}
+                onClick={() => setCurrentView('live-games')}
+                className="flex items-center space-x-2"
+              >
+                <Layout className="h-4 w-4" />
+                <span>Live Games</span>
+              </Button>
+              <Button
+                variant={currentView === 'settings' ? 'default' : 'ghost'}
+                onClick={() => setCurrentView('settings')}
+                className="flex items-center space-x-2"
+              >
+                <Database className="h-4 w-4" />
+                <span>API Setup</span>
+              </Button>
             </nav>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <UserCircle className="h-5 w-5 text-gray-600" />
@@ -161,7 +162,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 
   const renderHomeView = () => (
@@ -226,8 +227,8 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {user?.squad.length ? 
-                Math.round(user.squad.reduce((sum, player) => sum + player.rating, 0) / user.squad.length) 
+              {user?.squad.length ?
+                Math.round(user.squad.reduce((sum, player) => sum + player.rating, 0) / user.squad.length)
                 : 0
               }
             </div>
@@ -281,22 +282,22 @@ const Dashboard = () => {
             <CardDescription>Manage your squad</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button 
+            <Button
               className="w-full gradient-bg hover:opacity-90"
               onClick={() => setCurrentView('players')}
             >
               <Users className="h-4 w-4 mr-2" />
               Browse Players
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full"
               onClick={() => setCurrentView('squad')}
             >
               <Target className="h-4 w-4 mr-2" />
               View My Squad
             </Button>
-            <Button 
+            <Button
               variant="secondary"
               className="w-full"
               onClick={handlePopulateDatabase}
@@ -305,7 +306,7 @@ const Dashboard = () => {
               <Database className="h-4 w-4 mr-2" />
               {isPopulating ? 'Populating...' : 'Populate Database'}
             </Button>
-            <Button 
+            <Button
               variant="outline"
               className="w-full"
               onClick={handleMigrateLocalData}
@@ -323,12 +324,33 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {renderNavigation()}
-      
+
       <div className="container mx-auto px-4 py-8">
-        {currentView === 'home' && renderHomeView()}
-        {currentView === 'players' && <PlayersView />}
-        {currentView === 'squad' && <SquadView />}
+        {currentView === 'news' && <NewsView />}
+        {currentView === 'fpls' && (
+          <div className="space-y-6">
+            <div className="flex space-x-4 mb-6">
+              <Button onClick={() => setCurrentView('squad')} variant="outline">My Squad</Button>
+              <Button onClick={() => setCurrentView('players')} variant="outline">Transfer Market</Button>
+            </div>
+            {renderHomeView()}
+          </div>
+        )}
+        {currentView === 'squad' && (
+          <div>
+            <Button onClick={() => setCurrentView('fpls')} variant="ghost" className="mb-4">← Back to Fpls</Button>
+            <SquadView />
+          </div>
+        )}
+        {currentView === 'players' && (
+          <div>
+            <Button onClick={() => setCurrentView('fpls')} variant="ghost" className="mb-4">← Back to Fpls</Button>
+            <PlayersView />
+          </div>
+        )}
         {currentView === 'psl' && <PSLDashboard />}
+        {currentView === 'live-games' && <LiveGamesView />}
+        {currentView === 'settings' && <ApiSetup />}
       </div>
     </div>
   );

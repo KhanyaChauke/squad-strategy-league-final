@@ -1,8 +1,10 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/firebase/client';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { Trophy, TrendingUp, Star, Users } from 'lucide-react';
 
 // Sample PSL data since we don't have a standings table yet
@@ -17,6 +19,12 @@ const sampleStandings = [
   { rank: 8, team: "Royal AM", points: 40, played: 28, win: 11, draw: 7, loss: 10, goalsFor: 34, goalsAgainst: 36, goalDifference: -2 },
   { rank: 9, team: "AmaZulu FC", points: 39, played: 28, win: 10, draw: 9, loss: 9, goalsFor: 32, goalsAgainst: 35, goalDifference: -3 },
   { rank: 10, team: "Golden Arrows", points: 37, played: 28, win: 10, draw: 7, loss: 11, goalsFor: 31, goalsAgainst: 37, goalDifference: -6 },
+  { rank: 11, team: "TS Galaxy", points: 35, played: 28, win: 9, draw: 8, loss: 11, goalsFor: 28, goalsAgainst: 32, goalDifference: -4 },
+  { rank: 12, team: "Polokwane City", points: 34, played: 28, win: 8, draw: 10, loss: 10, goalsFor: 25, goalsAgainst: 30, goalDifference: -5 },
+  { rank: 13, team: "Chippa United", points: 32, played: 28, win: 8, draw: 8, loss: 12, goalsFor: 22, goalsAgainst: 29, goalDifference: -7 },
+  { rank: 14, team: "Moroka Swallows", points: 29, played: 28, win: 7, draw: 8, loss: 13, goalsFor: 20, goalsAgainst: 35, goalDifference: -15 },
+  { rank: 15, team: "Richards Bay", points: 24, played: 28, win: 6, draw: 6, loss: 16, goalsFor: 18, goalsAgainst: 42, goalDifference: -24 },
+  { rank: 16, team: "Cape Town Spurs", points: 18, played: 28, win: 4, draw: 6, loss: 18, goalsFor: 15, goalsAgainst: 45, goalDifference: -30 },
 ];
 
 interface PSLStanding {
@@ -35,48 +43,63 @@ interface PSLStanding {
 interface Player {
   id: string;
   name: string;
-  position: string;
   team: string;
+  position: string;
   price: number;
+  rating: number;
 }
 
 export const PSLDashboard = () => {
-  const [standings] = useState<PSLStanding[]>(sampleStandings);
+  const [standings, setStandings] = useState<PSLStanding[]>(sampleStandings);
   const [topPlayers, setTopPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchPlayers = async () => {
+    const loadData = async () => {
+      setLoading(true);
+
+      // 1. Fetch Players (Firebase)
       try {
-        // Fetch top 3 players by price (using price as rating proxy)
-        const { data: playersData, error: playersError } = await supabase
-          .from('players')
-          .select('*')
-          .order('price', { ascending: false })
-          .limit(3);
+        const playersRef = collection(db, 'players');
+        const q = query(playersRef, orderBy('price', 'desc'), limit(3));
+        const querySnapshot = await getDocs(q);
 
-        if (playersError) throw playersError;
+        const playersData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Player[];
 
-        setTopPlayers(playersData || []);
+        setTopPlayers(playersData);
       } catch (error) {
         console.error('Error fetching players:', error);
-      } finally {
-        setLoading(false);
       }
+
+      // 2. Fetch Standings (API)
+      const apiKey = localStorage.getItem('psl_news_api_key') || localStorage.getItem('rapid_api_key'); // Try both keys
+      if (apiKey) {
+        try {
+          // Dynamically import to avoid circular dependencies if any, or just cleanliness
+          const { fetchStandings } = await import('@/services/newsService');
+          const liveStandings = await fetchStandings(apiKey);
+
+          if (liveStandings && liveStandings.length > 0) {
+            setStandings(liveStandings);
+          } else {
+            console.log("No live standings found, keeping sample data.");
+          }
+        } catch (error) {
+          console.error("Error fetching live standings:", error);
+          setApiError("Failed to load live standings. Showing 2023/24 final table.");
+          // Keep sample standings as fallback
+        }
+      }
+
+      setLoading(false);
     };
 
-    fetchPlayers();
+    loadData();
   }, []);
-
-  const getPositionColor = (position: string) => {
-    switch (position) {
-      case 'GK': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'DEF': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'MID': return 'bg-green-100 text-green-800 border-green-200';
-      case 'ATT': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', {
@@ -88,11 +111,21 @@ export const PSLDashboard = () => {
   };
 
   const getRankBadgeColor = (rank: number) => {
-    if (rank === 1) return 'bg-yellow-500 text-white';
-    if (rank <= 3) return 'bg-gray-400 text-white';
-    if (rank <= 6) return 'bg-green-500 text-white';
-    if (rank >= 17) return 'bg-red-500 text-white';
+    if (rank === 1) return 'bg-gradient-to-r from-green-500 to-purple-500 text-white border-none';
+    if (rank === 2) return 'bg-purple-500 text-white';
+    if (rank === 15) return 'bg-orange-500 text-white';
+    if (rank === 16) return 'bg-red-500 text-white';
     return 'bg-gray-200 text-gray-800';
+  };
+
+  const getPositionColor = (position: string) => {
+    switch (position) {
+      case 'GK': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'DEF': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'MID': return 'bg-green-100 text-green-800 border-green-200';
+      case 'ATT': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
   };
 
   if (loading) {
@@ -130,6 +163,11 @@ export const PSLDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* PSL Standings Table */}
         <div className="lg:col-span-2">
+          {apiError && (
+            <div className="mb-4 bg-yellow-50 text-yellow-800 p-3 rounded-md text-sm border border-yellow-200">
+              {apiError}
+            </div>
+          )}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -183,6 +221,26 @@ export const PSLDashboard = () => {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Legend */}
+              <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-500 to-purple-500"></div>
+                  <span>Champions & CAF</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                  <span>CAF Qualification</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                  <span>Relegation Play-offs</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                  <span>Relegation</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -229,7 +287,7 @@ export const PSLDashboard = () => {
                   </div>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="space-y-3">
                 {/* Player Status */}
                 <div className="pt-2 border-t">
@@ -240,7 +298,7 @@ export const PSLDashboard = () => {
                     </Badge>
                   </div>
                 </div>
-                
+
                 {/* Market Value */}
                 <div className="pt-2 border-t">
                   <div className="flex items-center justify-between">

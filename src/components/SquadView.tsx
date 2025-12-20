@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -84,7 +86,7 @@ export const SquadView = () => {
 
   const handlePlayerSelect = (player: Player) => {
     if (!player || !playerSelectionDialog.position) return;
-    
+
     const success = addPlayerToSquad(player);
     if (success) {
       toast({
@@ -103,7 +105,7 @@ export const SquadView = () => {
 
   const getAvailablePlayersForPosition = (position: 'GK' | 'DEF' | 'MID' | 'ATT') => {
     return playersDatabase
-      .filter(player => 
+      .filter(player =>
         player.position === position &&
         !user?.squad?.some(squadPlayer => squadPlayer.id === player.id) &&
         !user?.bench?.some(benchPlayer => benchPlayer.id === player.id) &&
@@ -154,7 +156,7 @@ export const SquadView = () => {
   };
 
   const squadValue = user?.squad.reduce((total, player) => total + player.price, 0) || 0;
-  const averageRating = user?.squad.length ? 
+  const averageRating = user?.squad.length ?
     Math.round(user.squad.reduce((sum, player) => sum + player.rating, 0) / user.squad.length) : 0;
 
   const positionCounts = {
@@ -189,7 +191,7 @@ export const SquadView = () => {
             {selectedFormation ? `Formation: ${selectedFormation.name} (${selectedFormation.style})` : 'Manage your fantasy team'}
           </p>
         </div>
-        
+
         <div className="bg-white rounded-lg p-4 shadow-sm border">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4 text-sm">
@@ -268,7 +270,7 @@ export const SquadView = () => {
       </div>
 
       {/* Team Chemistry */}
-      <TeamChemistry 
+      <TeamChemistry
         squad={user?.squad.map(player => ({
           id: player.id,
           name: player.name,
@@ -285,7 +287,7 @@ export const SquadView = () => {
           <CardDescription>Visual representation of your team setup on the pitch</CardDescription>
         </CardHeader>
         <CardContent className="p-4">
-          <div 
+          <div
             className="relative w-full h-[700px] rounded-lg overflow-hidden border-2 border-white"
             style={{
               background: 'linear-gradient(180deg, #1e5128 0%, #2d7a2d 20%, #4ade80 40%, #22c55e 60%, #4ade80 80%, #2d7a2d 100%)',
@@ -296,51 +298,51 @@ export const SquadView = () => {
             <div className="absolute inset-0">
               {/* Outer boundary */}
               <div className="absolute inset-4 border-2 border-white/80 rounded-sm"></div>
-              
+
               {/* Center line */}
               <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-white/80 transform -translate-y-0.5"></div>
-              
+
               {/* Center circle */}
               <div className="absolute top-1/2 left-1/2 w-32 h-32 border-2 border-white/80 rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
               <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-white/80 rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
-              
+
               {/* Goal area (bottom - our goal) */}
               <div className="absolute bottom-4 left-1/2 w-48 h-16 border-2 border-white/80 border-b-0 transform -translate-x-1/2"></div>
-              
+
               {/* 6-yard box (bottom) */}
               <div className="absolute bottom-4 left-1/2 w-24 h-8 border-2 border-white/80 border-b-0 transform -translate-x-1/2"></div>
-              
+
               {/* Penalty area (bottom) */}
               <div className="absolute bottom-4 left-1/2 w-56 h-20 border-2 border-white/80 border-b-0 transform -translate-x-1/2"></div>
-              
+
               {/* Penalty spot (bottom) */}
               <div className="absolute bottom-16 left-1/2 w-2 h-2 bg-white/80 rounded-full transform -translate-x-1/2"></div>
-              
+
               {/* Goal posts (bottom) */}
               <div className="absolute bottom-4 left-1/2 w-16 h-1 bg-white transform -translate-x-1/2"></div>
-              
+
               {/* Goal area (top - opponent goal) */}
               <div className="absolute top-4 left-1/2 w-48 h-16 border-2 border-white/80 border-t-0 transform -translate-x-1/2"></div>
-              
+
               {/* 6-yard box (top) */}
               <div className="absolute top-4 left-1/2 w-24 h-8 border-2 border-white/80 border-t-0 transform -translate-x-1/2"></div>
-              
+
               {/* Penalty area (top) */}
               <div className="absolute top-4 left-1/2 w-56 h-20 border-2 border-white/80 border-t-0 transform -translate-x-1/2"></div>
-              
+
               {/* Penalty spot (top) */}
               <div className="absolute top-16 left-1/2 w-2 h-2 bg-white/80 rounded-full transform -translate-x-1/2"></div>
-              
+
               {/* Goal posts (top) */}
               <div className="absolute top-4 left-1/2 w-16 h-1 bg-white transform -translate-x-1/2"></div>
-              
+
               {/* Corner arcs */}
               <div className="absolute top-4 left-4 w-8 h-8 border-2 border-white/80 border-r-0 border-b-0 rounded-tl-full"></div>
               <div className="absolute top-4 right-4 w-8 h-8 border-2 border-white/80 border-l-0 border-b-0 rounded-tr-full"></div>
               <div className="absolute bottom-4 left-4 w-8 h-8 border-2 border-white/80 border-r-0 border-t-0 rounded-bl-full"></div>
               <div className="absolute bottom-4 right-4 w-8 h-8 border-2 border-white/80 border-l-0 border-t-0 rounded-br-full"></div>
             </div>
-            
+
             {/* Players positioned on field */}
             <div className="absolute inset-0 flex flex-col justify-between py-12 px-8">
               {/* Attackers (Forward line) */}
@@ -348,7 +350,7 @@ export const SquadView = () => {
                 <div className="flex space-x-6">
                   {getPlayersByPosition('ATT').slice(0, selectedFormation?.positions.ATT || 3).map((player, index) => (
                     <FifaCard
-                      key={player.id} 
+                      key={player.id}
                       player={player}
                       size="small"
                       onPlayerClick={handleRemovePlayer}
@@ -357,7 +359,7 @@ export const SquadView = () => {
                   ))}
                   {Array(Math.max(0, (selectedFormation?.positions.ATT || 3) - positionCounts.ATT)).fill(0).map((_, index) => (
                     <FifaCard
-                      key={`empty-att-${index}`} 
+                      key={`empty-att-${index}`}
                       isEmpty
                       size="small"
                       onEmptyClick={() => handleEmptySlotClick('ATT')}
@@ -365,13 +367,13 @@ export const SquadView = () => {
                   ))}
                 </div>
               </div>
-              
+
               {/* Midfielders (Middle line) */}
               <div className="flex justify-center items-center h-32">
                 <div className="flex space-x-4">
                   {getPlayersByPosition('MID').slice(0, selectedFormation?.positions.MID || 4).map((player, index) => (
                     <FifaCard
-                      key={player.id} 
+                      key={player.id}
                       player={player}
                       size="small"
                       onPlayerClick={handleRemovePlayer}
@@ -380,7 +382,7 @@ export const SquadView = () => {
                   ))}
                   {Array(Math.max(0, (selectedFormation?.positions.MID || 4) - positionCounts.MID)).fill(0).map((_, index) => (
                     <FifaCard
-                      key={`empty-mid-${index}`} 
+                      key={`empty-mid-${index}`}
                       isEmpty
                       size="small"
                       onEmptyClick={() => handleEmptySlotClick('MID')}
@@ -388,13 +390,13 @@ export const SquadView = () => {
                   ))}
                 </div>
               </div>
-              
+
               {/* Defenders (Defense line) */}
               <div className="flex justify-center items-center h-32">
                 <div className="flex space-x-3">
                   {getPlayersByPosition('DEF').slice(0, selectedFormation?.positions.DEF || 4).map((player, index) => (
                     <FifaCard
-                      key={player.id} 
+                      key={player.id}
                       player={player}
                       size="small"
                       onPlayerClick={handleRemovePlayer}
@@ -403,7 +405,7 @@ export const SquadView = () => {
                   ))}
                   {Array(Math.max(0, (selectedFormation?.positions.DEF || 4) - positionCounts.DEF)).fill(0).map((_, index) => (
                     <FifaCard
-                      key={`empty-def-${index}`} 
+                      key={`empty-def-${index}`}
                       isEmpty
                       size="small"
                       onEmptyClick={() => handleEmptySlotClick('DEF')}
@@ -411,12 +413,12 @@ export const SquadView = () => {
                   ))}
                 </div>
               </div>
-              
+
               {/* Goalkeeper (Goal line) */}
               <div className="flex justify-center items-end h-32 pb-4">
                 {getPlayersByPosition('GK').slice(0, selectedFormation?.positions.GK || 1).map((player, index) => (
                   <FifaCard
-                    key={player.id} 
+                    key={player.id}
                     player={player}
                     size="small"
                     onPlayerClick={handleRemovePlayer}
@@ -425,7 +427,7 @@ export const SquadView = () => {
                 ))}
                 {Array(Math.max(0, (selectedFormation?.positions.GK || 1) - positionCounts.GK)).fill(0).map((_, index) => (
                   <FifaCard
-                    key={`empty-gk-${index}`} 
+                    key={`empty-gk-${index}`}
                     isEmpty
                     size="small"
                     onEmptyClick={() => handleEmptySlotClick('GK')}
@@ -468,7 +470,7 @@ export const SquadView = () => {
                       </div>
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent className="space-y-3">
                     {/* Available substitutions */}
                     <div className="space-y-2">
@@ -488,7 +490,7 @@ export const SquadView = () => {
                         <p className="text-xs text-gray-500">No players in same position on field</p>
                       )}
                     </div>
-                    
+
                     {/* Remove from bench */}
                     <div className="flex items-center justify-between pt-2 border-t">
                       <div className="text-xs text-green-600 font-medium">
@@ -506,7 +508,7 @@ export const SquadView = () => {
                   </CardContent>
                 </Card>
               ))}
-              
+
               {/* Empty bench slots */}
               {Array(Math.max(0, 4 - (user?.bench.length || 0))).fill(0).map((_, index) => (
                 <Card key={`empty-bench-${index}`} className="border-2 border-dashed border-gray-300 bg-gray-50">
@@ -558,7 +560,7 @@ export const SquadView = () => {
                   </div>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="space-y-4">
                 {/* Player Stats */}
                 <div className="grid grid-cols-3 gap-2 text-xs">
@@ -587,7 +589,7 @@ export const SquadView = () => {
                     <div className="text-gray-500">PHY</div>
                   </div>
                 </div>
-                
+
                 {/* Cost and Remove Button */}
                 <div className="flex items-center justify-between pt-2 border-t">
                   <div>
@@ -596,7 +598,7 @@ export const SquadView = () => {
                       {formatCurrency(player.price)}
                     </div>
                   </div>
-                  
+
                   <Button
                     onClick={() => handleRemovePlayer(player)}
                     variant="destructive"
@@ -621,8 +623,8 @@ export const SquadView = () => {
       )}
 
       {/* Player Selection Dialog */}
-      <Dialog 
-        open={playerSelectionDialog.isOpen} 
+      <Dialog
+        open={playerSelectionDialog.isOpen}
         onOpenChange={(open) => setPlayerSelectionDialog({ isOpen: open, position: null })}
       >
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -634,30 +636,69 @@ export const SquadView = () => {
               Choose a player to add to your squad from available {playerSelectionDialog.position} players within your budget.
             </DialogDescription>
           </DialogHeader>
-          
-          <div className="grid gap-4 max-h-96 overflow-y-auto">
-            {playerSelectionDialog.position && 
-              getAvailablePlayersForPosition(playerSelectionDialog.position).map((player) => (
-                <div
-                  key={player.id}
-                  className="flex items-center justify-center cursor-pointer"
-                  onClick={() => handlePlayerSelect(player)}
-                >
-                  <FifaCard
-                    player={player}
-                    size="medium"
-                  />
+
+          <div className="max-h-[60vh] overflow-y-auto p-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Player</TableHead>
+                  <TableHead>Team</TableHead>
+                  <TableHead>Rating</TableHead>
+                  <TableHead>Position</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {playerSelectionDialog.position &&
+                  getAvailablePlayersForPosition(playerSelectionDialog.position).map((player) => (
+                    <TableRow key={player.id}>
+                      <TableCell className="font-medium flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={getJerseyImage(player.team)} alt={player.name} className="object-cover" />
+                          <AvatarFallback>{player.name.substring(0, 2)}</AvatarFallback>
+                        </Avatar>
+                        {player.name}
+                      </TableCell>
+                      <TableCell>{player.team}</TableCell>
+                      <TableCell>
+                        <span className={`font-bold ${getRatingColor(player.rating)}`}>
+                          {player.rating}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={`${getPositionColor(player.position)}`} variant="secondary">
+                          {player.position}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-green-600 font-bold">
+                        {formatCurrency(player.price)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          size="sm"
+                          onClick={() => handlePlayerSelect(player)}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Select
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                }
+              </TableBody>
+            </Table>
+
+            {playerSelectionDialog.position &&
+              getAvailablePlayersForPosition(playerSelectionDialog.position).length === 0 && (
+                <div className="text-center py-12">
+                  <Users className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-muted-foreground">
+                    No {playerSelectionDialog.position} players available within your budget.
+                  </p>
                 </div>
-              ))
-            }
-            {playerSelectionDialog.position && 
-             getAvailablePlayersForPosition(playerSelectionDialog.position).length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">
-                  No {playerSelectionDialog.position} players available within your budget.
-                </p>
-              </div>
-            )}
+              )}
           </div>
         </DialogContent>
       </Dialog>

@@ -8,29 +8,72 @@ import { PlayersView } from '@/components/PlayersView';
 import { SquadView } from '@/components/SquadView';
 import { PSLDashboard } from '@/components/PSLDashboard';
 import { NewsView } from '@/components/NewsView';
-import { ApiSetup } from '@/components/ApiSetup';
 import { LiveGamesView } from '@/components/LiveGamesView';
+import { LeaderboardView } from '@/components/LeaderboardView';
 import {
   Trophy,
   Users,
   DollarSign,
   Target,
   LogOut,
-  Home,
   UserCircle,
   Database,
-  Download,
   Newspaper,
   Layout
 } from 'lucide-react';
 
-type DashboardView = 'home' | 'players' | 'squad' | 'psl' | 'news' | 'live-games' | 'fpls' | 'settings';
+type DashboardView = 'home' | 'players' | 'squad' | 'psl' | 'news' | 'live-games' | 'leaderboard' | 'fpls';
 
 const Dashboard = () => {
   const [currentView, setCurrentView] = useState<DashboardView>('news');
-  const [isPopulating, setIsPopulating] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout, simulateGameweekForUser, simulateGameweekForAllUsers } = useAuth();
   const { toast } = useToast();
+
+  const handleSimulateGameweek = async () => {
+    toast({ title: "Simulation Started", description: "Simulating gameweek matches..." });
+    const result = await simulateGameweekForUser();
+    if (result) {
+      toast({
+        title: `Gameweek ${result.gameweek} Complete!`,
+        description: `You scored ${result.totalPoints} points!`,
+        className: "bg-green-50 border-green-200"
+      });
+    } else {
+      toast({ title: "Simulation Failed", variant: "destructive" });
+    }
+  };
+
+  const handleSimulateAllUsers = async () => {
+    if (!user?.isAdmin) {
+      toast({
+        title: "Unauthorized",
+        description: "Only admins can perform this action",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Admin Action",
+      description: "Simulating gameweek for ALL users. This may take a moment..."
+    });
+
+    const success = await simulateGameweekForAllUsers();
+
+    if (success) {
+      toast({
+        title: "Success!",
+        description: "Gameweek simulated for all users with squads",
+        className: "bg-green-50 border-green-200"
+      });
+    } else {
+      toast({
+        title: "Simulation Failed",
+        description: "Failed to simulate gameweek for all users",
+        variant: "destructive"
+      });
+    }
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', {
@@ -45,52 +88,6 @@ const Dashboard = () => {
     return user?.squad.filter(player => player.position === position).length || 0;
   };
 
-  const handlePopulateDatabase = async () => {
-    const apiKey = localStorage.getItem('rapid_api_key');
-    if (!apiKey) {
-      toast({
-        title: "API Key Missing",
-        description: "Please connect your RapidAPI key in the Settings tab first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsPopulating(true);
-    try {
-      const { populateDatabaseWithApiData } = await import('@/utils/populateDatabase');
-      const result = await populateDatabaseWithApiData(apiKey);
-
-      if (!result.success) {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to populate database",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: `Database populated with ${result.count} players!`,
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to populate database",
-        variant: "destructive",
-      });
-    } finally {
-      setIsPopulating(false);
-    }
-  };
-
-  const handleMigrateLocalData = async () => {
-    toast({
-      title: "Info",
-      description: "Migration feature coming soon for Firebase",
-    });
-  };
-
   const renderNavigation = () => (
     <div className="bg-white shadow-sm border-b">
       <div className="container mx-auto px-4">
@@ -98,7 +95,7 @@ const Dashboard = () => {
           <div className="flex items-center space-x-8">
             <div className="flex items-center space-x-2">
               <Trophy className="h-8 w-8 text-green-600" />
-              <span className="text-2xl font-bold text-green-600">PSL</span>
+              <span className="text-2xl font-bold text-green-600">Touchline SA</span>
             </div>
 
             <nav className="flex space-x-4">
@@ -119,6 +116,14 @@ const Dashboard = () => {
                 <span>Fpls</span>
               </Button>
               <Button
+                variant={currentView === 'leaderboard' ? 'default' : 'ghost'}
+                onClick={() => setCurrentView('leaderboard')}
+                className="flex items-center space-x-2"
+              >
+                <Trophy className="h-4 w-4" />
+                <span>Leaderboard</span>
+              </Button>
+              <Button
                 variant={currentView === 'psl' ? 'default' : 'ghost'}
                 onClick={() => setCurrentView('psl')}
                 className="flex items-center space-x-2"
@@ -133,14 +138,6 @@ const Dashboard = () => {
               >
                 <Layout className="h-4 w-4" />
                 <span>Live Games</span>
-              </Button>
-              <Button
-                variant={currentView === 'settings' ? 'default' : 'ghost'}
-                onClick={() => setCurrentView('settings')}
-                className="flex items-center space-x-2"
-              >
-                <Database className="h-4 w-4" />
-                <span>API Setup</span>
               </Button>
             </nav>
           </div>
@@ -162,18 +159,16 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-    </div >
+    </div>
   );
 
   const renderHomeView = () => (
     <div className="space-y-6">
-      {/* Welcome Header */}
       <div className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg p-8">
         <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.fullName}!</h1>
         <p className="text-green-100">Ready to build your dream PSL squad?</p>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid md:grid-cols-4 gap-6">
         <Card className="card-hover">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -184,9 +179,6 @@ const Dashboard = () => {
             <div className="text-2xl font-bold text-green-600">
               {formatCurrency(user?.budget || 0)}
             </div>
-            <p className="text-xs text-muted-foreground">
-              of R1,000,000,000 total
-            </p>
           </CardContent>
         </Card>
 
@@ -197,32 +189,22 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{user?.squad.length || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              of 11 players maximum
-            </p>
           </CardContent>
         </Card>
 
         <Card className="card-hover">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Squad Value</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Points</CardTitle>
             <Trophy className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(
-                user?.squad.reduce((total, player) => total + player.price, 0) || 0
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Total spent on players
-            </p>
+            <div className="text-2xl font-bold">{user?.totalPoints || 0}</div>
           </CardContent>
         </Card>
 
         <Card className="card-hover">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
+            <CardTitle className="text-sm font-medium">Avg Rating</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -232,14 +214,10 @@ const Dashboard = () => {
                 : 0
               }
             </div>
-            <p className="text-xs text-muted-foreground">
-              Squad overall rating
-            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Squad Formation Preview */}
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -297,24 +275,31 @@ const Dashboard = () => {
               <Target className="h-4 w-4 mr-2" />
               View My Squad
             </Button>
-            <Button
-              variant="secondary"
-              className="w-full"
-              onClick={handlePopulateDatabase}
-              disabled={isPopulating}
-            >
-              <Database className="h-4 w-4 mr-2" />
-              {isPopulating ? 'Populating...' : 'Populate Database'}
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleMigrateLocalData}
-              disabled={isPopulating}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              {isPopulating ? 'Migrating...' : 'Migrate Local Data'}
-            </Button>
+
+            {user?.isAdmin && (
+              <div className="pt-4 border-t">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-gray-500 font-semibold uppercase">Admin Zone</p>
+                  <Badge variant="destructive" className="text-xs">ADMIN</Badge>
+                </div>
+                <div className="space-y-2">
+                  <Button
+                    onClick={handleSimulateGameweek}
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                  >
+                    <Database className="h-4 w-4 mr-2" />
+                    Simulate My Gameweek
+                  </Button>
+                  <Button
+                    onClick={handleSimulateAllUsers}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    Simulate ALL Users Gameweek
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -324,14 +309,14 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {renderNavigation()}
-
       <div className="container mx-auto px-4 py-8">
         {currentView === 'news' && <NewsView />}
         {currentView === 'fpls' && (
           <div className="space-y-6">
-            <div className="flex space-x-4 mb-6">
-              <Button onClick={() => setCurrentView('squad')} variant="outline">My Squad</Button>
-              <Button onClick={() => setCurrentView('players')} variant="outline">Transfer Market</Button>
+            <div className="flex space-x-4 mb-6 text-sm">
+              <Button onClick={() => setCurrentView('squad')} variant="outline" size="sm">My Squad</Button>
+              <Button onClick={() => setCurrentView('players')} variant="outline" size="sm">Transfer Market</Button>
+              <Button onClick={() => setCurrentView('leaderboard')} variant="outline" size="sm">Leaderboard</Button>
             </div>
             {renderHomeView()}
           </div>
@@ -348,9 +333,9 @@ const Dashboard = () => {
             <PlayersView />
           </div>
         )}
+        {currentView === 'leaderboard' && <LeaderboardView />}
         {currentView === 'psl' && <PSLDashboard />}
         {currentView === 'live-games' && <LiveGamesView />}
-        {currentView === 'settings' && <ApiSetup />}
       </div>
     </div>
   );

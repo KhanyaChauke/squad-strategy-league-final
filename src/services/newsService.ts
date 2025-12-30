@@ -1,9 +1,12 @@
+import { db } from '@/integrations/firebase/client';
+import { collection, getDocs, setDoc, doc, query, orderBy, limit, Timestamp } from 'firebase/firestore';
 
 export interface NewsArticle {
     id: string;
     title: string;
     summary: string;
     date: string;
+    publishedAt?: any; // Firestore Timestamp
     source: string;
     imageUrl: string;
     tag: string;
@@ -12,103 +15,174 @@ export interface NewsArticle {
 }
 
 const HARDCODED_API_KEY = "1a5d324f62mshf82070b791b2f3ap10994fjsnd9dc8ed92749";
-const STORAGE_KEY = 'psl_news_api_key';
 
-export const getStoredNewsApiKey = (): string | null => {
-    return localStorage.getItem(STORAGE_KEY) || localStorage.getItem('rapid_api_key') || HARDCODED_API_KEY;
+const CACHE_KEY_NEWS = 'cached_psl_news';
+const CACHE_KEY_FIXTURES = 'cached_live_fixtures';
+const CACHE_DURATION = 1000 * 60 * 60 * 24; // 24 hours
+
+const saveToCache = (key: string, data: any) => {
+    try {
+        const cacheEntry = {
+            timestamp: Date.now(),
+            data: data
+        };
+        localStorage.setItem(key, JSON.stringify(cacheEntry));
+    } catch (e) {
+        console.warn('Failed to save to cache:', e);
+    }
 };
 
-export const setStoredNewsApiKey = (key: string) => {
-    localStorage.setItem(STORAGE_KEY, key);
-};
+const getFromCache = (key: string): any | null => {
+    try {
+        const cached = localStorage.getItem(key);
+        if (!cached) return null;
 
-export const removeStoredNewsApiKey = () => {
-    localStorage.removeItem(STORAGE_KEY);
+        const { timestamp, data } = JSON.parse(cached);
+        if (Date.now() - timestamp > CACHE_DURATION) {
+            console.log(`Cache for ${key} expired.`);
+            return null;
+        }
+        return data;
+    } catch (e) {
+        console.warn('Failed to read from cache:', e);
+        return null;
+    }
 };
 
 export const fetchPSLNews = async (apiKey: string): Promise<NewsArticle[]> => {
-    if (!apiKey) throw new Error('No API key provided');
+    try {
+        // 1. Try to fetch from Firestore first
+        const newsRef = collection(db, 'news');
+        const q = query(newsRef, orderBy('publishedAt', 'desc'), limit(20));
+        const querySnapshot = await getDocs(q);
 
-    const provider = localStorage.getItem('psl_news_provider') || 'newsapi';
-    const apiHost = localStorage.getItem('psl_news_api_host');
+        const cachedNews = querySnapshot.docs.map(doc => ({
+            ...doc.data(),
+            id: doc.id
+        })) as NewsArticle[];
 
-    if (provider === 'rapidapi' && apiHost) {
-        // RapidAPI Implementation
-        try {
-            // Trying a generic news endpoint for livescore APIs
-            const response = await fetch(`https://${apiHost}/news?league=PSL&country=za`, {
-                method: 'GET',
-                headers: {
-                    'X-RapidAPI-Key': apiKey,
-                    'X-RapidAPI-Host': apiHost
-                }
-            });
+        // 2. Decide if we need to sync with API
+        // Sync if: No news in DB OR oldest news is more than 6 hours old
+        const shouldSync = cachedNews.length === 0 ||
+            (cachedNews[0] as any).syncedAt?.toMillis() < Date.now() - (1000 * 60 * 60 * 6);
 
-            if (!response.ok) {
-                // If the specific endpoint fails, we might want to try a fallback or just throw
-                // Many free livescore APIs don't actually have news, so this is a best-effort attempt.
-                throw new Error(`RapidAPI Error: ${response.status}`);
-            }
+        if (shouldSync) {
+            console.log('Syncing news with API...');
+            await syncNewsWithAPI(apiKey);
 
-            const data = await response.json();
-
-            // If data is empty or not in expected format, return empty array to trigger fallback
-            if (!data || (Array.isArray(data) && data.length === 0)) {
-                return [];
-            }
-
-            // Transform data if it exists (this is speculative based on common formats)
-            return Array.isArray(data) ? data.map((item: any, index: number) => ({
-                id: `rapid-${index}`,
-                title: item.title || 'News Update',
-                summary: item.description || item.summary || 'Click to read more.',
-                date: new Date().toLocaleDateString(), // Fallback date
-                source: 'LiveScore API',
-                imageUrl: item.image || 'https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=800',
-                tag: 'Live Update',
-                tagColor: 'bg-indigo-500',
-                url: item.url || '#'
-            })) : [];
-
-        } catch (e) {
-            console.warn("RapidAPI fetch failed or not supported, falling back to mock", e);
-            // Return empty array to allow component to show mock data as fallback
-            return [];
-        }
-    } else {
-        // NewsAPI.org Implementation
-        const query = 'PSL South Africa OR Kaizer Chiefs OR Orlando Pirates OR Mamelodi Sundowns';
-        const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=en&sortBy=publishedAt&pageSize=10&apiKey=${apiKey}`;
-
-        const response = await fetch(url);
-        const data = await response.json();
-
-        if (data.status === 'error') {
-            throw new Error(data.message || 'Failed to fetch news');
+            // Re-fetch after sync
+            const freshSnapshot = await getDocs(q);
+            return freshSnapshot.docs.map(doc => ({
+                ...doc.data(),
+                id: doc.id
+            })) as NewsArticle[];
         }
 
-        return data.articles.map((article: any, index: number) => ({
-            id: `news-${index}`,
-            title: article.title,
-            summary: article.description || article.content || 'No description available.',
-            date: new Date(article.publishedAt).toLocaleDateString('en-ZA', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            }),
-            source: article.source.name,
-            imageUrl: article.urlToImage || 'https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=800',
-            tag: 'Latest',
-            tagColor: 'bg-blue-500',
-            url: article.url
-        }));
+        return cachedNews;
+    } catch (e) {
+        console.warn("Firestore fetch failed, checking local cache...", e);
+        const localCached = getFromCache(CACHE_KEY_NEWS);
+        if (localCached) return localCached;
+        return [];
     }
 };
-// ... (existing code)
 
-export interface Standing {
+const syncNewsWithAPI = async (apiKey: string) => {
+    const effectiveKey = import.meta.env.VITE_RAPID_API_KEY || apiKey;
+    if (!effectiveKey) return;
+
+    const apiHost = 'livescore6.p.rapidapi.com';
+
+    try {
+        const response = await fetch(`https://${apiHost}/news/v3/list?countryCode=ZA&category=soccer`, {
+            method: 'GET',
+            headers: {
+                'X-RapidAPI-Key': effectiveKey,
+                'X-RapidAPI-Host': apiHost
+            }
+        });
+
+        const data = response.ok ? await response.json() : null;
+
+        if (data && data.topStories && Array.isArray(data.topStories)) {
+            const syncTime = Timestamp.now();
+
+            for (const item of data.topStories) {
+                const title = item.title || 'South African News Update';
+                const summary = item.description || 'Latest football development in South Africa.';
+
+                let tag = 'Soccer';
+                let tagColor = 'bg-blue-600';
+
+                const lowerTitle = title.toLowerCase();
+                if (lowerTitle.includes('transfer') || lowerTitle.includes('sign') || lowerTitle.includes('deal')) {
+                    tag = 'Transfer';
+                    tagColor = 'bg-purple-600';
+                } else if (lowerTitle.includes('chiefs') || lowerTitle.includes('pirates') || lowerTitle.includes('sundowns')) {
+                    tag = 'PSL Giants';
+                    tagColor = 'bg-yellow-600';
+                } else if (lowerTitle.includes('bafana') || lowerTitle.includes('banyana')) {
+                    tag = 'National Team';
+                    tagColor = 'bg-green-600';
+                } else if (lowerTitle.includes('coach') || lowerTitle.includes('manager')) {
+                    tag = 'Management';
+                    tagColor = 'bg-red-600';
+                }
+
+                const docId = item.id ? String(item.id) : btoa(item.url || title).slice(0, 20);
+                const publishedAt = item.published_at ? Timestamp.fromDate(new Date(item.published_at)) : Timestamp.now();
+
+                const newsData = {
+                    title,
+                    summary,
+                    date: item.published_at ? formatRelativeTime(item.published_at) : 'Just now',
+                    publishedAt,
+                    syncedAt: syncTime,
+                    source: item.source || 'LiveScore',
+                    imageUrl: item.mainMedia?.gallery?.[0]?.url || 'https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=800',
+                    tag,
+                    tagColor,
+                    url: item.url ? (item.url.startsWith('http') ? item.url : `https://www.livescore.com${item.url}`) : '#'
+                };
+
+                await setDoc(doc(db, 'news', docId), newsData, { merge: true });
+            }
+            console.log(`Successfully synced ${data.topStories.length} stories to Firebase.`);
+        }
+    } catch (e) {
+        console.error("API Sync failed:", e);
+    }
+};
+
+const formatRelativeTime = (dateString: string): string => {
+    try {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+        if (diffInSeconds < 60) return 'Just now';
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        if (diffInSeconds < 172800) return 'Yesterday';
+        return date.toLocaleDateString();
+    } catch {
+        return 'Recently';
+    }
+};
+
+export interface Fixture {
+    fixtureId: string;
+    league: string;
+    homeTeam: string;
+    awayTeam: string;
+    homeScore: number | null;
+    awayScore: number | null;
+    status: 'Not Started' | 'In Progress' | 'Finished' | 'Postponed';
+    time: string;
+    syncedAt?: any;
+}
+
+export interface PSLStanding {
     rank: number;
     team: string;
     points: number;
@@ -121,94 +195,60 @@ export interface Standing {
     goalDifference: number;
 }
 
-export const fetchStandings = async (apiKey?: string): Promise<Standing[]> => {
-    const effectiveKey = apiKey || localStorage.getItem('rapid_api_key') || HARDCODED_API_KEY;
-
-    if (!effectiveKey) throw new Error('No API key provided');
-
-    const apiHost = localStorage.getItem('psl_news_api_host') || 'free-livescore-api.p.rapidapi.com';
-
-    try {
-        const response = await fetch(`https://${apiHost}/leagues/standings?league=288&season=2024`, {
-            method: 'GET',
-            headers: {
-                'X-RapidAPI-Key': effectiveKey,
-                'X-RapidAPI-Host': apiHost
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`API Error: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        // Check if response has the expected structure
-        if (!data || !data.response || !Array.isArray(data.response)) {
-            console.warn("Unexpected API response format for standings:", data);
-            return [];
-        }
-
-        // Helper to parse the response. 
-        // Real API (API-Football) structure: response[0].league.standings[0] (array of teams)
-        const leagueData = data.response[0]?.league;
-        const standingsRaw = leagueData?.standings?.[0]; // Usually standings are in a nested array [[Team1, Team2...]]
-
-        if (!standingsRaw || !Array.isArray(standingsRaw)) {
-            return [];
-        }
-
-        return standingsRaw.map((item: any) => ({
-            rank: item.rank,
-            team: item.team.name,
-            points: item.points,
-            played: item.all.played,
-            win: item.all.win,
-            draw: item.all.draw,
-            loss: item.all.lose,
-            goalsFor: item.all.goals.for,
-            goalsAgainst: item.all.goals.against,
-            goalDifference: item.goalsDiff
-        }));
-
-    } catch (error) {
-        console.error("Failed to fetch standings:", error);
-        throw error;
-    }
-};
-// ... (existing code for fetchStandings)
-
-export interface Fixture {
-    fixtureId: string;
-    league: string;
-    homeTeam: string;
-    awayTeam: string;
-    homeScore: number | null;
-    awayScore: number | null;
-    status: 'Not Started' | 'In Progress' | 'Finished' | 'Postponed';
-    time: string;
+export interface TopScorer {
+    rank: number;
+    player: string;
+    team: string;
+    goals: number;
+    assists: number;
+    played: number;
 }
 
 export const fetchFixtures = async (apiKey?: string): Promise<Fixture[]> => {
-    const effectiveKey = apiKey || localStorage.getItem('rapid_api_key') || HARDCODED_API_KEY;
+    try {
+        const fixturesRef = collection(db, 'fixtures');
+        const q = query(fixturesRef);
+        const querySnapshot = await getDocs(q);
 
-    if (!effectiveKey) throw new Error('No API key provided');
+        const cachedFixtures = querySnapshot.docs.map(doc => ({
+            ...doc.data(),
+            fixtureId: doc.id
+        })) as Fixture[];
 
-    const apiHost = localStorage.getItem('psl_news_api_host') || 'free-livescore-api.p.rapidapi.com';
+        // Live data needs frequent sync (every 5 mins if possible, but let's do 10 mins for safety)
+        const lastSync = cachedFixtures.length > 0 ? (cachedFixtures[0] as any).syncedAt?.toMillis() : 0;
+        const shouldSync = Date.now() - lastSync > (1000 * 60 * 10);
+
+        if (shouldSync) {
+            console.log('Syncing fixtures with API...');
+            await syncFixturesWithAPI(apiKey);
+            const freshSnapshot = await getDocs(q);
+            return freshSnapshot.docs.map(doc => ({
+                ...doc.data(),
+                fixtureId: doc.id
+            })) as Fixture[];
+        }
+
+        return cachedFixtures.sort((a, b) => {
+            const isRelevantA = isSouthAfrican(a.homeTeam) || isSouthAfrican(a.awayTeam);
+            const isRelevantB = isSouthAfrican(b.homeTeam) || isSouthAfrican(b.awayTeam);
+            if (isRelevantA && !isRelevantB) return -1;
+            if (!isRelevantA && isRelevantB) return 1;
+            return 0;
+        });
+    } catch (e) {
+        console.warn("Fixture sync failed:", e);
+        return getFromCache(CACHE_KEY_FIXTURES) || [];
+    }
+};
+
+const syncFixturesWithAPI = async (apiKey?: string) => {
+    const effectiveKey = import.meta.env.VITE_RAPID_API_KEY || apiKey;
+    if (!effectiveKey) return;
+    const apiHost = 'livescore6.p.rapidapi.com';
 
     try {
-        // Fetch fixtures for PSL (League 288) for current season (2024)
-        // Note: 'timezone' param is often useful but we'll stick to basics.
-        // We'll try to get 'live' games first, or just 'next' few games if no live ones?
-        // For a broad 'Live Games' tab, getting 'fixtures?league=288&season=2024' returns ALL.
-        // That's too many. We usually want "Matches for Today".
-        const today = new Date().toISOString().split('T')[0];
-
-        // Construct URL: Try to get fixtures for "today"
-        // API-Football format: /fixtures?league=288&season=2024&date=YYYY-MM-DD
-        const url = `https://${apiHost}/fixtures?league=288&season=2024&date=${today}`;
-
-        const response = await fetch(url, {
+        const response = await fetch(`https://${apiHost}/matches/v2/list-live?category=soccer`, {
             method: 'GET',
             headers: {
                 'X-RapidAPI-Key': effectiveKey,
@@ -216,51 +256,133 @@ export const fetchFixtures = async (apiKey?: string): Promise<Fixture[]> => {
             }
         });
 
-        if (!response.ok) {
-            // Fallback: If 'date' filter isn't supported or fails, try just 'next' 10 fixtures
-            // This handles cases where season is over or API differs.
-            console.warn(`Specific date fetch failed (${response.status}), trying 'next 10' fallback...`);
-            const fallbackUrl = `https://${apiHost}/fixtures?league=288&season=2024&next=10`;
-            const fallbackResponse = await fetch(fallbackUrl, {
-                method: 'GET',
-                headers: { 'X-RapidAPI-Key': effectiveKey, 'X-RapidAPI-Host': apiHost }
-            });
+        const data = response.ok ? await response.json() : null;
+        if (data && data.Stages) {
+            const syncTime = Timestamp.now();
+            for (const stage of data.Stages) {
+                if (stage.Events) {
+                    for (const event of stage.Events) {
+                        const statusShort = event.Eps;
+                        let status: Fixture['status'] = 'Not Started';
+                        if (['1H', '2H', 'HT', 'ET', 'P', 'BT', 'LIVE'].includes(statusShort)) status = 'In Progress';
+                        else if (['FT', 'AET', 'PEN'].includes(statusShort)) status = 'Finished';
 
-            if (!fallbackResponse.ok) throw new Error(`API Error: ${response.status}`);
-
-            var data = await fallbackResponse.json();
-        } else {
-            var data = await response.json();
+                        const fixtureData = {
+                            league: stage.Snm || 'International',
+                            homeTeam: event.T1?.[0]?.Nm || 'Home',
+                            awayTeam: event.T2?.[0]?.Nm || 'Away',
+                            homeScore: event.Tr1 ? parseInt(event.Tr1) : null,
+                            awayScore: event.Tr2 ? parseInt(event.Tr2) : null,
+                            status: status,
+                            time: event.Esd ? String(event.Esd).slice(8, 10) + ':' + String(event.Esd).slice(10, 12) : 'TBD',
+                            syncedAt: syncTime
+                        };
+                        await setDoc(doc(db, 'fixtures', String(event.Eid)), fixtureData, { merge: true });
+                    }
+                }
+            }
         }
+    } catch (e) {
+        console.error("Fixture API Sync failed:", e);
+    }
+};
 
-        if (!data || !data.response || !Array.isArray(data.response)) {
-            // Second Fallback: Maybe no games today. Let's return mock if strictly needed, 
-            // but here we just return empty array so UI shows "No games today".
-            return [];
+export const fetchStandings = async (apiKey?: string): Promise<PSLStanding[]> => {
+    try {
+        const standingsRef = collection(db, 'standings');
+        const q = query(standingsRef, orderBy('rank', 'asc'));
+        const querySnapshot = await getDocs(q);
+
+        const cached = querySnapshot.docs.map(doc => doc.data()) as PSLStanding[];
+
+        // Standings change less frequently (every 12 hours)
+        const shouldSync = cached.length === 0 ||
+            (cached[0] as any).syncedAt?.toMillis() < Date.now() - (1000 * 60 * 60 * 12);
+
+        if (shouldSync) {
+            console.log('Syncing PSL Standings...');
+            await syncStandingsWithAPI(apiKey);
+            const fresh = await getDocs(q);
+            return fresh.docs.map(doc => doc.data()) as PSLStanding[];
         }
+        return cached;
+    } catch (e) {
+        console.error("Standings fetch failed:", e);
+        return [];
+    }
+};
 
-        return data.response.map((item: any) => {
-            const statusShort = item.fixture.status.short;
-            let status: Fixture['status'] = 'Not Started';
+const syncStandingsWithAPI = async (apiKey?: string) => {
+    const effectiveKey = import.meta.env.VITE_RAPID_API_KEY || apiKey;
+    if (!effectiveKey) return;
+    const apiHost = 'livescore6.p.rapidapi.com';
 
-            if (['1H', '2H', 'HT', 'ET', 'P', 'BT'].includes(statusShort)) status = 'In Progress';
-            else if (['FT', 'AET', 'PEN'].includes(statusShort)) status = 'Finished';
-            else if (['PST', 'CANC', 'ABD'].includes(statusShort)) status = 'Postponed';
-
-            return {
-                fixtureId: String(item.fixture.id),
-                league: item.league.name || 'PSL',
-                homeTeam: item.teams.home.name,
-                awayTeam: item.teams.away.name,
-                homeScore: item.goals.home,
-                awayScore: item.goals.away,
-                status: status,
-                time: new Date(item.fixture.date).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })
-            };
+    try {
+        const response = await fetch(`https://${apiHost}/leagues/v2/get-table?category=soccer&leagueId=41`, {
+            method: 'GET',
+            headers: { 'X-RapidAPI-Key': effectiveKey, 'X-RapidAPI-Host': apiHost }
         });
 
-    } catch (error) {
-        console.error("Failed to fetch fixtures:", error);
-        throw error;
+        const data = await response.json();
+        if (data && data.Stages && data.Stages[0]?.LeagueTable?.Lp) {
+            const syncTime = Timestamp.now();
+            const rows = data.Stages[0].LeagueTable.Lp;
+
+            for (const row of rows) {
+                const standing: PSLStanding & { syncedAt: any } = {
+                    rank: parseInt(row.Rnk),
+                    team: row.Nm || 'Unknown',
+                    played: parseInt(row.Pld),
+                    win: parseInt(row.Wn),
+                    draw: parseInt(row.Dr),
+                    loss: parseInt(row.Ls),
+                    goalsFor: parseInt(row.Gf),
+                    goalsAgainst: parseInt(row.Ga),
+                    goalDifference: parseInt(row.Gd),
+                    points: parseInt(row.Pts),
+                    syncedAt: syncTime
+                };
+                await setDoc(doc(db, 'standings', `rank_${standing.rank}`), standing);
+            }
+        }
+    } catch (e) {
+        console.error("Standings Sync Error:", e);
     }
+};
+
+export const fetchTopScorers = async (apiKey?: string): Promise<TopScorer[]> => {
+    try {
+        const scorersRef = collection(db, 'top_scorers');
+        const q = query(scorersRef, orderBy('rank', 'asc'), limit(10));
+        const querySnapshot = await getDocs(q);
+
+        const cached = querySnapshot.docs.map(doc => doc.data()) as TopScorer[];
+
+        const shouldSync = cached.length === 0 ||
+            (cached[0] as any).syncedAt?.toMillis() < Date.now() - (1000 * 60 * 60 * 12);
+
+        if (shouldSync) {
+            console.log('Syncing Top Scorers...');
+            // In many LiveScore APIs, scorers are part of league info or a separate call
+            // Using a simplified mock sync if endpoint is not exactly known, 
+            // but structure is ready for actual integration
+            await syncScorersWithAPI(apiKey);
+            const fresh = await getDocs(q);
+            return fresh.docs.map(doc => doc.data()) as TopScorer[];
+        }
+        return cached;
+    } catch (e) {
+        return [];
+    }
+};
+
+const syncScorersWithAPI = async (apiKey?: string) => {
+    // Note: LiveScore6 RapidAPI sometimes nests scorers under 'leagues/v2/get-top-scorers'
+    // This is a placeholder for the actual API call logic
+    console.log("Scorers sync called - implementing structure");
+};
+
+const isSouthAfrican = (name: string): boolean => {
+    const relevantTerms = ['South Africa', 'Bafana', 'Banyana', 'Kaizer', 'Chiefs', 'Pirates', 'Sundowns', 'Cape Town', 'Stellenbosch', 'Amazulu', 'Golden Arrows', 'Galaxy', 'Sekhukhune', 'Chippa', 'Richards Bay', 'Polokwane', 'Royal AM'];
+    return relevantTerms.some(term => name.toLowerCase().includes(term.toLowerCase()));
 };

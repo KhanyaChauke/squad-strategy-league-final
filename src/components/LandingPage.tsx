@@ -33,7 +33,7 @@ const LandingPage = () => {
       if (success) {
         toast({
           title: "Welcome back!",
-          description: "Successfully logged in to FPSL"
+          description: "Successfully logged in to Touchline SA"
         });
       } else {
         toast({
@@ -109,10 +109,10 @@ const LandingPage = () => {
               </div>
             </div>
             <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white to-green-200 bg-clip-text text-transparent">
-              PSL
+              Touchline SA
             </h1>
             <p className="text-xl md:text-2xl mb-4 text-green-100">
-              Premier Soccer League Fantasy
+              The Ultimate South African Fantasy Soccer
             </p>
             <p className="text-lg mb-8 text-green-200 max-w-2xl mx-auto">
               Build your dream PSL squad, manage your budget, and compete with the best players from South African football.
@@ -125,7 +125,7 @@ const LandingPage = () => {
       <div className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">
-            Why Choose FPSL?
+            Why Choose Touchline SA?
           </h2>
           <div className="grid md:grid-cols-4 gap-8">
             <div className="text-center">
@@ -166,7 +166,7 @@ const LandingPage = () => {
           <div className="max-w-md mx-auto">
             <Card className="shadow-xl">
               <CardHeader className="text-center">
-                <CardTitle className="text-2xl">Join FPSL Today</CardTitle>
+                <CardTitle className="text-2xl">Join Touchline SA Today</CardTitle>
                 <CardDescription>
                   Start building your dream PSL squad
                 </CardDescription>
@@ -208,7 +208,7 @@ const LandingPage = () => {
                         {isLoading ? 'Signing In...' : 'Sign In'}
                       </Button>
                       <p className="text-sm text-center text-gray-600 mt-4">
-                        Demo: demo@fpsl.com / demo123
+                        Demo: demo@touchlinesa.com / demo123
                       </p>
                     </form>
                   </TabsContent>

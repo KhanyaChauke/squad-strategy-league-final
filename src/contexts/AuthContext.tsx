@@ -10,6 +10,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { mockDb } from '@/services/mockDatabase';
+import { GameweekResult, simulateGameweek } from '@/services/gameweekService';
 
 // Toggle this to switch between Firebase and Local Mock DB
 const USE_MOCK_DB = false;
@@ -23,6 +24,7 @@ export interface User {
   bench: Player[];
   teamName?: string;
   emailVerified: boolean;
+  isAdmin?: boolean;
   selectedFormation?: {
     id: string;
     name: string;
@@ -33,6 +35,11 @@ export interface User {
       ATT: number;
     };
   };
+  totalPoints: number;
+  history: GameweekResult[];
+  transfersMade: number;
+  freeTransfersAvailable: number;
+  transferCost: number;
 }
 
 export interface Player {
@@ -57,13 +64,16 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   register: (fullName: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  addPlayerToSquad: (player: Player) => boolean;
-  removePlayerFromSquad: (playerId: string) => void;
-  addPlayerToBench: (player: Player) => boolean;
-  removePlayerFromBench: (playerId: string) => void;
-  substitutePlayer: (squadPlayerId: string, benchPlayerId: string) => boolean;
-  setFormation: (formation: { id: string; name: string; positions: { GK: number; DEF: number; MID: number; ATT: number } }) => void;
+  addPlayerToSquad: (player: Player) => Promise<boolean>;
+  removePlayerFromSquad: (playerId: string) => Promise<void>;
+  addPlayerToBench: (player: Player) => Promise<boolean>;
+  removePlayerFromBench: (playerId: string) => Promise<void>;
+  substitutePlayer: (squadPlayerId: string, benchPlayerId: string) => Promise<boolean>;
+  setFormation: (formation: { id: string; name: string; positions: { GK: number; DEF: number; MID: number; ATT: number } }) => Promise<void>;
   updateTeamName: (name: string) => Promise<boolean>;
+  saveSquad: () => Promise<boolean>;
+  simulateGameweekForUser: () => Promise<GameweekResult | null>;
+  simulateGameweekForAllUsers: () => Promise<boolean>;
   isLoading: boolean;
   error: string | null;
 }
@@ -76,6 +86,14 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+};
+
+// Admin email constant
+const ADMIN_EMAIL = 'khc.chauke@gmail.com';
+
+// Helper to check if email is admin
+const isAdminEmail = (email: string): boolean => {
+  return email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -116,8 +134,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 console.log("[AuthContext] Profile snapshot update. Exists:", docSnapshot.exists());
                 if (docSnapshot.exists()) {
                   const userData = docSnapshot.data() as User;
-                  // Ensure ID matches auth ID
-                  setUser({ ...userData, id: authUser.uid, email: authUser.email || '' });
+                  setUser({
+                    totalPoints: 0,
+                    history: [],
+                    transfersMade: 0,
+                    freeTransfersAvailable: 1,
+                    transferCost: 0,
+                    squad: [],
+                    bench: [],
+                    budget: 1000000000,
+                    ...userData,
+                    id: authUser.uid,
+                    email: authUser.email || '',
+                    isAdmin: isAdminEmail(authUser.email || '')
+                  });
                   setIsLoading(false);
                 } else {
                   console.log('[AuthContext] User document not found. Attempting self-healing...');
@@ -131,7 +161,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     squad: [],
                     bench: [],
                     emailVerified: authUser.emailVerified,
-                    teamName: ''
+                    teamName: '',
+                    totalPoints: 0,
+                    history: [],
+                    transfersMade: 0,
+                    freeTransfersAvailable: 1,
+                    transferCost: 0,
+                    isAdmin: isAdminEmail(authUser.email || '')
                   };
 
                   try {
@@ -231,7 +267,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           squad: [],
           bench: [],
           emailVerified: authUser.emailVerified,
-          teamName: ''
+          teamName: '',
+          totalPoints: 0,
+          history: [],
+          transfersMade: 0,
+          freeTransfersAvailable: 1,
+          transferCost: 0,
+          isAdmin: isAdminEmail(email)
         };
 
         await setDoc(doc(db, 'users', authUser.uid), newUser);
@@ -261,19 +303,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (USE_MOCK_DB) {
       mockDb.updateUser(updatedUser);
     } else {
-      if (!user) return;
+      if (!user) {
+        console.warn("[AuthContext] syncUser called but no user is currently logged in.");
+        return;
+      }
       try {
-        console.log(`[AuthContext] Syncing user ${user.id} to Firestore... squad size: ${updatedUser.squad.length}`);
+        console.log(`[AuthContext] PERSISTENCE START: User ${user.id}`);
+        console.log(`[AuthContext] SAVING: Squad(${updatedUser.squad.length}), Bench(${updatedUser.bench.length}), Points(${updatedUser.totalPoints})`);
+
         const userDocRef = doc(db, 'users', user.id);
-        await updateDoc(userDocRef, { ...updatedUser });
-        console.log("[AuthContext] Sync successful.");
+
+        // Clean up any potential undefined values just in case
+        const dataToSave = JSON.parse(JSON.stringify(updatedUser));
+
+        await setDoc(userDocRef, dataToSave);
+        console.log("[AuthContext] PERSISTENCE SUCCESS: Data written to Firestore.");
       } catch (error) {
         console.error("Error syncing user to Firestore:", error);
+        throw error; // Re-throw to allow callers to handle it
       }
     }
   };
 
-  const addPlayerToSquad = (player: Player): boolean => {
+  const addPlayerToSquad = async (player: Player): Promise<boolean> => {
     if (!user) return false;
 
     if (user.selectedFormation) {
@@ -303,26 +355,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       squad: [...user.squad, player]
     };
 
-    syncUser(updatedUser);
+    await syncUser(updatedUser);
     return true;
   };
 
-  const removePlayerFromSquad = (playerId: string) => {
+  const removePlayerFromSquad = async (playerId: string) => {
     if (!user) return;
 
     const playerToRemove = user.squad.find(p => p.id === playerId);
     if (!playerToRemove) return;
 
+    // Track transfer if squad was full (already playing)
+    const isTransferred = user.squad.length + user.bench.length === 15;
+
     const updatedUser = {
       ...user,
       budget: user.budget + playerToRemove.price,
-      squad: user.squad.filter(p => p.id !== playerId)
+      squad: user.squad.filter(p => p.id !== playerId),
+      transfersMade: isTransferred ? (user.transfersMade || 0) + 1 : (user.transfersMade || 0)
     };
 
-    syncUser(updatedUser);
+    // Calculate hit if transfers exceed free ones
+    if (isTransferred && updatedUser.transfersMade > updatedUser.freeTransfersAvailable) {
+      updatedUser.transferCost = (updatedUser.transferCost || 0) + 4;
+    }
+
+    await syncUser(updatedUser);
   };
 
-  const addPlayerToBench = (player: Player): boolean => {
+  const addPlayerToBench = async (player: Player): Promise<boolean> => {
     if (!user) return false;
 
     if (user.bench.length >= 4) {
@@ -343,11 +404,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       bench: [...user.bench, player]
     };
 
-    syncUser(updatedUser);
+    await syncUser(updatedUser);
     return true;
   };
 
-  const removePlayerFromBench = (playerId: string) => {
+  const removePlayerFromBench = async (playerId: string) => {
     if (!user) return;
 
     const playerToRemove = user.bench.find(p => p.id === playerId);
@@ -359,10 +420,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       bench: user.bench.filter(p => p.id !== playerId)
     };
 
-    syncUser(updatedUser);
+    await syncUser(updatedUser);
   };
 
-  const substitutePlayer = (squadPlayerId: string, benchPlayerId: string): boolean => {
+  const substitutePlayer = async (squadPlayerId: string, benchPlayerId: string): Promise<boolean> => {
     if (!user) return false;
 
     const squadPlayer = user.squad.find(p => p.id === squadPlayerId);
@@ -380,11 +441,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       bench: user.bench.map(p => p.id === benchPlayerId ? squadPlayer : p)
     };
 
-    syncUser(updatedUser);
+    await syncUser(updatedUser);
     return true;
   };
 
-  const setFormation = (formation: { id: string; name: string; positions: { GK: number; DEF: number; MID: number; ATT: number } }) => {
+  const setFormation = async (formation: { id: string; name: string; positions: { GK: number; DEF: number; MID: number; ATT: number } }) => {
     if (!user) return;
 
     const updatedUser = {
@@ -392,7 +453,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       selectedFormation: formation
     };
 
-    syncUser(updatedUser);
+    await syncUser(updatedUser);
   };
 
   const updateTeamName = async (name: string): Promise<boolean> => {
@@ -417,6 +478,117 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const saveSquad = async (): Promise<boolean> => {
+    if (!user) return false;
+    try {
+      console.log(`[AuthContext] Manual save requested for user ${user.id}`);
+      console.log(`[AuthContext] Data being saved - Squad: ${user.squad.length}, Bench: ${user.bench.length}, Budget: ${user.budget}`);
+      await syncUser(user);
+      return true;
+    } catch (error) {
+      console.error('Error manually saving squad:', error);
+      return false;
+    }
+  };
+
+  const simulateGameweekForUser = async (): Promise<GameweekResult | null> => {
+    if (!user) return null;
+
+    try {
+      // Determine next GW number (current history length + 1)
+      const nextGw = (user.history?.length || 0) + 1;
+
+      // Run simulation
+      const result = simulateGameweek(user.squad, user.bench, nextGw);
+
+      // Update User
+      const updatedUser: User = {
+        ...user,
+        totalPoints: (user.totalPoints || 0) + result.totalPoints - (user.transferCost || 0),
+        history: [...(user.history || []), result],
+        transfersMade: 0, // Reset transfers for next week
+        transferCost: 0, // Reset hits
+        freeTransfersAvailable: Math.min(2, (user.freeTransfersAvailable || 1) + 1) // Roll over free transfer (max 2)
+      };
+
+      await syncUser(updatedUser);
+      return result;
+
+    } catch (e) {
+      console.error("Simulation failed:", e);
+      return null;
+    }
+  };
+
+  // Admin-only function to simulate gameweek for ALL users
+  const simulateGameweekForAllUsers = async (): Promise<boolean> => {
+    if (!user?.isAdmin) {
+      console.error('Unauthorized: Only admins can simulate gameweek for all users');
+      return false;
+    }
+
+    try {
+      console.log('[Admin] Starting gameweek simulation for all users...');
+
+      // Import collection and getDocs from firebase
+      const { collection, getDocs } = await import('firebase/firestore');
+
+      // Get all users from Firestore
+      const usersCollection = collection(db, 'users');
+      const usersSnapshot = await getDocs(usersCollection);
+
+      let successCount = 0;
+      let failCount = 0;
+
+      // Process each user
+      for (const userDoc of usersSnapshot.docs) {
+        try {
+          const userData = userDoc.data() as User;
+
+          // Skip if user doesn't have a squad
+          if (!userData.squad || userData.squad.length === 0) {
+            console.log(`[Admin] Skipping user ${userData.fullName} - no squad`);
+            continue;
+          }
+
+          // Determine next GW number
+          const nextGw = (userData.history?.length || 0) + 1;
+
+          // Run simulation
+          const result = simulateGameweek(userData.squad, userData.bench || [], nextGw);
+
+          // Update user data
+          const updatedUserData: User = {
+            ...userData,
+            totalPoints: (userData.totalPoints || 0) + result.totalPoints - (userData.transferCost || 0),
+            history: [...(userData.history || []), result],
+            transfersMade: 0,
+            transferCost: 0,
+            freeTransfersAvailable: Math.min(2, (userData.freeTransfersAvailable || 1) + 1)
+          };
+
+          // Save to Firestore
+          const userDocRef = doc(db, 'users', userDoc.id);
+          await setDoc(userDocRef, updatedUserData);
+
+          successCount++;
+          console.log(`[Admin] Simulated GW${nextGw} for ${userData.fullName}: ${result.totalPoints} points`);
+
+        } catch (error) {
+          failCount++;
+          console.error(`[Admin] Failed to simulate for user ${userDoc.id}:`, error);
+        }
+      }
+
+      console.log(`[Admin] Simulation complete: ${successCount} successful, ${failCount} failed`);
+      return true;
+
+    } catch (error) {
+      console.error('[Admin] Failed to simulate gameweek for all users:', error);
+      return false;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -431,6 +603,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         substitutePlayer,
         setFormation,
         updateTeamName,
+        saveSquad,
+        simulateGameweekForUser,
+        simulateGameweekForAllUsers,
         isLoading,
         error
       }}

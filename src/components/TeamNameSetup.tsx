@@ -67,7 +67,7 @@ export const TeamNameSetup: React.FC<TeamNameSetupProps> = ({ onComplete }) => {
 
       toast({
         title: "Team Name Set!",
-        description: `Welcome to FPSL, ${teamName}!`,
+        description: `Welcome to Touchline SA, ${teamName}!`,
       });
 
       onComplete();
@@ -93,7 +93,7 @@ export const TeamNameSetup: React.FC<TeamNameSetupProps> = ({ onComplete }) => {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-green-600">
-            Welcome to FPSL!
+            Welcome to Touchline SA!
           </CardTitle>
           <CardDescription>
             Before you start building your dream team, give your squad a name that will strike fear into your opponents.

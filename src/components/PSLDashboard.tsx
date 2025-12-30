@@ -5,26 +5,27 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { db } from '@/integrations/firebase/client';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
-import { Trophy, TrendingUp, Star, Users } from 'lucide-react';
+import { Trophy, TrendingUp, Star, Users, Target } from 'lucide-react';
 
 // Sample PSL data since we don't have a standings table yet
+// Sample PSL data for 2024/25 Season (Projected Final)
 const sampleStandings = [
-  { rank: 1, team: "Mamelodi Sundowns", points: 73, played: 28, win: 24, draw: 1, loss: 3, goalsFor: 65, goalsAgainst: 13, goalDifference: 52 },
-  { rank: 2, team: "Orlando Pirates", points: 59, played: 28, win: 18, draw: 5, loss: 5, goalsFor: 50, goalsAgainst: 25, goalDifference: 25 },
-  { rank: 3, team: "Kaizer Chiefs", points: 53, played: 28, win: 16, draw: 5, loss: 7, goalsFor: 45, goalsAgainst: 30, goalDifference: 15 },
-  { rank: 4, team: "Stellenbosch FC", points: 49, played: 28, win: 14, draw: 7, loss: 7, goalsFor: 39, goalsAgainst: 28, goalDifference: 11 },
-  { rank: 5, team: "SuperSport United", points: 46, played: 28, win: 13, draw: 7, loss: 8, goalsFor: 38, goalsAgainst: 31, goalDifference: 7 },
-  { rank: 6, team: "Sekhukhune United", points: 44, played: 28, win: 12, draw: 8, loss: 8, goalsFor: 37, goalsAgainst: 33, goalDifference: 4 },
-  { rank: 7, team: "Cape Town City", points: 42, played: 28, win: 12, draw: 6, loss: 10, goalsFor: 36, goalsAgainst: 34, goalDifference: 2 },
-  { rank: 8, team: "Royal AM", points: 40, played: 28, win: 11, draw: 7, loss: 10, goalsFor: 34, goalsAgainst: 36, goalDifference: -2 },
-  { rank: 9, team: "AmaZulu FC", points: 39, played: 28, win: 10, draw: 9, loss: 9, goalsFor: 32, goalsAgainst: 35, goalDifference: -3 },
-  { rank: 10, team: "Golden Arrows", points: 37, played: 28, win: 10, draw: 7, loss: 11, goalsFor: 31, goalsAgainst: 37, goalDifference: -6 },
-  { rank: 11, team: "TS Galaxy", points: 35, played: 28, win: 9, draw: 8, loss: 11, goalsFor: 28, goalsAgainst: 32, goalDifference: -4 },
-  { rank: 12, team: "Polokwane City", points: 34, played: 28, win: 8, draw: 10, loss: 10, goalsFor: 25, goalsAgainst: 30, goalDifference: -5 },
-  { rank: 13, team: "Chippa United", points: 32, played: 28, win: 8, draw: 8, loss: 12, goalsFor: 22, goalsAgainst: 29, goalDifference: -7 },
-  { rank: 14, team: "Moroka Swallows", points: 29, played: 28, win: 7, draw: 8, loss: 13, goalsFor: 20, goalsAgainst: 35, goalDifference: -15 },
-  { rank: 15, team: "Richards Bay", points: 24, played: 28, win: 6, draw: 6, loss: 16, goalsFor: 18, goalsAgainst: 42, goalDifference: -24 },
-  { rank: 16, team: "Cape Town Spurs", points: 18, played: 28, win: 4, draw: 6, loss: 18, goalsFor: 15, goalsAgainst: 45, goalDifference: -30 },
+  { rank: 1, team: "Mamelodi Sundowns", points: 72, played: 30, win: 22, draw: 6, loss: 2, goalsFor: 62, goalsAgainst: 14, goalDifference: 48 },
+  { rank: 2, team: "Orlando Pirates", points: 65, played: 30, win: 19, draw: 8, loss: 3, goalsFor: 55, goalsAgainst: 22, goalDifference: 33 },
+  { rank: 3, team: "Stellenbosch FC", points: 54, played: 30, win: 15, draw: 9, loss: 6, goalsFor: 44, goalsAgainst: 28, goalDifference: 16 },
+  { rank: 4, team: "Sekhukhune United", points: 48, played: 30, win: 12, draw: 12, loss: 6, goalsFor: 35, goalsAgainst: 26, goalDifference: 9 },
+  { rank: 5, team: "Cape Town City", points: 45, played: 30, win: 12, draw: 9, loss: 9, goalsFor: 38, goalsAgainst: 33, goalDifference: 5 },
+  { rank: 6, team: "TS Galaxy", points: 42, played: 30, win: 11, draw: 9, loss: 10, goalsFor: 32, goalsAgainst: 29, goalDifference: 3 },
+  { rank: 7, team: "SuperSport United", points: 40, played: 30, win: 9, draw: 13, loss: 8, goalsFor: 34, goalsAgainst: 34, goalDifference: 0 },
+  { rank: 8, team: "Kaizer Chiefs", points: 39, played: 30, win: 10, draw: 9, loss: 11, goalsFor: 30, goalsAgainst: 32, goalDifference: -2 },
+  { rank: 9, team: "Polokwane City", points: 37, played: 30, win: 8, draw: 13, loss: 9, goalsFor: 25, goalsAgainst: 28, goalDifference: -3 },
+  { rank: 10, team: "Golden Arrows", points: 35, played: 30, win: 9, draw: 8, loss: 13, goalsFor: 31, goalsAgainst: 42, goalDifference: -11 },
+  { rank: 11, team: "Chippa United", points: 33, played: 30, win: 8, draw: 9, loss: 13, goalsFor: 28, goalsAgainst: 38, goalDifference: -10 },
+  { rank: 12, team: "AmaZulu FC", points: 32, played: 30, win: 7, draw: 11, loss: 12, goalsFor: 24, goalsAgainst: 35, goalDifference: -11 },
+  { rank: 13, team: "Royal AM", points: 30, played: 30, win: 8, draw: 6, loss: 16, goalsFor: 29, goalsAgainst: 48, goalDifference: -19 },
+  { rank: 14, team: "Magesi FC", points: 28, played: 30, win: 6, draw: 10, loss: 14, goalsFor: 22, goalsAgainst: 40, goalDifference: -18 },
+  { rank: 15, team: "Richards Bay", points: 26, played: 30, win: 6, draw: 8, loss: 16, goalsFor: 20, goalsAgainst: 39, goalDifference: -19 },
+  { rank: 16, team: "Marumo Gallants", points: 21, played: 30, win: 4, draw: 9, loss: 17, goalsFor: 18, goalsAgainst: 42, goalDifference: -24 },
 ];
 
 interface PSLStanding {
@@ -49,18 +50,29 @@ interface Player {
   rating: number;
 }
 
+interface TopScorer {
+  rank: number;
+  player: string;
+  team: string;
+  goals: number;
+  assists: number;
+  played: number;
+}
+
 export const PSLDashboard = () => {
   const [standings, setStandings] = useState<PSLStanding[]>(sampleStandings);
   const [topPlayers, setTopPlayers] = useState<Player[]>([]);
+  const [leagueTopScorers, setLeagueTopScorers] = useState<TopScorer[]>([]); // New State
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
+      setApiError(null);
 
-      // 1. Fetch Players (Firebase)
       try {
+        // 1. Fetch Top Valued Players (from your existing players collection)
         const playersRef = collection(db, 'players');
         const q = query(playersRef, orderBy('price', 'desc'), limit(3));
         const querySnapshot = await getDocs(q);
@@ -71,31 +83,30 @@ export const PSLDashboard = () => {
         })) as Player[];
 
         setTopPlayers(playersData);
-      } catch (error) {
-        console.error('Error fetching players:', error);
-      }
 
-      // 2. Fetch Standings (API)
-      const apiKey = localStorage.getItem('psl_news_api_key') || localStorage.getItem('rapid_api_key'); // Try both keys
-      if (apiKey) {
-        try {
-          // Dynamically import to avoid circular dependencies if any, or just cleanliness
-          const { fetchStandings } = await import('@/services/newsService');
-          const liveStandings = await fetchStandings(apiKey);
+        // 2. Fetch Standings & Scorers (from Google-synced Firebase collections)
+        const { fetchStandings, fetchTopScorers } = await import('@/services/newsService');
 
-          if (liveStandings && liveStandings.length > 0) {
-            setStandings(liveStandings);
-          } else {
-            console.log("No live standings found, keeping sample data.");
-          }
-        } catch (error) {
-          console.error("Error fetching live standings:", error);
-          setApiError("Failed to load live standings. Showing 2023/24 final table.");
-          // Keep sample standings as fallback
+        // This will automatically check if sync is needed
+        const [liveStandings, liveScorers] = await Promise.all([
+          fetchStandings(),
+          fetchTopScorers()
+        ]);
+
+        if (liveStandings && liveStandings.length > 0) {
+          setStandings(liveStandings);
         }
-      }
 
-      setLoading(false);
+        if (liveScorers && liveScorers.length > 0) {
+          setLeagueTopScorers(liveScorers);
+        }
+
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+        setApiError("Using cached data. Some live stats might be delayed.");
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadData();
@@ -245,16 +256,52 @@ export const PSLDashboard = () => {
           </Card>
         </div>
 
-        {/* Top 3 Players */}
-        <div className="space-y-4">
+        {/* League Top Scorers & Top Rated */}
+        <div className="space-y-6">
+          {/* League Top Scorers */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5 text-green-500" />
+                League Top Scorers
+              </CardTitle>
+              <CardDescription>
+                Top goalscorers in the PSL
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableBody>
+                  {leagueTopScorers.map((scorer) => (
+                    <TableRow key={scorer.rank}>
+                      <TableCell className="w-8 font-bold text-gray-500">#{scorer.rank}</TableCell>
+                      <TableCell>
+                        <div className="font-semibold">{scorer.player}</div>
+                        <div className="text-xs text-gray-500">{scorer.team}</div>
+                      </TableCell>
+                      <TableCell className="text-right font-bold text-green-600">
+                        {scorer.goals} <span className="text-xs font-normal text-gray-400">Goals</span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {leagueTopScorers.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-gray-500 py-4">Loading stats...</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Star className="h-5 w-5 text-yellow-500" />
-                Top Rated Players
+                Most Valuable Players
               </CardTitle>
               <CardDescription>
-                Highest rated players in the league
+                Highest market value in Fantasy League
               </CardDescription>
             </CardHeader>
           </Card>

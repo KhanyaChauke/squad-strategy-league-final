@@ -21,10 +21,10 @@ export interface Player {
 // Generate enhanced PSL database with proper budget balancing
 const rawPlayersData = getEnhancedPSLData();
 
-// Ensure budget is balanced for a starting 11
-// Average cost per player should be around 90-100M for a 1B budget
+// Ensure budget is balanced for a full squad of 15 (11 starters + 4 subs)
+// Average cost per player should be around 66M for a 1B budget
 const totalBudget = 1000000000; // 1 billion
-const averageCostPerPlayer = totalBudget / 11; // ~90M per player
+const averageCostPerPlayer = totalBudget / 15; // ~66M per player
 
 // Adjust player costs to ensure budget balance
 const adjustedPlayers = rawPlayersData.map(player => {
@@ -34,14 +34,14 @@ const adjustedPlayers = rawPlayersData.map(player => {
     MID: 1.0,  // Midfielders at average
     ATT: 1.4   // Attackers more expensive
   };
-  
+
   const ratingMultiplier = player.rating / 80; // Scale based on rating
   const baselineCost = averageCostPerPlayer * positionMultipliers[player.position] * ratingMultiplier;
-  
+
   // Add variance but keep within reasonable bounds
   const variance = baselineCost * 0.3;
   const adjustedCost = baselineCost + (Math.random() * variance * 2 - variance);
-  
+
   return {
     ...player,
     price: Math.max(20000000, Math.round(adjustedCost / 5000000) * 5000000) // Minimum 20M, round to 5M
@@ -62,7 +62,7 @@ export const getPlayerById = (id: string) => {
 
 export const searchPlayers = (query: string) => {
   const lowercaseQuery = query.toLowerCase();
-  return adjustedPlayers.filter(player => 
+  return adjustedPlayers.filter(player =>
     player.name.toLowerCase().includes(lowercaseQuery) ||
     player.team.toLowerCase().includes(lowercaseQuery) ||
     player.position.toLowerCase().includes(lowercaseQuery)
@@ -74,21 +74,21 @@ export const getBudgetOptimizedSquad = (budget: number = 1000000000) => {
   const formation = { GK: 1, DEF: 4, MID: 4, ATT: 2 }; // 4-4-2 formation
   const squad: Player[] = [];
   let remainingBudget = budget;
-  
+
   // Sort players by value for money (rating per cost)
   const valueForMoney = adjustedPlayers.map(player => ({
     ...player,
     valueRatio: player.rating / (player.price / 1000000)
   })).sort((a, b) => b.valueRatio - a.valueRatio);
-  
+
   // Fill each position with best value players
   Object.entries(formation).forEach(([pos, count]) => {
     const position = pos as 'GK' | 'DEF' | 'MID' | 'ATT';
-    const positionPlayers = valueForMoney.filter(p => 
-      p.position === position && 
+    const positionPlayers = valueForMoney.filter(p =>
+      p.position === position &&
       !squad.some(s => s.id === p.id)
     );
-    
+
     for (let i = 0; i < count && positionPlayers.length > 0; i++) {
       const affordablePlayers = positionPlayers.filter(p => p.price <= remainingBudget);
       if (affordablePlayers.length > 0) {
@@ -98,6 +98,6 @@ export const getBudgetOptimizedSquad = (budget: number = 1000000000) => {
       }
     }
   });
-  
+
   return { squad, remainingBudget };
 };

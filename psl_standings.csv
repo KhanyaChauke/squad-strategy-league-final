@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 rank,team,points,played,win,draw,loss,goalsFor,goalsAgainst,goalDifference
 1,Mamelodi Sundowns,73,28,24,1,3,65,13,52
 2,Orlando Pirates,59,28,18,5,5,50,25,25
@@ -18,4 +19,26 @@ rank,team,points,played,win,draw,loss,goalsFor,goalsAgainst,goalDifference
 17,Tshakhuma Tsha Madzivhandila,24,28,6,6,16,22,44,-22
 18,Moroka Swallows,22,28,5,7,16,21,45,-24
 19,Jomo Cosmos,20,28,5,5,18,20,46,-26
+=======
+rank,team,points,played,win,draw,loss,goalsFor,goalsAgainst,goalDifference
+1,Mamelodi Sundowns,73,28,24,1,3,65,13,52
+2,Orlando Pirates,59,28,18,5,5,50,25,25
+3,Kaizer Chiefs,53,28,16,5,7,45,30,15
+4,Stellenbosch FC,49,28,14,7,7,39,28,11
+5,SuperSport United,46,28,13,7,8,38,31,7
+6,Sekhukhune United,44,28,12,8,8,37,33,4
+7,Cape Town City,42,28,12,6,10,36,34,2
+8,Royal AM,40,28,11,7,10,34,36,-2
+9,AmaZulu FC,39,28,10,9,9,32,35,-3
+10,Golden Arrows,37,28,10,7,11,31,37,-6
+11,TS Galaxy,35,28,9,8,11,29,35,-6
+12,Chippa United,33,28,9,6,13,28,39,-11
+13,Maritzburg United,31,28,8,7,13,27,38,-11
+14,Baroka FC,29,28,7,8,13,26,40,-14
+15,Richards Bay FC,28,28,7,7,14,25,41,-16
+16,Polokwane City,26,28,6,8,14,24,42,-18
+17,Tshakhuma Tsha Madzivhandila,24,28,6,6,16,22,44,-22
+18,Moroka Swallows,22,28,5,7,16,21,45,-24
+19,Jomo Cosmos,20,28,5,5,18,20,46,-26
+>>>>>>> 2fe39010f4e0483b8168a7f537111a34969b3cdd
 20,University of Pretoria,18,28,4,6,18,18,48,-30

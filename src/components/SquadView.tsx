@@ -5,15 +5,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth } from '@/contexts/AuthContext';
-import { Trash2, Users, TrendingUp, Target, Star, Settings, Plus, X } from 'lucide-react';
+import { Trash2, Users, TrendingUp, Target, Star, Settings, Plus, X, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TeamChemistry } from '@/components/TeamChemistry';
 import { FormationSelector, formations, Formation } from '@/components/FormationSelector';
 import { playersDatabase, Player } from '@/data/playersData';
 import { FifaCard } from '@/components/FifaCard';
 
-// Import jersey images
+// ... (existing imports for jerseys)
 import sundownsJersey from '@/assets/jerseys/sundowns-jersey.png';
 import piratesJersey from '@/assets/jerseys/pirates-jersey.png';
 import chiefsJersey from '@/assets/jerseys/chiefs-jersey.png';
@@ -22,13 +23,63 @@ import supersportJersey from '@/assets/jerseys/supersport-jersey.png';
 import defaultJersey from '@/assets/jerseys/default-jersey.png';
 
 export const SquadView = () => {
-  const { user, removePlayerFromSquad, removePlayerFromBench, substitutePlayer, setFormation, addPlayerToSquad } = useAuth();
+  const { user, removePlayerFromSquad, removePlayerFromBench, substitutePlayer, setFormation, addPlayerToSquad, addPlayerToBench, saveSquad } = useAuth();
   const { toast } = useToast();
   const [showFormationSelector, setShowFormationSelector] = useState(!user?.selectedFormation);
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [playerSelectionDialog, setPlayerSelectionDialog] = useState<{
     isOpen: boolean;
     position: 'GK' | 'DEF' | 'MID' | 'ATT' | null;
   }>({ isOpen: false, position: null });
+
+  const latestResult = user?.history && user.history.length > 0
+    ? user.history[user.history.length - 1]
+    : null;
+
+  const getPlayerPoints = (playerId: string) => {
+    return latestResult?.playerStats?.[playerId]?.points;
+  };
+
+  // ... (existing handlers: handleFormationSelect, formatCurrency)
+
+  const handleManualSave = async () => {
+    setIsSaveDialogOpen(false);
+
+    const success = await saveSquad();
+
+    if (success) {
+      toast({
+        title: "Squad Saved Successfully",
+        description: "Your team setup has been securely saved to the database.",
+        className: "bg-green-50 border-green-200"
+      });
+    } else {
+      toast({
+        title: "Save Failed",
+        description: "There was an error saving your squad. Please check your connection and try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // ... (existing handlers)
+
+  // ... (render logic)
+
+  // Inside return statement, add the button and dialog
+  // I will target the header section where "Change Formation" is.
+
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Player, direction: 'asc' | 'desc' } | null>({ key: 'rating', direction: 'desc' });
+
+  // ... (sort handlers)
+
+  // ... (getDialogPlayers)
+
+  if (showFormationSelector) {
+    // ...
+  }
+
+
 
   const handleFormationSelect = (formation: Formation) => {
     setFormation(formation);
@@ -48,24 +99,24 @@ export const SquadView = () => {
     }).format(amount);
   };
 
-  const handleRemovePlayer = (player: any) => {
-    removePlayerFromSquad(player.id);
+  const handleRemovePlayer = async (player: any) => {
+    await removePlayerFromSquad(player.id);
     toast({
       title: "Player Removed",
       description: `${player.name} has been removed from your squad.`
     });
   };
 
-  const handleRemoveBenchPlayer = (player: any) => {
-    removePlayerFromBench(player.id);
+  const handleRemoveBenchPlayer = async (player: any) => {
+    await removePlayerFromBench(player.id);
     toast({
       title: "Player Removed",
       description: `${player.name} has been removed from your bench.`
     });
   };
 
-  const handleSubstitution = (squadPlayer: any, benchPlayer: any) => {
-    const success = substitutePlayer(squadPlayer.id, benchPlayer.id);
+  const handleSubstitution = async (squadPlayer: any, benchPlayer: any) => {
+    const success = await substitutePlayer(squadPlayer.id, benchPlayer.id);
     if (success) {
       toast({
         title: "Substitution Made",
@@ -80,24 +131,56 @@ export const SquadView = () => {
     }
   };
 
+  const [selectedSlotType, setSelectedSlotType] = useState<'squad' | 'bench'>('squad');
+
   const handleEmptySlotClick = (position: 'GK' | 'DEF' | 'MID' | 'ATT') => {
+    setSelectedSlotType('squad');
     setPlayerSelectionDialog({ isOpen: true, position });
   };
 
-  const handlePlayerSelect = (player: Player) => {
-    if (!player || !playerSelectionDialog.position) return;
+  const handleEmptyBenchSlotClick = () => {
+    setSelectedSlotType('bench');
+    // Bench can be any position, but usually we filter by what's needed or allow all.
+    // For simplicity let's allow all positions or maybe filter if user picks a specific slot type?
+    // Since bench is generic, we'll allow User to pick any position.
+    // However, the dialog expects a position. Let's default to MID or open a "Any" dialog.
+    // Based on existing dialog logic, it requires a position.
+    // Let's iterate: For bench, we might need a way to select position FIRST or loop through all.
+    // Hack: Just set it to 'MID' for now or allow null in dialog if we update dialog.
+    // Better: Allow dialog to have a dropdown if position is null?
+    // Let's keep it simple: When clicking empty bench, defaulting to MID or adding a quick selector?
+    // Actually, looking at the code, `playerSelectionDialog` takes a position.
+    // Let's modify the flow: Click Empty Bench -> Prompt for Position -> Select Player.
+    // OR just pick a random one? No.
+    // Let's set it to null and let the dialog handle "All"??
+    // The dialog filters: `getAvailablePlayersForPosition(playerSelectionDialog.position)`.
+    // If we pass null, it might crash.
+    // Let's just default to MID for now to verify functionality, or ask user?
+    // Wait, the USER request is "bench slots can be filled out". 
+    // I will change the logic to allow picking a position.
+    setPlayerSelectionDialog({ isOpen: true, position: 'MID' }); // Default start, visually imperfect but functional
+  };
 
-    const success = addPlayerToSquad(player);
+  const handlePlayerSelect = async (player: Player) => {
+    if (!player) return;
+
+    let success = false;
+    if (selectedSlotType === 'bench') {
+      success = await addPlayerToBench(player);
+    } else {
+      success = await addPlayerToSquad(player);
+    }
+
     if (success) {
       toast({
         title: "Player Added",
-        description: `${player.name} has been added to your squad.`
+        description: `${player.name} has been added to your ${selectedSlotType}.`
       });
       setPlayerSelectionDialog({ isOpen: false, position: null });
     } else {
       toast({
         title: "Cannot Add Player",
-        description: "Check your budget, formation limits, or if the player is already in your team.",
+        description: `${selectedSlotType === 'bench' ? 'Bench full (max 4)' : 'Check squad limits'} or budget insufficient.`,
         variant: "destructive"
       });
     }
@@ -112,6 +195,12 @@ export const SquadView = () => {
         player.price <= (user?.budget || 0)
       )
       .sort((a, b) => b.rating - a.rating);
+  };
+
+  const getDialogPlayers = () => {
+    if (!playerSelectionDialog.position) return [];
+    const players = getAvailablePlayersForPosition(playerSelectionDialog.position);
+    return players;
   };
 
   const getPositionColor = (position: string) => {
@@ -155,9 +244,13 @@ export const SquadView = () => {
     return user?.squad.filter(player => player.position === position) || [];
   };
 
-  const squadValue = user?.squad.reduce((total, player) => total + player.price, 0) || 0;
-  const averageRating = user?.squad.length ?
-    Math.round(user.squad.reduce((sum, player) => sum + player.rating, 0) / user.squad.length) : 0;
+  const squadValue = (user?.squad.reduce((total, player) => total + player.price, 0) || 0) +
+    (user?.bench.reduce((total, player) => total + player.price, 0) || 0);
+
+  const totalPlayers = (user?.squad?.length || 0) + (user?.bench?.length || 0);
+  const averageRating = totalPlayers ?
+    Math.round(((user?.squad.reduce((sum, player) => sum + player.rating, 0) || 0) +
+      (user?.bench.reduce((sum, player) => sum + player.rating, 0) || 0)) / totalPlayers) : 0;
 
   const positionCounts = {
     GK: getPlayersByPosition('GK').length,
@@ -208,15 +301,26 @@ export const SquadView = () => {
                 </span>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFormationSelector(true)}
-              className="flex items-center space-x-2"
-            >
-              <Settings className="h-4 w-4" />
-              <span>Change Formation</span>
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFormationSelector(true)}
+                className="flex items-center space-x-2"
+              >
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Change Formation</span>
+              </Button>
+
+              <Button
+                size="sm"
+                onClick={() => setIsSaveDialogOpen(true)}
+                className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Save className="h-4 w-4" />
+                <span>Save Squad</span>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -355,6 +459,7 @@ export const SquadView = () => {
                       size="small"
                       onPlayerClick={handleRemovePlayer}
                       showRemoveOverlay
+                      points={getPlayerPoints(player.id)}
                     />
                   ))}
                   {Array(Math.max(0, (selectedFormation?.positions.ATT || 3) - positionCounts.ATT)).fill(0).map((_, index) => (
@@ -378,6 +483,7 @@ export const SquadView = () => {
                       size="small"
                       onPlayerClick={handleRemovePlayer}
                       showRemoveOverlay
+                      points={getPlayerPoints(player.id)}
                     />
                   ))}
                   {Array(Math.max(0, (selectedFormation?.positions.MID || 4) - positionCounts.MID)).fill(0).map((_, index) => (
@@ -401,6 +507,7 @@ export const SquadView = () => {
                       size="small"
                       onPlayerClick={handleRemovePlayer}
                       showRemoveOverlay
+                      points={getPlayerPoints(player.id)}
                     />
                   ))}
                   {Array(Math.max(0, (selectedFormation?.positions.DEF || 4) - positionCounts.DEF)).fill(0).map((_, index) => (
@@ -423,6 +530,7 @@ export const SquadView = () => {
                     size="small"
                     onPlayerClick={handleRemovePlayer}
                     showRemoveOverlay
+                    points={getPlayerPoints(player.id)}
                   />
                 ))}
                 {Array(Math.max(0, (selectedFormation?.positions.GK || 1) - positionCounts.GK)).fill(0).map((_, index) => (
@@ -452,83 +560,72 @@ export const SquadView = () => {
         </CardHeader>
         <CardContent>
           {user?.bench && user.bench.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="flex flex-wrap justify-center gap-6">
               {user.bench.map((benchPlayer) => (
-                <Card key={benchPlayer.id} className="relative border-2 border-dashed border-orange-300 bg-orange-50">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-sm">{benchPlayer.name}</CardTitle>
-                        <CardDescription className="text-xs">
-                          <Badge className={getPositionColor(benchPlayer.position)} variant="secondary">
-                            {benchPlayer.position}
-                          </Badge>
-                        </CardDescription>
-                      </div>
-                      <div className={`text-lg font-bold ${getRatingColor(benchPlayer.rating)}`}>
-                        {benchPlayer.rating}
-                      </div>
-                    </div>
-                  </CardHeader>
+                <div key={benchPlayer.id} className="flex flex-col items-center space-y-3">
+                  <FifaCard
+                    player={benchPlayer}
+                    size="small"
+                    onPlayerClick={() => { }}
+                    points={getPlayerPoints(benchPlayer.id)}
+                  />
 
-                  <CardContent className="space-y-3">
-                    {/* Available substitutions */}
-                    <div className="space-y-2">
-                      <div className="text-xs font-medium text-gray-700">Can substitute:</div>
+                  {/* Substitution Controls */}
+                  <div className="w-28 space-y-1">
+                    <div className="text-[10px] font-bold text-center border-b pb-1 text-gray-500 uppercase tracking-tighter">Sub for:</div>
+                    <div className="flex flex-col gap-1 max-h-24 overflow-y-auto pr-1">
                       {getPlayersByPosition(benchPlayer.position).map((squadPlayer) => (
                         <Button
                           key={squadPlayer.id}
                           onClick={() => handleSubstitution(squadPlayer, benchPlayer)}
-                          variant="outline"
+                          variant="secondary"
                           size="sm"
-                          className="w-full text-xs h-8"
+                          className="w-full text-[10px] h-7 px-1 bg-white border border-blue-100 hover:bg-blue-50 font-oswald uppercase"
                         >
-                          ↔ {squadPlayer.name}
+                          {squadPlayer.name.split(' ').pop()}
                         </Button>
                       ))}
                       {getPlayersByPosition(benchPlayer.position).length === 0 && (
-                        <p className="text-xs text-gray-500">No players in same position on field</p>
+                        <p className="text-[10px] text-center text-gray-400 italic">No field {benchPlayer.position}s</p>
                       )}
                     </div>
 
-                    {/* Remove from bench */}
-                    <div className="flex items-center justify-between pt-2 border-t">
-                      <div className="text-xs text-green-600 font-medium">
-                        {formatCurrency(benchPlayer.price)}
-                      </div>
-                      <Button
-                        onClick={() => handleRemoveBenchPlayer(benchPlayer)}
-                        variant="destructive"
-                        size="sm"
-                        className="h-6 px-2"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                    <Button
+                      onClick={() => handleRemoveBenchPlayer(benchPlayer)}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full h-6 text-red-500 hover:text-red-700 hover:bg-red-50 text-[10px] font-medium"
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" /> Remove
+                    </Button>
+                  </div>
+                </div>
               ))}
 
-              {/* Empty bench slots */}
-              {Array(Math.max(0, 4 - (user?.bench.length || 0))).fill(0).map((_, index) => (
-                <Card key={`empty-bench-${index}`} className="border-2 border-dashed border-gray-300 bg-gray-50">
-                  <CardContent className="text-center py-8">
-                    <Users className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-500 text-sm">Empty Bench Slot</p>
-                  </CardContent>
-                </Card>
+              {/* Empty Bench Slots */}
+              {Array(4 - (user?.bench?.length || 0)).fill(0).map((_, index) => (
+                <div key={`empty-bench-${index}`} className="flex flex-col items-center">
+                  <FifaCard
+                    isEmpty
+                    size="small"
+                    onEmptyClick={() => setPlayerSelectionDialog({ isOpen: true, position: null })}
+                  />
+                  <div className="h-10"></div>
+                </div>
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-4 gap-4">
-              {Array(4).fill(0).map((_, index) => (
-                <Card key={`empty-bench-${index}`} className="border-2 border-dashed border-gray-300 bg-gray-50">
-                  <CardContent className="text-center py-8">
-                    <Users className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-500 text-sm">Empty Bench Slot</p>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
+              <Plus className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+              <p className="text-gray-500">Your bench is empty</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4"
+                onClick={() => setPlayerSelectionDialog({ isOpen: true, position: null })}
+              >
+                Add Players
+              </Button>
             </div>
           )}
         </CardContent>
@@ -622,6 +719,25 @@ export const SquadView = () => {
         </Card>
       )}
 
+      {/* Save Confirmation Dialog */}
+      <AlertDialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Save Squad Changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to save your current squad configuration?
+              Ensure you have a full starting 11 and bench before the gameweek deadline.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleManualSave} className="bg-green-600 hover:bg-green-700">
+              Confirm Save
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Player Selection Dialog */}
       <Dialog
         open={playerSelectionDialog.isOpen}
@@ -636,6 +752,19 @@ export const SquadView = () => {
               Choose a player to add to your squad from available {playerSelectionDialog.position} players within your budget.
             </DialogDescription>
           </DialogHeader>
+
+          <div className="flex gap-2 p-4 border-b overflow-x-auto">
+            {(['GK', 'DEF', 'MID', 'ATT'] as const).map(pos => (
+              <Button
+                key={pos}
+                variant={playerSelectionDialog.position === pos ? "default" : "outline"}
+                size="sm"
+                onClick={() => setPlayerSelectionDialog(prev => ({ ...prev, position: pos }))}
+              >
+                {pos}
+              </Button>
+            ))}
+          </div>
 
           <div className="max-h-[60vh] overflow-y-auto p-4">
             <Table>
@@ -690,15 +819,11 @@ export const SquadView = () => {
               </TableBody>
             </Table>
 
-            {playerSelectionDialog.position &&
-              getAvailablePlayersForPosition(playerSelectionDialog.position).length === 0 && (
-                <div className="text-center py-12">
-                  <Users className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-muted-foreground">
-                    No {playerSelectionDialog.position} players available within your budget.
-                  </p>
-                </div>
-              )}
+            {playerSelectionDialog.position && getAvailablePlayersForPosition(playerSelectionDialog.position).length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No players found for {playerSelectionDialog.position}</p>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

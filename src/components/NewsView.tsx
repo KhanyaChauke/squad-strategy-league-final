@@ -77,7 +77,12 @@ export const NewsView = () => {
         setError(null);
         try {
             const articles = await fetchPSLNews('');
-            setNews(articles);
+            if (articles && articles.length > 0) {
+                setNews(articles);
+            } else {
+                console.warn('API returned no news, falling back to mock data');
+                setNews(MOCK_NEWS);
+            }
         } catch (err) {
             console.error(err);
             setError('Failed to fetch latest news. Showing cached stories.');

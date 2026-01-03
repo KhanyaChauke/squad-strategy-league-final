@@ -13,6 +13,7 @@ import { TeamChemistry } from '@/components/TeamChemistry';
 import { FormationSelector, formations, Formation } from '@/components/FormationSelector';
 import { playersDatabase, Player } from '@/data/playersData';
 import { FifaCard } from '@/components/FifaCard';
+import { usePlayers } from '@/hooks/usePlayers';
 
 // ... (existing imports for jerseys)
 import sundownsJersey from '@/assets/jerseys/sundowns-jersey.png';
@@ -25,6 +26,7 @@ import defaultJersey from '@/assets/jerseys/default-jersey.png';
 export const SquadView = () => {
   const { user, removePlayerFromSquad, removePlayerFromBench, substitutePlayer, setFormation, addPlayerToSquad, addPlayerToBench, saveSquad } = useAuth();
   const { toast } = useToast();
+  const { players: availablePlayers, loading } = usePlayers(); // Use hook
   const [showFormationSelector, setShowFormationSelector] = useState(!user?.selectedFormation);
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [playerSelectionDialog, setPlayerSelectionDialog] = useState<{
@@ -140,24 +142,6 @@ export const SquadView = () => {
 
   const handleEmptyBenchSlotClick = () => {
     setSelectedSlotType('bench');
-    // Bench can be any position, but usually we filter by what's needed or allow all.
-    // For simplicity let's allow all positions or maybe filter if user picks a specific slot type?
-    // Since bench is generic, we'll allow User to pick any position.
-    // However, the dialog expects a position. Let's default to MID or open a "Any" dialog.
-    // Based on existing dialog logic, it requires a position.
-    // Let's iterate: For bench, we might need a way to select position FIRST or loop through all.
-    // Hack: Just set it to 'MID' for now or allow null in dialog if we update dialog.
-    // Better: Allow dialog to have a dropdown if position is null?
-    // Let's keep it simple: When clicking empty bench, defaulting to MID or adding a quick selector?
-    // Actually, looking at the code, `playerSelectionDialog` takes a position.
-    // Let's modify the flow: Click Empty Bench -> Prompt for Position -> Select Player.
-    // OR just pick a random one? No.
-    // Let's set it to null and let the dialog handle "All"??
-    // The dialog filters: `getAvailablePlayersForPosition(playerSelectionDialog.position)`.
-    // If we pass null, it might crash.
-    // Let's just default to MID for now to verify functionality, or ask user?
-    // Wait, the USER request is "bench slots can be filled out". 
-    // I will change the logic to allow picking a position.
     setPlayerSelectionDialog({ isOpen: true, position: 'MID' }); // Default start, visually imperfect but functional
   };
 
@@ -187,7 +171,7 @@ export const SquadView = () => {
   };
 
   const getAvailablePlayersForPosition = (position: 'GK' | 'DEF' | 'MID' | 'ATT') => {
-    return playersDatabase
+    return availablePlayers
       .filter(player =>
         player.position === position &&
         !user?.squad?.some(squadPlayer => squadPlayer.id === player.id) &&
@@ -199,6 +183,7 @@ export const SquadView = () => {
 
   const getDialogPlayers = () => {
     if (!playerSelectionDialog.position) return [];
+    // Could add loading spinner here if loading is true
     const players = getAvailablePlayersForPosition(playerSelectionDialog.position);
     return players;
   };

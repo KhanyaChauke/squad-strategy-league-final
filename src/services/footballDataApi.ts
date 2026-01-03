@@ -168,8 +168,6 @@ export const fetchTeamData = async (): Promise<TransformedPlayer[]> => {
 
 // Keep the fallback for offline/error modes
 export const getEnhancedPSLData = (): TransformedPlayer[] => {
-  // ... (Keep existing manual fallback data exactly as is for safety)
-  // ... We will copy the existing fallback body here.
   const pslTeams = [
     'Mamelodi Sundowns', 'Orlando Pirates', 'Stellenbosch FC', 'Sekhukhune United',
     'Cape Town City', 'TS Galaxy', 'SuperSport United', 'Polokwane City',
@@ -178,26 +176,38 @@ export const getEnhancedPSLData = (): TransformedPlayer[] => {
   ];
 
   const manualPlayers = [
-    { name: 'Ronwen Williams', team: 'Mamelodi Sundowns', position: 'GK', nationality: 'South Africa', rating: 88 },
-    { name: 'Teboho Mokoena', team: 'Mamelodi Sundowns', position: 'MID', nationality: 'South Africa', rating: 86 },
-    { name: 'Peter Shalulile', team: 'Mamelodi Sundowns', position: 'ATT', nationality: 'Namibia', rating: 87 },
+    { name: 'Brandon Petersen', team: 'Kaizer Chiefs', position: 'GK', nationality: 'South Africa', rating: 77 },
+    { name: 'Deon Hotto', team: 'Orlando Pirates', position: 'MID', nationality: 'Namibia', rating: 81 },
+    { name: 'Evidence Makgopa', team: 'Orlando Pirates', position: 'ATT', nationality: 'South Africa', rating: 77 },
+    { name: 'Goodman Mosele', team: 'Orlando Pirates', position: 'MID', nationality: 'South Africa', rating: 79 },
+    { name: 'Iqraam Rayners', team: 'Stellenbosch FC', position: 'ATT', nationality: 'South Africa', rating: 78 },
+    { name: 'Keagan Dolly', team: 'Kaizer Chiefs', position: 'MID', nationality: 'South Africa', rating: 80 },
+    { name: 'Lehlohonolo Majoro', team: 'AmaZulu', position: 'ATT', nationality: 'South Africa', rating: 78 },
+    { name: 'Lyle Lakay', team: 'Cape Town City', position: 'DEF', nationality: 'South Africa', rating: 78 },
+    { name: 'Mduduzi Mdantsane', team: 'Cape Town City', position: 'MID', nationality: 'South Africa', rating: 80 },
+    { name: 'Monnapule Saleng', team: 'Orlando Pirates', position: 'ATT', nationality: 'South Africa', rating: 82 },
+    { name: 'Patrick Maswanganyi', team: 'SuperSport United', position: 'MID', nationality: 'South Africa', rating: 78 },
+    { name: 'Reeve Frosler', team: 'Kaizer Chiefs', position: 'DEF', nationality: 'South Africa', rating: 76 },
+    { name: 'Ronwen Williams', team: 'Mamelodi Sundowns', position: 'GK', nationality: 'South Africa', rating: 83 },
+    { name: 'Sipho Mbule', team: 'Mamelodi Sundowns', position: 'MID', nationality: 'South Africa', rating: 80 },
+    { name: 'Siyanda Xulu', team: 'SuperSport United', position: 'DEF', nationality: 'South Africa', rating: 79 },
+    { name: 'Terrence Dzvukamanja', team: 'Orlando Pirates', position: 'ATT', nationality: 'Zimbabwe', rating: 79 },
+    { name: 'Thapelo Morena', team: 'Mamelodi Sundowns', position: 'DEF', nationality: 'South Africa', rating: 80 },
     { name: 'Themba Zwane', team: 'Mamelodi Sundowns', position: 'MID', nationality: 'South Africa', rating: 85 },
+    { name: 'Veli Mothwa', team: 'AmaZulu', position: 'GK', nationality: 'South Africa', rating: 78 },
+    { name: 'Victor Letsoalo', team: 'Sekhukhune United', position: 'ATT', nationality: 'South Africa', rating: 81 },
+    { name: 'Peter Shalulile', team: 'Mamelodi Sundowns', position: 'ATT', nationality: 'Namibia', rating: 87 },
     { name: 'Lucas Ribeiro', team: 'Mamelodi Sundowns', position: 'ATT', nationality: 'Brazil', rating: 86 },
     { name: 'Khuliso Mudau', team: 'Mamelodi Sundowns', position: 'DEF', nationality: 'South Africa', rating: 84 },
-    // ... (shortened for brevity in thought process, will include full list in file write)
-    { name: 'Patrick Maswanganyi', team: 'Orlando Pirates', position: 'MID', nationality: 'South Africa', rating: 85 }
+    { name: 'Teboho Mokoena', team: 'Mamelodi Sundowns', position: 'MID', nationality: 'South Africa', rating: 86 }
   ];
 
-  // Logic to generate stats for manual players + Fillers
-  // (We'll copy the existing logic to ensure the fallback still works perfectly)
   const players: TransformedPlayer[] = [];
-
-  // Re-implementing the fallback generator...
   const generateStats = (pos: 'GK' | 'DEF' | 'MID' | 'ATT', rating: number) => {
-    // Simple generator for fallback
     return generateAttributes(pos, rating);
   };
 
+  // Add Manual Players
   manualPlayers.forEach((p, idx) => {
     const stats = generateStats(p.position as any, p.rating);
     players.push({

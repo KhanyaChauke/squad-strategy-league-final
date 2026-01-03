@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { syncPlayersToFirestore } from '@/services/playerSync';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +12,13 @@ import { NewsView } from '@/components/NewsView';
 import { LiveGamesView } from '@/components/LiveGamesView';
 import { LeaderboardView } from '@/components/LeaderboardView';
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
   Trophy,
   Users,
   DollarSign,
@@ -19,7 +27,8 @@ import {
   UserCircle,
   Database,
   Newspaper,
-  Layout
+  Layout,
+  Menu
 } from 'lucide-react';
 
 type DashboardView = 'home' | 'players' | 'squad' | 'psl' | 'news' | 'live-games' | 'leaderboard' | 'fpls';
@@ -28,6 +37,26 @@ const Dashboard = () => {
   const [currentView, setCurrentView] = useState<DashboardView>('news');
   const { user, logout, simulateGameweekForUser, simulateGameweekForAllUsers } = useAuth();
   const { toast } = useToast();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleSyncPlayers = async () => {
+    if (!user?.isAdmin) return;
+    toast({ title: "Syncing Players", description: "Fetching from API and saving to database..." });
+    try {
+      const count = await syncPlayersToFirestore();
+      toast({
+        title: "Sync Complete",
+        description: `Successfully synced ${count} players to the database.`,
+        className: "bg-green-50 border-green-200"
+      });
+    } catch (error) {
+      toast({
+        title: "Sync Failed",
+        description: "Could not sync players. Check console for details.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const handleSimulateGameweek = async () => {
     toast({ title: "Simulation Started", description: "Simulating gameweek matches..." });
@@ -88,74 +117,121 @@ const Dashboard = () => {
     return user?.squad.filter(player => player.position === position).length || 0;
   };
 
+  const NavButton = ({ view, icon: Icon, label, onClick }: { view: DashboardView, icon: any, label: string, onClick?: () => void }) => (
+    <Button
+      variant={currentView === view ? 'default' : 'ghost'}
+      onClick={() => {
+        setCurrentView(view);
+        onClick?.();
+      }}
+      className={`flex items-center space-x-2 ${currentView === view ? '' : 'text-gray-600'}`}
+    >
+      <Icon className="h-4 w-4" />
+      <span>{label}</span>
+    </Button>
+  );
+
   const renderNavigation = () => (
-    <div className="bg-white shadow-sm border-b">
+    <div className="bg-white shadow-sm border-b sticky top-0 z-40">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-8">
-            <div className="flex items-center space-x-2">
-              <Trophy className="h-8 w-8 text-green-600" />
-              <span className="text-2xl font-bold text-green-600">Touchline SA</span>
-            </div>
-
-            <nav className="flex space-x-4">
-              <Button
-                variant={currentView === 'news' ? 'default' : 'ghost'}
-                onClick={() => setCurrentView('news')}
-                className="flex items-center space-x-2"
-              >
-                <Newspaper className="h-4 w-4" />
-                <span>News</span>
-              </Button>
-              <Button
-                variant={currentView === 'fpls' ? 'default' : 'ghost'}
-                onClick={() => setCurrentView('fpls')}
-                className="flex items-center space-x-2"
-              >
-                <UserCircle className="h-4 w-4" />
-                <span>Fpls</span>
-              </Button>
-              <Button
-                variant={currentView === 'leaderboard' ? 'default' : 'ghost'}
-                onClick={() => setCurrentView('leaderboard')}
-                className="flex items-center space-x-2"
-              >
-                <Trophy className="h-4 w-4" />
-                <span>Leaderboard</span>
-              </Button>
-              <Button
-                variant={currentView === 'psl' ? 'default' : 'ghost'}
-                onClick={() => setCurrentView('psl')}
-                className="flex items-center space-x-2"
-              >
-                <Trophy className="h-4 w-4" />
-                <span>PSL Table</span>
-              </Button>
-              <Button
-                variant={currentView === 'live-games' ? 'default' : 'ghost'}
-                onClick={() => setCurrentView('live-games')}
-                className="flex items-center space-x-2"
-              >
-                <Layout className="h-4 w-4" />
-                <span>Live Games</span>
-              </Button>
-            </nav>
+          {/* Logo Section */}
+          <div className="flex items-center space-x-2 cursor-pointer" onClick={() => setCurrentView('news')}>
+            <Trophy className="h-8 w-8 text-green-600" />
+            <span className="text-xl md:text-2xl font-bold text-green-600 hidden xs:inline-block">Touchline SA</span>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <UserCircle className="h-5 w-5 text-gray-600" />
-              <span className="text-sm font-medium">{user?.fullName}</span>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-4">
+            <nav className="flex space-x-1 lg:space-x-2">
+              <NavButton view="news" icon={Newspaper} label="News" />
+              <NavButton view="fpls" icon={UserCircle} label="Fpls" />
+              <NavButton view="leaderboard" icon={Trophy} label="Leaderboard" />
+              <NavButton view="psl" icon={Trophy} label="PSL Table" />
+              <NavButton view="live-games" icon={Layout} label="Live Games" />
+            </nav>
+
+            <div className="h-6 w-px bg-gray-200 mx-2" />
+
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <UserCircle className="h-5 w-5 text-gray-600" />
+                <span className="text-sm font-medium max-w-[100px] truncate">{user?.fullName}</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={logout}
+                className="flex items-center space-x-2"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden lg:inline">Logout</span>
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={logout}
-              className="flex items-center space-x-2"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Logout</span>
-            </Button>
+          </div>
+
+          {/* Mobile Navigation */}
+          <div className="md:hidden flex items-center space-x-2">
+            <div className="flex items-center mr-2">
+              <span className="text-sm font-medium mr-2 truncate max-w-[80px]">{user?.fullName?.split(' ')[0]}</span>
+            </div>
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-10 w-10">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] sm:w-[350px]">
+                <SheetHeader className="text-left mb-6">
+                  <SheetTitle className="flex items-center space-x-2">
+                    <Trophy className="h-6 w-6 text-green-600" />
+                    <span className="font-bold text-green-600">Touchline SA</span>
+                  </SheetTitle>
+                </SheetHeader>
+
+                <div className="flex flex-col space-y-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-gray-500 mb-2 px-2">Menu</p>
+                    <div className="grid gap-1">
+                      <Button variant={currentView === 'news' ? 'default' : 'ghost'} className="justify-start w-full" onClick={() => { setCurrentView('news'); setIsMobileMenuOpen(false); }}>
+                        <Newspaper className="mr-2 h-4 w-4" /> News
+                      </Button>
+                      <Button variant={currentView === 'fpls' ? 'default' : 'ghost'} className="justify-start w-full" onClick={() => { setCurrentView('fpls'); setIsMobileMenuOpen(false); }}>
+                        <UserCircle className="mr-2 h-4 w-4" /> Fpls (My Team)
+                      </Button>
+                      <Button variant={currentView === 'leaderboard' ? 'default' : 'ghost'} className="justify-start w-full" onClick={() => { setCurrentView('leaderboard'); setIsMobileMenuOpen(false); }}>
+                        <Trophy className="mr-2 h-4 w-4" /> Leaderboard
+                      </Button>
+                      <Button variant={currentView === 'psl' ? 'default' : 'ghost'} className="justify-start w-full" onClick={() => { setCurrentView('psl'); setIsMobileMenuOpen(false); }}>
+                        <Trophy className="mr-2 h-4 w-4" /> PSL Table
+                      </Button>
+                      <Button variant={currentView === 'live-games' ? 'default' : 'ghost'} className="justify-start w-full" onClick={() => { setCurrentView('live-games'); setIsMobileMenuOpen(false); }}>
+                        <Layout className="mr-2 h-4 w-4" /> Live Games
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="border-t pt-4">
+                    <p className="text-sm font-medium text-gray-500 mb-2 px-2">Account</p>
+                    <div className="flex items-center space-x-2 p-2 mb-2 bg-gray-50 rounded-md">
+                      <UserCircle className="h-8 w-8 text-gray-400" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{user?.fullName}</span>
+                        <span className="text-xs text-gray-500 truncate max-w-[180px]">{user?.email}</span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      onClick={logout}
+                      className="w-full justify-start"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Logout
+                    </Button>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>
@@ -296,6 +372,13 @@ const Dashboard = () => {
                   >
                     <Users className="h-4 w-4 mr-2" />
                     Simulate ALL Users Gameweek
+                  </Button>
+                  <Button
+                    onClick={handleSyncPlayers}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Database className="h-4 w-4 mr-2" />
+                    Sync Players from API
                   </Button>
                 </div>
               </div>

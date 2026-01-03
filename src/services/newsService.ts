@@ -14,9 +14,18 @@ export interface NewsArticle {
     url: string;
 }
 
-const HARDCODED_API_KEY = "1a5d324f62mshf82070b791b2f3ap10994fjsnd9dc8ed92749";
+export const setStoredNewsApiKey = (key: string) => {
+    localStorage.setItem('psl_user_api_key', key);
+};
 
-const CACHE_KEY_NEWS = 'cached_psl_news';
+export const getStoredNewsApiKey = () => {
+    return localStorage.getItem('psl_user_api_key');
+};
+
+const NEWS_API_ORG_KEY = "92c9846c875047eeac8fda27eeacb14d";
+const HARDCODED_API_KEY = "1a5d324f62mshf82070b791b2f3ap10994fjsnd9dc8ed92749"; // Legacy RapidAPI key
+
+const CACHE_KEY_NEWS = 'cached_psl_news_v2';
 const CACHE_KEY_FIXTURES = 'cached_live_fixtures';
 const CACHE_DURATION = 1000 * 60 * 60 * 24; // 24 hours
 
@@ -88,9 +97,96 @@ export const fetchPSLNews = async (apiKey: string): Promise<NewsArticle[]> => {
 };
 
 const syncNewsWithAPI = async (apiKey: string) => {
-    const effectiveKey = import.meta.env.VITE_RAPID_API_KEY || apiKey;
-    if (!effectiveKey) return;
+    // Default to 'newsapi' since we have a valid key for it now
+    const provider = localStorage.getItem('psl_news_provider') || 'newsapi';
 
+    if (provider === 'rapidapi') {
+        const effectiveKey = import.meta.env.VITE_RAPID_API_KEY || apiKey || getStoredNewsApiKey() || HARDCODED_API_KEY;
+        if (!effectiveKey) return;
+        await syncFromRapidAPI(effectiveKey);
+    } else if (provider === 'newsapi') {
+        const key = getStoredNewsApiKey() || apiKey || NEWS_API_ORG_KEY;
+        if (!key) return;
+        await syncFromNewsOrg(key);
+    }
+};
+
+const syncFromNewsOrg = async (apiKey: string) => {
+    try {
+        // Fetch Top Sports Headlines from South Africa
+        const response = await fetch(`https://newsapi.org/v2/top-headlines?country=za&category=sports&apiKey=${apiKey}`);
+        const data = await response.json();
+
+        if (data.status === 'ok' && Array.isArray(data.articles)) {
+            const syncTime = Timestamp.now();
+            console.log(`Synced ${data.articles.length} articles from NewsAPI.org`);
+
+            for (const item of data.articles) {
+                if (item.title === '[Removed]') continue;
+
+                const title = item.title;
+                const lowerTitle = title.toLowerCase();
+                const description = (item.description || '').toLowerCase();
+                const content = (item.content || '').toLowerCase();
+                const combinedText = `${lowerTitle} ${description} ${content}`;
+
+                // Strict Football Filtering
+                const soccerKeywords = ['soccer', 'football', 'psl', 'premier league', 'chiefs', 'pirates', 'sundowns',
+                    'bafana', 'banyana', 'fifa', 'caf', 'coach', 'squad', 'transfer', 'sign',
+                    'dstv', 'motsepe', 'betway', 'kaiser', 'orlando', 'mamelodi'];
+
+                const excludeKeywords = ['cricket', 'rugby', 'proteas', 'springboks', 't20', 'odi', 'test match',
+                    'lions', 'bulls', 'sharks', 'stormers', 'tennis', 'golf', 'f1', 'formula 1'];
+
+                const isSoccer = soccerKeywords.some(keyword => combinedText.includes(keyword));
+                const isExcluded = excludeKeywords.some(keyword => combinedText.includes(keyword));
+
+                // If it's explicitly other sports, skip. If it's not clearly soccer, skip.
+                if (isExcluded || !isSoccer) continue;
+
+                const summary = item.description || item.content || 'Click to read full story.';
+
+                let tag = 'Soccer';
+                let tagColor = 'bg-blue-600';
+
+                if (lowerTitle.includes('chiefs') || lowerTitle.includes('pirates') || lowerTitle.includes('sundowns')) {
+                    tag = 'PSL Giants';
+                    tagColor = 'bg-yellow-600';
+                } else if (lowerTitle.includes('transfer') || lowerTitle.includes('sign') || lowerTitle.includes('deal')) {
+                    tag = 'Transfer News';
+                    tagColor = 'bg-purple-600';
+                } else if (lowerTitle.includes('bafana') || lowerTitle.includes('banyana')) {
+                    tag = 'National Team';
+                    tagColor = 'bg-green-600';
+                }
+
+                const docId = btoa(item.url).slice(0, 20); // Unique ID from URL
+                const publishedAt = item.publishedAt ? Timestamp.fromDate(new Date(item.publishedAt)) : Timestamp.now();
+
+                const newsData = {
+                    title,
+                    summary,
+                    date: item.publishedAt ? formatRelativeTime(item.publishedAt) : 'Just now',
+                    publishedAt,
+                    syncedAt: syncTime,
+                    source: item.source.name || 'NewsAPI',
+                    imageUrl: item.urlToImage || 'https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=800',
+                    tag,
+                    tagColor,
+                    url: item.url
+                };
+
+                await setDoc(doc(db, 'news', docId), newsData, { merge: true });
+            }
+        } else {
+            console.error("NewsAPI Error:", data.message);
+        }
+    } catch (e) {
+        console.error("NewsAPI Sync failed:", e);
+    }
+};
+
+const syncFromRapidAPI = async (effectiveKey: string) => {
     const apiHost = 'livescore6.p.rapidapi.com';
 
     try {
@@ -243,7 +339,7 @@ export const fetchFixtures = async (apiKey?: string): Promise<Fixture[]> => {
 };
 
 const syncFixturesWithAPI = async (apiKey?: string) => {
-    const effectiveKey = import.meta.env.VITE_RAPID_API_KEY || apiKey;
+    const effectiveKey = import.meta.env.VITE_RAPID_API_KEY || apiKey || getStoredNewsApiKey();
     if (!effectiveKey) return;
     const apiHost = 'livescore6.p.rapidapi.com';
 
@@ -313,7 +409,7 @@ export const fetchStandings = async (apiKey?: string): Promise<PSLStanding[]> =>
 };
 
 const syncStandingsWithAPI = async (apiKey?: string) => {
-    const effectiveKey = import.meta.env.VITE_RAPID_API_KEY || apiKey;
+    const effectiveKey = import.meta.env.VITE_RAPID_API_KEY || apiKey || getStoredNewsApiKey();
     if (!effectiveKey) return;
     const apiHost = 'livescore6.p.rapidapi.com';
 

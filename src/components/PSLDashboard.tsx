@@ -203,12 +203,12 @@ export const PSLDashboard = () => {
                       <TableHead className="text-center">GF</TableHead>
                       <TableHead className="text-center">GA</TableHead>
                       <TableHead className="text-center">GD</TableHead>
-                      <TableHead className="text-center font-bold">Pts</TableHead>
+                      <TableHead className="text-center font-bold sticky right-0 bg-white z-10 shadow-[-2px_0_5px_rgba(0,0,0,0.1)]">Pts</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {standings.map((team) => (
-                      <TableRow key={team.rank} className="hover:bg-gray-50">
+                      <TableRow key={team.rank} className="group hover:bg-gray-50">
                         <TableCell>
                           <Badge className={getRankBadgeColor(team.rank)}>
                             {team.rank}
@@ -226,7 +226,7 @@ export const PSLDashboard = () => {
                             {team.goalDifference > 0 ? '+' : ''}{team.goalDifference}
                           </span>
                         </TableCell>
-                        <TableCell className="text-center font-bold">{team.points}</TableCell>
+                        <TableCell className="text-center font-bold sticky right-0 bg-white group-hover:bg-gray-50 z-10 shadow-[-2px_0_5px_rgba(0,0,0,0.1)]">{team.points}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

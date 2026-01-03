@@ -237,19 +237,19 @@ export const PlayersView = () => {
       </Card>
 
       {/* Players Grid */}
-      <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-1 md:gap-4 justify-items-center">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 justify-items-center">
         {filteredPlayers.map((player) => (
-          <div key={player.id} className="relative group w-full flex justify-center transform scale-75 md:scale-100 origin-top">
+          <div key={player.id} className="relative group w-fit flex justify-center mx-auto">
             <FifaCardDetailed
               player={player}
             />
 
             {/* Action Buttons Overlay - Mobile optimized */}
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-xl flex flex-col justify-end p-1 md:p-4 z-10 w-[140px] md:w-auto -ml-[35px] md:ml-0 left-1/2 md:left-0 md:bg-black/60">
-              <div className="space-y-1 md:space-y-2">
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-xl flex flex-col justify-end p-2 z-10">
+              <div className="space-y-2 mb-2">
                 <Button
                   onClick={() => handleAddPlayer(player)}
-                  className="w-full text-[8px] md:text-sm h-6 md:h-10 bg-blue-600 hover:bg-blue-700 text-white px-1"
+                  className="w-full text-xs md:text-sm h-8 md:h-10 bg-blue-600 hover:bg-blue-700 text-white px-1 shadow-lg"
                   disabled={
                     user?.squad?.some(p => p.id === player.id) ||
                     user?.bench?.some(p => p.id === player.id) ||
@@ -263,7 +263,7 @@ export const PlayersView = () => {
                 <Button
                   onClick={() => handleAddToBench(player)}
                   variant="outline"
-                  className="w-full text-[8px] md:text-sm h-6 md:h-10 bg-white/90 text-black border-white hover:bg-white px-1"
+                  className="w-full text-xs md:text-sm h-8 md:h-10 bg-white/90 text-black border-white hover:bg-white px-1 shadow-lg"
                   disabled={
                     user?.squad?.some(p => p.id === player.id) ||
                     user?.bench?.some(p => p.id === player.id) ||

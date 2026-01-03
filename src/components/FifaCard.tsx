@@ -29,7 +29,7 @@ interface Player {
 interface FifaCardProps {
   player?: Player;
   isEmpty?: boolean;
-  size?: 'small' | 'medium' | 'large';
+  size?: 'small' | 'medium' | 'large' | 'responsive';
   onEmptyClick?: () => void;
   onPlayerClick?: (player: Player) => void;
   showRemoveOverlay?: boolean;
@@ -52,7 +52,7 @@ const getPlayerImage = (teamName: string) => {
   return defaultJersey;
 };
 
-const getSizeClasses = (size: 'small' | 'medium' | 'large') => {
+const getSizeClasses = (size: 'small' | 'medium' | 'large' | 'responsive') => {
   switch (size) {
     case 'small':
       return {
@@ -74,6 +74,13 @@ const getSizeClasses = (size: 'small' | 'medium' | 'large') => {
         image: 'w-40 h-40',
         nameBox: 'px-4 py-2 text-lg',
         badge: 'text-sm px-2'
+      };
+    case 'responsive':
+      return {
+        container: 'w-32 h-44 md:w-48 md:h-64',
+        image: 'w-24 h-24 md:w-40 md:h-40',
+        nameBox: 'px-2 py-1 text-xs md:px-4 md:py-2 md:text-lg',
+        badge: 'text-[10px] px-1.5 md:text-sm md:px-2'
       };
   }
 };
@@ -159,15 +166,16 @@ export const FifaCard: React.FC<FifaCardProps> = ({
 };
 
 // Simplified detailed view re-using the new design
-export const FifaCardDetailed: React.FC<{ player: Player; onClick?: () => void }> = ({
+export const FifaCardDetailed: React.FC<{ player: Player; onClick?: () => void; size?: 'small' | 'medium' | 'large' | 'responsive' }> = ({
   player,
-  onClick
+  onClick,
+  size = 'responsive'
 }) => {
   return (
     <div onClick={onClick} className="flex flex-col items-center">
-      <FifaCard player={player} size="large" />
+      <FifaCard player={player} size={size} />
       <div className="mt-2 text-center">
-        <Badge variant="secondary" className="text-lg px-4 py-1 bg-black text-white border border-gold-500">
+        <Badge variant="secondary" className="text-xs px-2 py-0.5 md:text-lg md:px-4 md:py-1 bg-black text-white border border-gold-500">
           {new Intl.NumberFormat('en-ZA', {
             style: 'currency',
             currency: 'ZAR',

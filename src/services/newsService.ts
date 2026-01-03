@@ -141,7 +141,8 @@ const syncFromGNews = async (apiKey: string): Promise<{ success: boolean; error?
     try {
         console.log("Fetching news from GNews...");
         // Search for specific SA football terms, with broader fallback tags
-        const response = await fetch(`https://gnews.io/api/v4/search?q=psl OR "kaizer chiefs" OR "orlando pirates" OR sundowns OR "bafana bafana" OR soccer OR football&lang=en&country=za&max=10&apikey=${apiKey}`);
+        const query = 'psl OR "kaizer chiefs" OR "orlando pirates" OR sundowns OR "bafana bafana" OR soccer OR football';
+        const response = await fetch(`https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&country=za&max=10&apikey=${apiKey}`);
         const data = await response.json();
 
         if (response.status !== 200) {

@@ -5,17 +5,7 @@ import LandingPage from '@/components/LandingPage';
 import Dashboard from '@/components/Dashboard';
 import { TeamNameSetup } from '@/components/TeamNameSetup';
 
-const DebugOverlay = () => {
-  const { user, isLoading, error } = useAuth();
-  return (
-    <div className="fixed top-0 right-0 bg-black/80 text-white p-4 z-50 text-xs font-mono pointer-events-none max-w-xs break-words">
-      <p>Loading: {isLoading.toString()}</p>
-      <p>User: {user ? user.email : 'null'}</p>
-      <p>UID: {user ? user.id : 'null'}</p>
-      {error && <p className="text-red-400">Error: {error}</p>}
-    </div>
-  );
-};
+
 
 const AppContent = () => {
   const { user, isLoading } = useAuth();
@@ -23,7 +13,7 @@ const AppContent = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <DebugOverlay />
+
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading FPSL...</p>
@@ -35,7 +25,7 @@ const AppContent = () => {
   if (!user) {
     return (
       <>
-        <DebugOverlay />
+
         <LandingPage />
       </>
     );
@@ -63,7 +53,7 @@ const AppContent = () => {
   if (!user.teamName) {
     return (
       <>
-        <DebugOverlay />
+
         <TeamNameSetup onComplete={() => window.location.reload()} />
       </>
     );
@@ -71,7 +61,7 @@ const AppContent = () => {
 
   return (
     <>
-      <DebugOverlay />
+
       <Dashboard />
     </>
   );

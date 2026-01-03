@@ -133,12 +133,12 @@ export const FifaCard: React.FC<FifaCardProps> = ({
           {getSurname(player.name)}
         </div>
 
-        {/* Optional: Position indicator below name, can be kept minimal or removed if strictly minimal */}
+        {/* Optional: Position indicator below name */}
         <div className="flex space-x-1">
-          <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-white/80 text-black font-bold">
+          <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-slate-900/90 text-white font-bold border border-slate-700">
             {player.position}
           </Badge>
-          <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-green-500 text-white font-bold">
+          <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-green-600 text-white font-bold border border-green-700">
             {player.rating}
           </Badge>
         </div>

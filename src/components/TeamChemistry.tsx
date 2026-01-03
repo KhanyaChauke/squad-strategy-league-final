@@ -8,35 +8,67 @@ import { useTeamChemistry, PlayerForChemistry } from '@/hooks/useTeamChemistry';
 interface TeamChemistryProps {
   squad: PlayerForChemistry[];
   className?: string;
+  compact?: boolean;
 }
 
-export const TeamChemistry: React.FC<TeamChemistryProps> = ({ squad, className = "" }) => {
+export const TeamChemistry: React.FC<TeamChemistryProps> = ({ squad, className = "", compact = false }) => {
   const chemistry = useTeamChemistry(squad);
-  
+
   // Calculate additional stats for display
   const clubConnections = React.useMemo(() => {
     const clubs = squad.reduce((acc, player) => {
       acc[player.club] = (acc[player.club] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-    
+
     return Object.entries(clubs)
       .filter(([_, count]) => count > 1)
       .map(([club, count]) => ({ club, count }))
       .sort((a, b) => b.count - a.count);
   }, [squad]);
-  
+
   const nationalityConnections = React.useMemo(() => {
     const nationalities = squad.reduce((acc, player) => {
       acc[player.nationality] = (acc[player.nationality] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-    
+
     return Object.entries(nationalities)
       .filter(([_, count]) => count > 1)
       .map(([nationality, count]) => ({ nationality, count }))
       .sort((a, b) => b.count - a.count);
   }, [squad]);
+
+  if (compact) {
+    return (
+      <Card className={`${className} p-3 md:p-6 h-full flex flex-col justify-center`}>
+        <div className="flex flex-col space-y-2">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Chemistry</span>
+          <div className="flex items-center space-x-2">
+            <span className="text-lg md:text-2xl font-bold" style={{ color: chemistry.chemistryColor }}>
+              {chemistry.chemistryPercentage}%
+            </span>
+            <Badge
+              variant="secondary"
+              className="text-[10px] h-5 px-1.5"
+              style={{
+                backgroundColor: `${chemistry.chemistryColor}20`,
+                color: chemistry.chemistryColor,
+                borderColor: chemistry.chemistryColor
+              }}
+            >
+              {chemistry.chemistryGrade}
+            </Badge>
+          </div>
+          <Progress
+            value={chemistry.chemistryPercentage}
+            className="h-1.5 bg-muted"
+            indicatorColor={chemistry.chemistryColor}
+          />
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className={`${className} relative overflow-hidden`}>
@@ -46,7 +78,7 @@ export const TeamChemistry: React.FC<TeamChemistryProps> = ({ squad, className =
           <span>Team Chemistry</span>
         </CardTitle>
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
         {/* Main Chemistry Display */}
         <div className="space-y-3">
@@ -56,10 +88,10 @@ export const TeamChemistry: React.FC<TeamChemistryProps> = ({ squad, className =
                 <span className="text-2xl font-bold" style={{ color: chemistry.chemistryColor }}>
                   {chemistry.chemistryPercentage}%
                 </span>
-                <Badge 
-                  variant="secondary" 
+                <Badge
+                  variant="secondary"
                   className="text-xs"
-                  style={{ 
+                  style={{
                     backgroundColor: `${chemistry.chemistryColor}20`,
                     color: chemistry.chemistryColor,
                     borderColor: chemistry.chemistryColor
@@ -73,11 +105,11 @@ export const TeamChemistry: React.FC<TeamChemistryProps> = ({ squad, className =
               </p>
             </div>
           </div>
-          
+
           {/* Progress Bar */}
           <div className="space-y-2">
-            <Progress 
-              value={chemistry.chemistryPercentage} 
+            <Progress
+              value={chemistry.chemistryPercentage}
               className="h-3 bg-muted animate-fade-in"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
@@ -87,7 +119,7 @@ export const TeamChemistry: React.FC<TeamChemistryProps> = ({ squad, className =
             </div>
           </div>
         </div>
-        
+
         {/* Chemistry Breakdown */}
         {squad.length >= 2 && (
           <div className="grid grid-cols-1 gap-3 pt-2 border-t">
@@ -107,7 +139,7 @@ export const TeamChemistry: React.FC<TeamChemistryProps> = ({ squad, className =
                 </div>
               </div>
             )}
-            
+
             {/* Nationality Connections */}
             {nationalityConnections.length > 0 && (
               <div className="space-y-2">
@@ -124,7 +156,7 @@ export const TeamChemistry: React.FC<TeamChemistryProps> = ({ squad, className =
                 </div>
               </div>
             )}
-            
+
             {/* Squad Size Info */}
             <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
               <div className="flex items-center space-x-1">
@@ -135,7 +167,7 @@ export const TeamChemistry: React.FC<TeamChemistryProps> = ({ squad, className =
             </div>
           </div>
         )}
-        
+
         {/* Empty State */}
         {squad.length < 2 && (
           <div className="text-center py-4 text-muted-foreground">

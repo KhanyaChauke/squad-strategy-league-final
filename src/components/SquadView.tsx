@@ -310,64 +310,56 @@ export const SquadView = () => {
         </div>
       </div>
 
-      {/* Squad Overview */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Squad Value</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+      {/* Squad Overview & Chemistry */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+        <Card className="p-3 md:p-6">
+          <CardHeader className="p-0 pb-2 space-y-0">
+            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Value</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+          <CardContent className="p-0">
+            <div className="text-lg md:text-2xl font-bold text-green-600 truncate">
               {formatCurrency(squadValue)}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Total investment
-            </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
+        <Card className="p-3 md:p-6">
+          <CardHeader className="p-0 pb-2 space-y-0">
+            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Avg Rating</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${getRatingColor(averageRating)}`}>
+          <CardContent className="p-0">
+            <div className={`text-lg md:text-2xl font-bold ${getRatingColor(averageRating)}`}>
               {averageRating}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Squad quality
-            </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Formation</CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
+        <Card className="p-3 md:p-6">
+          <CardHeader className="p-0 pb-2 space-y-0">
+            <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Formation</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="p-0">
+            <div className="text-lg md:text-2xl font-bold truncate">
               {selectedFormation?.name || `${positionCounts.GK}-${positionCounts.DEF}-${positionCounts.MID}-${positionCounts.ATT}`}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[10px] md:text-xs text-muted-foreground truncate">
               {selectedFormation?.style || 'Current setup'}
             </p>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Team Chemistry */}
-      <TeamChemistry
-        squad={user?.squad.map(player => ({
-          id: player.id,
-          name: player.name,
-          club: player.team,
-          nationality: player.nationality,
-          position: player.position
-        })) || []}
-      />
+        <TeamChemistry
+          squad={user?.squad.map(player => ({
+            id: player.id,
+            name: player.name,
+            club: player.team,
+            nationality: player.nationality,
+            position: player.position
+          })) || []}
+          className="col-span-1"
+          compact={true}
+        />
+      </div>
 
       {/* Formation Visualization */}
       <Card>

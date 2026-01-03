@@ -16,28 +16,28 @@ export const PlayersView = () => {
   const [sortBy, setSortBy] = useState('rating');
   const { user, addPlayerToSquad, addPlayerToBench } = useAuth();
   const { toast } = useToast();
-  
+
   const selectedFormation = user?.selectedFormation;
 
   const getFilteredPlayers = () => {
     let players = playersDatabase;
-    
+
     // Apply search filter
     if (searchQuery.trim()) {
       players = searchPlayers(searchQuery);
     }
-    
+
     // Apply position filter
     if (positionFilter !== 'all') {
       players = getPlayersByPosition(positionFilter);
       if (searchQuery.trim()) {
-        players = players.filter(player => 
+        players = players.filter(player =>
           player.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           player.team.toLowerCase().includes(searchQuery.toLowerCase())
         );
       }
     }
-    
+
     // Apply sorting
     switch (sortBy) {
       case 'rating':
@@ -52,7 +52,7 @@ export const PlayersView = () => {
       default:
         break;
     }
-    
+
     return players;
   };
 
@@ -67,7 +67,7 @@ export const PlayersView = () => {
 
   const handleAddPlayer = (player: any) => {
     const success = addPlayerToSquad(player);
-    
+
     if (success) {
       toast({
         title: "Player Added!",
@@ -75,7 +75,7 @@ export const PlayersView = () => {
       });
     } else {
       let message = "Failed to add player.";
-      
+
       if (selectedFormation) {
         const currentPositionCount = user?.squad?.filter(p => p.position === player.position).length || 0;
         const maxForPosition = selectedFormation.positions[player.position as keyof typeof selectedFormation.positions];
@@ -95,7 +95,7 @@ export const PlayersView = () => {
           message = "Player is already in your squad.";
         }
       }
-      
+
       toast({
         title: "Cannot Add Player",
         description: message,
@@ -106,7 +106,7 @@ export const PlayersView = () => {
 
   const handleAddToBench = (player: any) => {
     const success = addPlayerToBench(player);
-    
+
     if (success) {
       toast({
         title: "Player Added to Bench!",
@@ -114,7 +114,7 @@ export const PlayersView = () => {
       });
     } else {
       let message = "Failed to add player to bench.";
-      
+
       if ((user?.squad?.length || 0) + (user?.bench?.length || 0) >= 15) {
         message = "Your total squad is full (15 players maximum).";
       } else if (user?.bench?.length >= 4) {
@@ -124,7 +124,7 @@ export const PlayersView = () => {
       } else if (user?.squad?.some(p => p.id === player.id) || user?.bench?.some(p => p.id === player.id)) {
         message = "Player is already in your squad or bench.";
       }
-      
+
       toast({
         title: "Cannot Add Player to Bench",
         description: message,
@@ -159,7 +159,7 @@ export const PlayersView = () => {
           <h2 className="text-3xl font-bold text-gray-900">Player Database</h2>
           <p className="text-gray-600">Browse and add players to your squad</p>
         </div>
-        
+
         <div className="bg-white rounded-lg p-4 shadow-sm border">
           <div className="flex items-center space-x-4 text-sm">
             <div className="flex items-center space-x-2">
@@ -208,7 +208,7 @@ export const PlayersView = () => {
                 />
               </div>
             </div>
-            
+
             <Select value={positionFilter} onValueChange={setPositionFilter}>
               <SelectTrigger className="w-full md:w-40">
                 <SelectValue placeholder="Position" />
@@ -221,7 +221,7 @@ export const PlayersView = () => {
                 <SelectItem value="ATT">Attacker</SelectItem>
               </SelectContent>
             </Select>
-            
+
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-full md:w-40">
                 <SelectValue placeholder="Sort by" />
@@ -237,19 +237,19 @@ export const PlayersView = () => {
       </Card>
 
       {/* Players Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 justify-items-center">
+      <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-1 md:gap-4 justify-items-center">
         {filteredPlayers.map((player) => (
-          <div key={player.id} className="relative group">
+          <div key={player.id} className="relative group w-full flex justify-center transform scale-75 md:scale-100 origin-top">
             <FifaCardDetailed
               player={player}
             />
-            
-            {/* Action Buttons Overlay */}
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-xl flex flex-col justify-end p-4">
-              <div className="space-y-2">
+
+            {/* Action Buttons Overlay - Mobile optimized */}
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-xl flex flex-col justify-end p-1 md:p-4 z-10 w-[140px] md:w-auto -ml-[35px] md:ml-0 left-1/2 md:left-0 md:bg-black/60">
+              <div className="space-y-1 md:space-y-2">
                 <Button
                   onClick={() => handleAddPlayer(player)}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  className="w-full text-[8px] md:text-sm h-6 md:h-10 bg-blue-600 hover:bg-blue-700 text-white px-1"
                   disabled={
                     user?.squad?.some(p => p.id === player.id) ||
                     user?.bench?.some(p => p.id === player.id) ||
@@ -258,12 +258,12 @@ export const PlayersView = () => {
                     (user?.budget || 0) < player.price
                   }
                 >
-                  Add to Squad
+                  Add Squad
                 </Button>
                 <Button
                   onClick={() => handleAddToBench(player)}
                   variant="outline"
-                  className="w-full bg-white/90 text-black border-white hover:bg-white"
+                  className="w-full text-[8px] md:text-sm h-6 md:h-10 bg-white/90 text-black border-white hover:bg-white px-1"
                   disabled={
                     user?.squad?.some(p => p.id === player.id) ||
                     user?.bench?.some(p => p.id === player.id) ||
@@ -272,7 +272,7 @@ export const PlayersView = () => {
                     (user?.budget || 0) < player.price
                   }
                 >
-                  Add to Bench
+                  Add Bench
                 </Button>
               </div>
             </div>

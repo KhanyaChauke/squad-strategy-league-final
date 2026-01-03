@@ -10,12 +10,23 @@ interface LiveFixtureCardProps {
 }
 
 export const LiveFixtureCard = ({ fixture, variant = 'default' }: LiveFixtureCardProps) => {
+    const getStatusText = (status: string) => {
+        switch (status) {
+            case 'In Progress': return 'LIVE';
+            case 'Finished': return 'Full Time';
+            case 'Postponed': return 'Postponed';
+            case 'Not Started': return 'Upcoming';
+            default: return status;
+        }
+    };
+
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'In Progress': return 'bg-green-500 animate-pulse';
-            case 'Finished': return 'bg-gray-500';
-            case 'Postponed': return 'bg-red-500';
-            default: return 'bg-blue-500';
+            case 'In Progress': return 'bg-red-600 animate-pulse font-bold tracking-widest';
+            case 'Finished': return 'bg-gray-800';
+            case 'Postponed': return 'bg-orange-500';
+            case 'Not Started': return 'bg-blue-600';
+            default: return 'bg-gray-500';
         }
     };
 
@@ -25,7 +36,7 @@ export const LiveFixtureCard = ({ fixture, variant = 'default' }: LiveFixtureCar
                 <CardContent className="p-3">
                     <div className="flex justify-between items-center mb-2">
                         <Badge className={`${getStatusColor(fixture.status)} text-[10px] px-1 py-0 h-4`}>
-                            {fixture.status === 'In Progress' ? 'LIVE' : fixture.status}
+                            {getStatusText(fixture.status)}
                         </Badge>
                         <span className="text-xs font-bold text-gray-500">{fixture.time}</span>
                     </div>
@@ -51,8 +62,8 @@ export const LiveFixtureCard = ({ fixture, variant = 'default' }: LiveFixtureCar
                     {/* Status/Time Strip */}
                     <div className="col-span-12 md:col-span-2 bg-gray-50 p-4 flex flex-row md:flex-col items-center justify-between md:justify-center border-b md:border-b-0 md:border-r">
                         <div className="flex flex-col items-center">
-                            <Badge className={`${getStatusColor(fixture.status)} mb-2`}>
-                                {fixture.status}
+                            <Badge className={`${getStatusColor(fixture.status)} mb-2 px-3 py-1 text-sm border-none shadow-md`}>
+                                {getStatusText(fixture.status)}
                             </Badge>
                             <span className="text-xl font-bold text-gray-700">{fixture.time}</span>
                         </div>

@@ -121,18 +121,20 @@ export const LiveGamesView = () => {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'In Progress': return 'bg-green-500 text-white animate-pulse font-bold';
-            case 'Finished': return 'bg-gray-600 text-white font-semibold';
-            case 'Postponed': return 'bg-red-500 text-white font-semibold';
-            default: return 'bg-blue-500 text-white font-semibold'; // Not Started
+            case 'In Progress': return 'bg-red-600 text-white animate-pulse font-bold tracking-widest';
+            case 'Finished': return 'bg-gray-800 text-white font-semibold';
+            case 'Postponed': return 'bg-orange-500 text-white font-semibold';
+            case 'Not Started': return 'bg-blue-600 text-white font-semibold';
+            default: return 'bg-gray-500 text-white font-semibold';
         }
     };
 
     const getStatusText = (status: string) => {
         switch (status) {
-            case 'In Progress': return '🔴 LIVE';
-            case 'Finished': return '✓ FT';
-            case 'Postponed': return '⚠ POSTPONED';
+            case 'In Progress': return 'LIVE';
+            case 'Finished': return 'Full Time';
+            case 'Postponed': return 'Postponed';
+            case 'Not Started': return 'Upcoming';
             default: return status;
         }
     };

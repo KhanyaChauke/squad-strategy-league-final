@@ -24,6 +24,7 @@ export const getStoredNewsApiKey = () => {
 
 const NEWS_API_ORG_KEY = "92c9846c875047eeac8fda27eeacb14d";
 const HARDCODED_API_KEY = "1a5d324f62mshf82070b791b2f3ap10994fjsnd9dc8ed92749"; // Legacy RapidAPI key
+const GNEWS_API_KEY = "46b746a39e92802f3adcc087019909cc";
 
 const CACHE_KEY_NEWS = 'cached_psl_news_v2';
 const CACHE_KEY_FIXTURES = 'cached_live_fixtures';
@@ -99,19 +100,90 @@ export const fetchPSLNews = async (apiKey: string): Promise<NewsArticle[]> => {
 const syncNewsWithAPI = async (apiKey: string) => {
     // Default to 'newsapi' since we have a valid key for it now
     const provider = localStorage.getItem('psl_news_provider') || 'newsapi';
+    let syncSuccess = false;
 
     if (provider === 'rapidapi') {
         const effectiveKey = import.meta.env.VITE_RAPID_API_KEY || apiKey || getStoredNewsApiKey() || HARDCODED_API_KEY;
-        if (!effectiveKey) return;
-        await syncFromRapidAPI(effectiveKey);
+        if (effectiveKey) {
+            syncSuccess = await syncFromRapidAPI(effectiveKey);
+        }
     } else if (provider === 'newsapi') {
         const key = getStoredNewsApiKey() || apiKey || NEWS_API_ORG_KEY;
-        if (!key) return;
-        await syncFromNewsOrg(key);
+        if (key) {
+            syncSuccess = await syncFromNewsOrg(key);
+        }
+    }
+
+    // Fallback to GNews if primary failed
+    if (!syncSuccess) {
+        console.log("Primary news provider failed or not configured. Attempting fallback to GNews...");
+        await syncFromGNews(GNEWS_API_KEY);
     }
 };
 
-const syncFromNewsOrg = async (apiKey: string) => {
+const syncFromGNews = async (apiKey: string) => {
+    try {
+        console.log("Fetching news from GNews...");
+        // Search for specific SA football terms
+        const response = await fetch(`https://gnews.io/api/v4/search?q=psl OR "kaizer chiefs" OR "orlando pirates" OR sundowns OR "bafana bafana"&lang=en&country=za&max=10&apikey=${apiKey}`);
+        const data = await response.json();
+
+        if (data.articles && Array.isArray(data.articles)) {
+            const syncTime = Timestamp.now();
+            console.log(`Synced ${data.articles.length} articles from GNews`);
+
+            for (const item of data.articles) {
+                const title = item.title;
+                const lowerTitle = title.toLowerCase();
+                const description = item.description || '';
+
+                // Skip non-sports logic handled by query generally, but double check context if needed
+                // GNews search is usually pretty accurate with these keywords
+
+                let tag = 'Soccer';
+                let tagColor = 'bg-blue-600';
+
+                if (lowerTitle.includes('chiefs') || lowerTitle.includes('pirates') || lowerTitle.includes('sundowns')) {
+                    tag = 'PSL Giants';
+                    tagColor = 'bg-yellow-600';
+                } else if (lowerTitle.includes('transfer') || lowerTitle.includes('sign')) {
+                    tag = 'Transfer News';
+                    tagColor = 'bg-purple-600';
+                } else if (lowerTitle.includes('bafana')) {
+                    tag = 'National Team';
+                    tagColor = 'bg-green-600';
+                }
+
+                const docId = btoa(item.url).slice(0, 20); // Unique ID from URL
+                const publishedAt = item.publishedAt ? Timestamp.fromDate(new Date(item.publishedAt)) : Timestamp.now();
+
+                const newsData = {
+                    title,
+                    summary: description,
+                    date: item.publishedAt ? formatRelativeTime(item.publishedAt) : 'Just now',
+                    publishedAt,
+                    syncedAt: syncTime,
+                    source: item.source.name || 'GNews',
+                    imageUrl: item.image || 'https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=800',
+                    tag,
+                    tagColor,
+                    url: item.url
+                };
+
+                await setDoc(doc(db, 'news', docId), newsData, { merge: true });
+            }
+            return true;
+        } else {
+            console.error("GNews Error:", data.errors);
+            return false;
+        }
+    } catch (e) {
+        console.error("GNews Sync failed:", e);
+        return false;
+    }
+};
+
+const syncFromNewsOrg = async (apiKey: string): Promise<boolean> => {
     try {
         // Fetch Top Sports Headlines from South Africa
         const response = await fetch(`https://newsapi.org/v2/top-headlines?country=za&category=sports&apiKey=${apiKey}`);
@@ -178,15 +250,18 @@ const syncFromNewsOrg = async (apiKey: string) => {
 
                 await setDoc(doc(db, 'news', docId), newsData, { merge: true });
             }
+            return true;
         } else {
             console.error("NewsAPI Error:", data.message);
+            return false;
         }
     } catch (e) {
         console.error("NewsAPI Sync failed:", e);
+        return false;
     }
 };
 
-const syncFromRapidAPI = async (effectiveKey: string) => {
+const syncFromRapidAPI = async (effectiveKey: string): Promise<boolean> => {
     const apiHost = 'livescore6.p.rapidapi.com';
 
     try {
@@ -244,9 +319,12 @@ const syncFromRapidAPI = async (effectiveKey: string) => {
                 await setDoc(doc(db, 'news', docId), newsData, { merge: true });
             }
             console.log(`Successfully synced ${data.topStories.length} stories to Firebase.`);
+            return true;
         }
+        return false;
     } catch (e) {
         console.error("API Sync failed:", e);
+        return false;
     }
 };
 

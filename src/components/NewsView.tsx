@@ -6,64 +6,6 @@ import { Calendar, ExternalLink, ChevronRight, Newspaper, RefreshCw, AlertCircle
 import { fetchPSLNews, NewsArticle } from '@/services/newsService';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-const MOCK_NEWS: NewsArticle[] = [
-    {
-        id: '1',
-        title: 'Chiefs Secure Last-Minute Winner in Soweto Derby',
-        summary: 'Amakhosi fans erupted in joy as a stoppage-time goal sealed a dramatic victory over their arch-rivals Orlando Pirates at a sold-out FNB Stadium.',
-        date: '2 hours ago',
-        source: 'Soccer Laduma',
-        imageUrl: 'https://images.unsplash.com/photo-1556056504-5c7696c4c28d?auto=format&fit=crop&q=80&w=800',
-        tag: 'Match Report',
-        tagColor: 'bg-yellow-500',
-        url: '#'
-    },
-    {
-        id: '2',
-        title: 'Sundowns Announce Record-Breaking Signing',
-        summary: 'The Brazilians have once again flexed their financial muscle, bringing in a top South American talent to bolster their CAF Champions League ambitions.',
-        date: '5 hours ago',
-        source: 'KickOff',
-        imageUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=800',
-        tag: 'Transfer News',
-        tagColor: 'bg-blue-500',
-        url: '#'
-    },
-    {
-        id: '3',
-        title: 'PSL Title Race Heats Up: Top 4 Analysis',
-        summary: 'With only 10 games remaining, we take a deep dive into the statistics and remaining fixtures for the teams vying for the league title.',
-        date: '1 day ago',
-        source: 'SuperSport',
-        imageUrl: 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?auto=format&fit=crop&q=80&w=800',
-        tag: 'Analysis',
-        tagColor: 'bg-green-500',
-        url: '#'
-    },
-    {
-        id: '4',
-        title: 'Bafana Bafana Squad Announced for AFCON Qualifiers',
-        summary: 'Coach Hugo Broos has named his 23-man squad for the upcoming crucial qualifiers, with a few surprise inclusions and notable omissions.',
-        date: '2 days ago',
-        source: 'SAFA.net',
-        imageUrl: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&q=80&w=800',
-        tag: 'International',
-        tagColor: 'bg-yellow-600',
-        url: '#'
-    },
-    {
-        id: '5',
-        title: 'Cape Town City Unveil New Home Kit',
-        summary: 'The Citizens have dropped their latest home jersey for the upcoming season, featuring a bold new design inspired by Table Mountain.',
-        date: '3 days ago',
-        source: 'iDiski Times',
-        imageUrl: 'https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a?auto=format&fit=crop&q=80&w=800',
-        tag: 'Kit Launch',
-        tagColor: 'bg-blue-600',
-        url: '#'
-    }
-];
-
 export const NewsView = () => {
     const [news, setNews] = useState<NewsArticle[]>([]);
     const [loading, setLoading] = useState(true);
@@ -77,16 +19,12 @@ export const NewsView = () => {
         setError(null);
         try {
             const articles = await fetchPSLNews('');
-            if (articles && articles.length > 0) {
-                setNews(articles);
-            } else {
-                console.warn('API returned no news, falling back to mock data');
-                setNews(MOCK_NEWS);
-            }
+            // Ensure we use what we get, even if it's empty, to test the API connection
+            setNews(articles || []);
         } catch (err) {
             console.error(err);
-            setError('Failed to fetch latest news. Showing cached stories.');
-            // Cache is already handled by fetchPSLNews
+            setError('Failed to fetch latest news.');
+            setNews([]);
         } finally {
             setLoading(false);
         }

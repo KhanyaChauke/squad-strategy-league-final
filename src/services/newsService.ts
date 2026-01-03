@@ -94,57 +94,10 @@ export const fetchPSLNews = async (apiKey: string): Promise<NewsArticle[]> => {
         const localCached = getFromCache(CACHE_KEY_NEWS);
         if (localCached) return localCached;
 
-        console.warn("Cache missing or expired. Returning static mock data as fallback.");
-        return MOCK_NEWS_FALLBACK;
+        // If we have no cache and an error occurred, propagate it
+        throw new Error(e instanceof Error ? e.message : "Failed to connect to news service");
     }
 };
-
-const MOCK_NEWS_FALLBACK: NewsArticle[] = [
-    {
-        id: 'mock-1',
-        title: 'Sundowns maintain lead at the top of the table',
-        summary: 'Mamelodi Sundowns continue their dominance in the DStv Premiership with another convincing win, extending their lead at the summit of the log.',
-        date: 'Just now',
-        source: 'KickOff',
-        imageUrl: 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?auto=format&fit=crop&q=80&w=800',
-        tag: 'PSL Giants',
-        tagColor: 'bg-yellow-600',
-        url: '#',
-    },
-    {
-        id: 'mock-2',
-        title: 'Chiefs looking to bolster squad in transfer window',
-        summary: 'Kaizer Chiefs are reportedly eyeing several key targets to strengthen their defense for the upcoming season as they look to challenge for honors.',
-        date: '2h ago',
-        source: 'Soccer Laduma',
-        imageUrl: 'https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a?auto=format&fit=crop&q=80&w=800',
-        tag: 'Transfer News',
-        tagColor: 'bg-purple-600',
-        url: '#',
-    },
-    {
-        id: 'mock-3',
-        title: 'Bafana Bafana prepare for crucial qualifiers',
-        summary: 'The national team coach has announced the preliminary squad for the upcoming AFCON qualifiers, with some surprise inclusions and notable exclusions.',
-        date: '4h ago',
-        source: 'Sowetan Live',
-        imageUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=800',
-        tag: 'National Team',
-        tagColor: 'bg-green-600',
-        url: '#',
-    },
-    {
-        id: 'mock-4',
-        title: 'Pirates star player ruled out with injury',
-        summary: 'Orlando Pirates have suffered a major blow as their star midfielder has been ruled out of action for the next three weeks due to a hamstring injury.',
-        date: '1d ago',
-        source: 'SuperSport',
-        imageUrl: 'https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&q=80&w=800',
-        tag: 'PSL Giants',
-        tagColor: 'bg-gray-800',
-        url: '#',
-    }
-];
 
 const getTwoWeeksAgoDate = () => {
     const date = new Date();

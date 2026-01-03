@@ -82,20 +82,8 @@ export const LiveGamesView = () => {
             // Sort and filter: Include Tier 1 first, then Tier 2 if needed to fill up to 5
             const tieredFixtures = data.map(f => ({ ...f, tier: getRelevanceTier(f) }));
 
-            let relevantFixtures = tieredFixtures.filter(f => f.tier <= 2);
-
-            // If we still don't have 5, add some random ones (preferably LIVE or upcoming) from Tier 3
-            if (relevantFixtures.length < 5) {
-                const others = tieredFixtures.filter(f => f.tier === 3);
-                // Prioritize LIVE games
-                others.sort((a, b) => {
-                    if (a.status === 'In Progress' && b.status !== 'In Progress') return -1;
-                    if (b.status === 'In Progress' && a.status !== 'In Progress') return 1;
-                    return 0;
-                });
-                const needed = 5 - relevantFixtures.length;
-                relevantFixtures = [...relevantFixtures, ...others.slice(0, needed)];
-            }
+            // We display all fixtures available, sorted by relevance and status
+            let relevantFixtures = tieredFixtures;
 
             // Sort by Tier, then by Status (Live first), then Time
             relevantFixtures.sort((a, b) => {

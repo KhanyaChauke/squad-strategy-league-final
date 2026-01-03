@@ -221,12 +221,7 @@ const syncFromNewsOrg = async (apiKey: string): Promise<boolean> => {
                 const content = (item.content || '').toLowerCase();
                 const combinedText = `${lowerTitle} ${description} ${content}`;
 
-                // Strict Exclusion of other sports
-                const excludeKeywords = ['cricket', 'rugby', 'proteas', 'springboks', 't20', 'odi', 'test match',
-                    'lions', 'bulls', 'sharks', 'stormers', 'tennis', 'golf', 'f1', 'formula 1', 'nfl', 'american football'];
-
-                const isExcluded = excludeKeywords.some(keyword => combinedText.includes(keyword));
-                if (isExcluded) continue;
+                // Strict Exclusion logic REMOVED to allow all content
 
                 const summary = item.description || item.content || 'Click to read full story.';
 
@@ -530,9 +525,9 @@ const syncRecentResults = async (apiKey?: string) => {
                     // But we can prioritize PSL/Major leagues to avoid writing junk
 
                     const leagueName = stage.Snm || '';
-                    const pslLeagues = ['Premier Soccer League', 'Betway Premiership', 'Premiership', 'Premier League', 'LaLiga', 'Serie A', 'Bundesliga', 'Ligue 1', 'Champions League'];
-                    // Only specific leagues for past results to avoid clutter
-                    if (!pslLeagues.some(l => leagueName.includes(l))) continue;
+
+                    // League filtering REMOVED - process all relevant soccer events returned
+
 
                     if (stage.Events) {
                         for (const event of stage.Events) {

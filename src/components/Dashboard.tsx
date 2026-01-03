@@ -138,11 +138,11 @@ const Dashboard = () => {
           {/* Logo Section */}
           <div className="flex items-center space-x-2 cursor-pointer" onClick={() => setCurrentView('news')}>
             <Trophy className="h-8 w-8 text-green-600" />
-            <span className="text-xl md:text-2xl font-bold text-green-600 hidden xs:inline-block">Touchline SA</span>
+            <span className="text-xl md:text-2xl font-bold text-green-600">Touchline SA</span>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-4">
             <nav className="flex space-x-1 lg:space-x-2">
               <NavButton view="news" icon={Newspaper} label="News" />
               <NavButton view="fpls" icon={UserCircle} label="Fpls" />
@@ -171,7 +171,7 @@ const Dashboard = () => {
           </div>
 
           {/* Mobile Navigation */}
-          <div className="md:hidden flex items-center space-x-2">
+          <div className="lg:hidden flex items-center space-x-2">
             <div className="flex items-center mr-2">
               <span className="text-sm font-medium mr-2 truncate max-w-[80px]">{user?.fullName?.split(' ')[0]}</span>
             </div>

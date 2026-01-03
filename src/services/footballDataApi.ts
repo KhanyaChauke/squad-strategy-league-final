@@ -1,4 +1,4 @@
-import { TransformedPlayer } from '@/types/player'; // Assuming types might be moved or we redefine them here
+
 // We'll define the interface locally if not present, to match existing file structure for now.
 
 export interface TransformedPlayer {
@@ -187,6 +187,9 @@ export const getEnhancedPSLData = (): TransformedPlayer[] => {
     { name: 'Gaston Sirino', team: 'Kaizer Chiefs', position: 'MID', nationality: 'Uruguay', rating: 81 },
     { name: 'Fiacre Ntwari', team: 'Kaizer Chiefs', position: 'GK', nationality: 'Rwanda', rating: 76 },
     { name: 'Ranga Chivaviro', team: 'Kaizer Chiefs', position: 'ATT', nationality: 'South Africa', rating: 75 },
+    { name: 'Mduduzi Shabalala', team: 'Kaizer Chiefs', position: 'MID', nationality: 'South Africa', rating: 74 },
+    { name: 'Nkosingiphile Ngcobo', team: 'Kaizer Chiefs', position: 'MID', nationality: 'South Africa', rating: 76 },
+    { name: 'Zitha Kwinika', team: 'Kaizer Chiefs', position: 'DEF', nationality: 'South Africa', rating: 75 },
 
     // Orlando Pirates
     { name: 'Deon Hotto', team: 'Orlando Pirates', position: 'MID', nationality: 'Namibia', rating: 81 },
@@ -202,6 +205,8 @@ export const getEnhancedPSLData = (): TransformedPlayer[] => {
     { name: 'Olisa Ndah', team: 'Orlando Pirates', position: 'DEF', nationality: 'Nigeria', rating: 81 },
     { name: 'Miguel Timm', team: 'Orlando Pirates', position: 'MID', nationality: 'South Africa', rating: 79 },
     { name: 'Thabiso Monyane', team: 'Orlando Pirates', position: 'DEF', nationality: 'South Africa', rating: 76 },
+    { name: 'Innocent Maela', team: 'Orlando Pirates', position: 'DEF', nationality: 'South Africa', rating: 78 },
+    { name: 'Zakhele Lepasa', team: 'Orlando Pirates', position: 'ATT', nationality: 'South Africa', rating: 76 },
 
     // Mamelodi Sundowns
     { name: 'Ronwen Williams', team: 'Mamelodi Sundowns', position: 'GK', nationality: 'South Africa', rating: 85 },
@@ -218,6 +223,7 @@ export const getEnhancedPSLData = (): TransformedPlayer[] => {
     { name: 'Grant Kekana', team: 'Mamelodi Sundowns', position: 'DEF', nationality: 'South Africa', rating: 81 },
     { name: 'Tashreeq Matthews', team: 'Mamelodi Sundowns', position: 'ATT', nationality: 'South Africa', rating: 79 },
     { name: 'Iqraam Rayners', team: 'Mamelodi Sundowns', position: 'ATT', nationality: 'South Africa', rating: 82 },
+    { name: 'Rivaldo Coetzee', team: 'Mamelodi Sundowns', position: 'MID', nationality: 'South Africa', rating: 81 },
 
     // Stellenbosch FC
     { name: 'Fawaaz Basadien', team: 'Stellenbosch FC', position: 'DEF', nationality: 'South Africa', rating: 78 },
@@ -225,6 +231,9 @@ export const getEnhancedPSLData = (): TransformedPlayer[] => {
     { name: 'Jayden Adams', team: 'Stellenbosch FC', position: 'MID', nationality: 'South Africa', rating: 78 },
     { name: 'Devin Titus', team: 'Stellenbosch FC', position: 'ATT', nationality: 'South Africa', rating: 77 },
     { name: 'Andre de Jong', team: 'Stellenbosch FC', position: 'ATT', nationality: 'New Zealand', rating: 76 },
+    { name: 'Ismael Toure', team: 'Stellenbosch FC', position: 'DEF', nationality: 'Ivory Coast', rating: 77 },
+    { name: 'Thabo Moloisane', team: 'Stellenbosch FC', position: 'DEF', nationality: 'South Africa', rating: 75 },
+    { name: 'Sihle Nduli', team: 'Stellenbosch FC', position: 'MID', nationality: 'South Africa', rating: 75 },
 
     // Cape Town City
     { name: 'Lyle Lakay', team: 'Cape Town City', position: 'DEF', nationality: 'South Africa', rating: 78 },
@@ -232,14 +241,17 @@ export const getEnhancedPSLData = (): TransformedPlayer[] => {
     { name: 'Thamsanqa Mkhize', team: 'Cape Town City', position: 'DEF', nationality: 'South Africa', rating: 77 },
     { name: 'Darren Keet', team: 'Cape Town City', position: 'GK', nationality: 'South Africa', rating: 78 },
     { name: 'Khanyisa Mayo', team: 'Cape Town City', position: 'ATT', nationality: 'South Africa', rating: 79 },
+    { name: 'Taariq Fielies', team: 'Cape Town City', position: 'DEF', nationality: 'South Africa', rating: 76 },
+    { name: 'Jaedin Rhodes', team: 'Cape Town City', position: 'MID', nationality: 'South Africa', rating: 75 },
 
     // SuperSport United
-    { name: 'Patrick Maswanganyi', team: 'SuperSport United', position: 'MID', nationality: 'South Africa', rating: 78 }, // Note: Moved to Pirates IRL, but keeping as per user list or old data if needed, but updated above to Pirates. Keeping this as "Historic" or a different player if generic. Let's remove to avoid dup if he is at Pirates.
     { name: 'Siyanda Xulu', team: 'SuperSport United', position: 'DEF', nationality: 'South Africa', rating: 79 },
     { name: 'Bradley Grobler', team: 'SuperSport United', position: 'ATT', nationality: 'South Africa', rating: 78 },
     { name: 'Grant Margeman', team: 'SuperSport United', position: 'MID', nationality: 'South Africa', rating: 78 },
     { name: 'Ime Okon', team: 'SuperSport United', position: 'DEF', nationality: 'South Africa', rating: 75 },
     { name: 'Ricardo Goss', team: 'SuperSport United', position: 'GK', nationality: 'South Africa', rating: 77 },
+    { name: 'Gamphani Lungu', team: 'SuperSport United', position: 'ATT', nationality: 'Zambia', rating: 76 },
+    { name: 'Kegan Johannes', team: 'SuperSport United', position: 'DEF', nationality: 'South Africa', rating: 76 },
 
     // AmaZulu
     { name: 'Lehlohonolo Majoro', team: 'AmaZulu', position: 'ATT', nationality: 'South Africa', rating: 76 },
@@ -247,6 +259,8 @@ export const getEnhancedPSLData = (): TransformedPlayer[] => {
     { name: 'Riaan Hanamub', team: 'AmaZulu', position: 'DEF', nationality: 'Namibia', rating: 77 },
     { name: 'Pule Ekstein', team: 'AmaZulu', position: 'MID', nationality: 'South Africa', rating: 76 },
     { name: 'Ben Motshwari', team: 'AmaZulu', position: 'MID', nationality: 'South Africa', rating: 75 },
+    { name: 'Taariq Fielies', team: 'AmaZulu', position: 'DEF', nationality: 'South Africa', rating: 76 }, // Moved around IRL, but key player
+    { name: 'Hendrick Ekstein', team: 'AmaZulu', position: 'MID', nationality: 'South Africa', rating: 75 },
 
     // Sekhukhune United
     { name: 'Victor Letsoalo', team: 'Sekhukhune United', position: 'ATT', nationality: 'South Africa', rating: 81 },
@@ -254,24 +268,59 @@ export const getEnhancedPSLData = (): TransformedPlayer[] => {
     { name: 'Daniel Cardoso', team: 'Sekhukhune United', position: 'DEF', nationality: 'South Africa', rating: 76 },
     { name: 'Badra Ali Sangare', team: 'Sekhukhune United', position: 'GK', nationality: 'Ivory Coast', rating: 75 },
     { name: 'Keletso Makgalwa', team: 'Sekhukhune United', position: 'ATT', nationality: 'South Africa', rating: 76 },
+    { name: 'Tresor Tshibwabwa', team: 'Sekhukhune United', position: 'DEF', nationality: 'DR Congo', rating: 75 },
+    { name: 'Jamie Webber', team: 'Sekhukhune United', position: 'MID', nationality: 'South Africa', rating: 76 },
 
     // TS Galaxy
     { name: 'Samir Nurkovic', team: 'TS Galaxy', position: 'ATT', nationality: 'Serbia', rating: 77 },
     { name: 'Mlungisi Mbunjana', team: 'TS Galaxy', position: 'MID', nationality: 'South Africa', rating: 76 },
     { name: 'Pogiso Sanoka', team: 'TS Galaxy', position: 'DEF', nationality: 'South Africa', rating: 75 },
+    { name: 'Marks Munyai', team: 'TS Galaxy', position: 'DEF', nationality: 'South Africa', rating: 74 },
+    { name: 'Bernard Parker', team: 'TS Galaxy', position: 'MID', nationality: 'South Africa', rating: 75 }, // Veteran presence
 
     // Golden Arrows
     { name: 'Nduduzo Sibiya', team: 'Golden Arrows', position: 'MID', nationality: 'South Africa', rating: 76 },
     { name: 'Ryan Moon', team: 'Golden Arrows', position: 'ATT', nationality: 'South Africa', rating: 74 },
+    { name: 'Knox Mutizwa', team: 'Golden Arrows', position: 'ATT', nationality: 'Zimbabwe', rating: 75 },
+    { name: 'Sifiso Mlungwana', team: 'Golden Arrows', position: 'GK', nationality: 'South Africa', rating: 74 },
+    { name: 'Thabani Zuke', team: 'Golden Arrows', position: 'DEF', nationality: 'South Africa', rating: 75 },
 
     // Chippa United
     { name: 'Stanley Nwabali', team: 'Chippa United', position: 'GK', nationality: 'Nigeria', rating: 78 },
     { name: 'Craig Martin', team: 'Chippa United', position: 'MID', nationality: 'South Africa', rating: 75 },
+    { name: 'Justice Chabalala', team: 'Chippa United', position: 'DEF', nationality: 'South Africa', rating: 74 },
+    { name: 'Roscoe Pietersen', team: 'Chippa United', position: 'DEF', nationality: 'South Africa', rating: 73 },
 
     // Royal AM
-    { name: 'Andile Mpisane', team: 'Royal AM', position: 'MID', nationality: 'South Africa', rating: 65 }, // Famous chairman-player
+    { name: 'Andile Mpisane', team: 'Royal AM', position: 'MID', nationality: 'South Africa', rating: 65 },
     { name: 'Kabelo Mahlasela', team: 'Royal AM', position: 'MID', nationality: 'South Africa', rating: 76 },
-    { name: 'Samuel Manganyi', team: 'Royal AM', position: 'DEF', nationality: 'South Africa', rating: 74 }
+    { name: 'Samuel Manganyi', team: 'Royal AM', position: 'DEF', nationality: 'South Africa', rating: 74 },
+    { name: 'Sedwyn George', team: 'Royal AM', position: 'ATT', nationality: 'South Africa', rating: 73 },
+    { name: 'Zukile Mkhize', team: 'Royal AM', position: 'DEF', nationality: 'South Africa', rating: 73 },
+
+    // Polokwane City (Added)
+    { name: 'Manuel Kambala', team: 'Polokwane City', position: 'MID', nationality: 'Mozambique', rating: 74 },
+    { name: 'Douglas Mapfumo', team: 'Polokwane City', position: 'ATT', nationality: 'Zimbabwe', rating: 73 },
+    { name: 'Bulelani Nikani', team: 'Polokwane City', position: 'DEF', nationality: 'South Africa', rating: 72 },
+    { name: 'Oswin Appollis', team: 'Polokwane City', position: 'MID', nationality: 'South Africa', rating: 76 }, // Breakout star
+    { name: 'Lebohang Nkaki', team: 'Polokwane City', position: 'DEF', nationality: 'South Africa', rating: 72 },
+    { name: 'Manuel Sapunga', team: 'Polokwane City', position: 'GK', nationality: 'Equatorial Guinea', rating: 73 },
+
+    // Richards Bay (Added)
+    { name: 'Salim Magoola', team: 'Richards Bay', position: 'GK', nationality: 'Uganda', rating: 75 },
+    { name: 'Siyethemba Sithebe', team: 'Richards Bay', position: 'MID', nationality: 'South Africa', rating: 76 },
+    { name: 'Keagan Allan', team: 'Richards Bay', position: 'DEF', nationality: 'South Africa', rating: 74 },
+    { name: 'Somila Ntsundwana', team: 'Richards Bay', position: 'ATT', nationality: 'South Africa', rating: 73 },
+    { name: 'Austin Dube', team: 'Richards Bay', position: 'DEF', nationality: 'South Africa', rating: 74 },
+    { name: 'Lwandile Mabuya', team: 'Richards Bay', position: 'MID', nationality: 'South Africa', rating: 72 },
+
+    // Magesi FC (Added)
+    { name: 'Elvis Chipezeze', team: 'Magesi FC', position: 'GK', nationality: 'Zimbabwe', rating: 72 },
+    { name: 'Kgaogelo Sekgota', team: 'Magesi FC', position: 'ATT', nationality: 'South Africa', rating: 74 },
+    { name: 'Deolin Mekoa', team: 'Magesi FC', position: 'MID', nationality: 'South Africa', rating: 73 },
+    { name: 'Rhulani Manzini', team: 'Magesi FC', position: 'ATT', nationality: 'South Africa', rating: 72 },
+    { name: 'Wonderboy Makhubu', team: 'Magesi FC', position: 'ATT', nationality: 'South Africa', rating: 71 },
+    { name: 'Lebo Ngubeni', team: 'Magesi FC', position: 'DEF', nationality: 'South Africa', rating: 70 }
   ];
 
   const players: TransformedPlayer[] = [];

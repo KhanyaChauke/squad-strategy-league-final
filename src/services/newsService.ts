@@ -92,9 +92,17 @@ export const fetchPSLNews = async (apiKey: string): Promise<NewsArticle[]> => {
     } catch (e) {
         console.warn("Firestore fetch failed, checking local cache...", e);
         const localCached = getFromCache(CACHE_KEY_NEWS);
+        // If we have cached news, filtered by strict soccer check, return it.
+        // We trust the cache was filtered.
         if (localCached) return localCached;
         return [];
     }
+};
+
+const getTwoWeeksAgoDate = () => {
+    const date = new Date();
+    date.setDate(date.getDate() - 14);
+    return date.toISOString().split('T')[0]; // YYYY-MM-DD
 };
 
 const syncNewsWithAPI = async (apiKey: string) => {
@@ -124,8 +132,8 @@ const syncNewsWithAPI = async (apiKey: string) => {
 const syncFromGNews = async (apiKey: string) => {
     try {
         console.log("Fetching news from GNews...");
-        // Search for specific SA football terms
-        const response = await fetch(`https://gnews.io/api/v4/search?q=psl OR "kaizer chiefs" OR "orlando pirates" OR sundowns OR "bafana bafana"&lang=en&country=za&max=10&apikey=${apiKey}`);
+        // Search for specific SA football terms, with broader fallback tags
+        const response = await fetch(`https://gnews.io/api/v4/search?q=psl OR "kaizer chiefs" OR "orlando pirates" OR sundowns OR "bafana bafana" OR soccer OR football&lang=en&country=za&max=10&apikey=${apiKey}`);
         const data = await response.json();
 
         if (data.articles && Array.isArray(data.articles)) {
@@ -185,13 +193,20 @@ const syncFromGNews = async (apiKey: string) => {
 
 const syncFromNewsOrg = async (apiKey: string): Promise<boolean> => {
     try {
-        // Fetch Top Sports Headlines from South Africa
-        const response = await fetch(`https://newsapi.org/v2/top-headlines?country=za&category=sports&apiKey=${apiKey}`);
+        // Use 'everything' endpoint to get older news (up to 2 weeks) if necessary to fill the quota
+        // AND ensure we get enough relevant content.
+        const fromDate = getTwoWeeksAgoDate();
+        const query = '(soccer OR football OR psl OR "kaizer chiefs" OR "orlando pirates" OR sundowns OR "bafana bafana")';
+
+        // We use 'everything' instead of 'top-headlines' to get a broader history
+        const response = await fetch(`https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&from=${fromDate}&sortBy=publishedAt&language=en&apiKey=${apiKey}`);
         const data = await response.json();
 
         if (data.status === 'ok' && Array.isArray(data.articles)) {
             const syncTime = Timestamp.now();
-            console.log(`Synced ${data.articles.length} articles from NewsAPI.org`);
+            console.log(`Synced ${data.articles.length} articles from NewsAPI.org (Everything)`);
+
+            let savedCount = 0;
 
             for (const item of data.articles) {
                 if (item.title === '[Removed]') continue;
@@ -202,19 +217,12 @@ const syncFromNewsOrg = async (apiKey: string): Promise<boolean> => {
                 const content = (item.content || '').toLowerCase();
                 const combinedText = `${lowerTitle} ${description} ${content}`;
 
-                // Strict Football Filtering
-                const soccerKeywords = ['soccer', 'football', 'psl', 'premier league', 'chiefs', 'pirates', 'sundowns',
-                    'bafana', 'banyana', 'fifa', 'caf', 'coach', 'squad', 'transfer', 'sign',
-                    'dstv', 'motsepe', 'betway', 'kaiser', 'orlando', 'mamelodi'];
-
+                // Strict Exclusion of other sports
                 const excludeKeywords = ['cricket', 'rugby', 'proteas', 'springboks', 't20', 'odi', 'test match',
-                    'lions', 'bulls', 'sharks', 'stormers', 'tennis', 'golf', 'f1', 'formula 1'];
+                    'lions', 'bulls', 'sharks', 'stormers', 'tennis', 'golf', 'f1', 'formula 1', 'nfl', 'american football'];
 
-                const isSoccer = soccerKeywords.some(keyword => combinedText.includes(keyword));
                 const isExcluded = excludeKeywords.some(keyword => combinedText.includes(keyword));
-
-                // If it's explicitly other sports, skip. If it's not clearly soccer, skip.
-                if (isExcluded || !isSoccer) continue;
+                if (isExcluded) continue;
 
                 const summary = item.description || item.content || 'Click to read full story.';
 
@@ -232,7 +240,7 @@ const syncFromNewsOrg = async (apiKey: string): Promise<boolean> => {
                     tagColor = 'bg-green-600';
                 }
 
-                const docId = btoa(item.url).slice(0, 20); // Unique ID from URL
+                const docId = btoa(item.url).slice(0, 20);
                 const publishedAt = item.publishedAt ? Timestamp.fromDate(new Date(item.publishedAt)) : Timestamp.now();
 
                 const newsData = {
@@ -249,8 +257,9 @@ const syncFromNewsOrg = async (apiKey: string): Promise<boolean> => {
                 };
 
                 await setDoc(doc(db, 'news', docId), newsData, { merge: true });
+                savedCount++;
             }
-            return true;
+            return savedCount > 0;
         } else {
             console.error("NewsAPI Error:", data.message);
             return false;
@@ -403,6 +412,20 @@ export const fetchFixtures = async (apiKey?: string): Promise<Fixture[]> => {
             })) as Fixture[];
         }
 
+        // Check if we need to sync OLDER fixtures/results because we don't have enough
+        // We want at least 5 relevant fixtures.
+        const totalRelevant = cachedFixtures.length; // We trust the cache has a mix
+        if (totalRelevant < 5) {
+            console.log('Not enough fixtures in cache, fetching recent past results...');
+            await syncRecentResults(apiKey);
+            // Re-fetch
+            const freshSnapshot = await getDocs(q);
+            return freshSnapshot.docs.map(doc => ({
+                ...doc.data(),
+                fixtureId: doc.id
+            })) as Fixture[];
+        }
+
         return cachedFixtures.sort((a, b) => {
             const isRelevantA = isSouthAfrican(a.homeTeam) || isSouthAfrican(a.awayTeam);
             const isRelevantB = isSouthAfrican(b.homeTeam) || isSouthAfrican(b.awayTeam);
@@ -458,6 +481,71 @@ const syncFixturesWithAPI = async (apiKey?: string) => {
         }
     } catch (e) {
         console.error("Fixture API Sync failed:", e);
+    }
+};
+
+const syncRecentResults = async (apiKey?: string) => {
+    const effectiveKey = import.meta.env.VITE_RAPID_API_KEY || apiKey || getStoredNewsApiKey();
+    if (!effectiveKey) return;
+    const apiHost = 'livescore6.p.rapidapi.com';
+
+    // Fetch fixtures for yesterday and the day before to fill up the list
+    const datesToSync = [];
+    const today = new Date();
+    for (let i = 1; i <= 3; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        datesToSync.push(`${yyyy}${mm}${dd}`);
+    }
+
+    try {
+        for (const dateStr of datesToSync) {
+            console.log(`Syncing results for ${dateStr}...`);
+            const response = await fetch(`https://${apiHost}/matches/v2/list-by-date?Category=soccer&Date=${dateStr}&Timezone=-2`, {
+                method: 'GET',
+                headers: {
+                    'X-RapidAPI-Key': effectiveKey,
+                    'X-RapidAPI-Host': apiHost
+                }
+            });
+            const data = response.ok ? await response.json() : null;
+
+            if (data && data.Stages) {
+                for (const stage of data.Stages) {
+                    // Filter for irrelevant leagues to save writes?
+                    // Let's just write them and let the View do the strict filtering/tiering
+                    // But we can prioritize PSL/Major leagues to avoid writing junk
+
+                    const leagueName = stage.Snm || '';
+                    const pslLeagues = ['Premier Soccer League', 'Betway Premiership', 'Premiership', 'Premier League', 'LaLiga', 'Serie A', 'Bundesliga', 'Ligue 1', 'Champions League'];
+                    // Only specific leagues for past results to avoid clutter
+                    if (!pslLeagues.some(l => leagueName.includes(l))) continue;
+
+                    if (stage.Events) {
+                        for (const event of stage.Events) {
+                            const status = 'Finished';
+                            const fixtureData = {
+                                league: stage.Snm || 'International',
+                                homeTeam: event.T1?.[0]?.Nm || 'Home',
+                                awayTeam: event.T2?.[0]?.Nm || 'Away',
+                                homeScore: event.Tr1 ? parseInt(event.Tr1) : null,
+                                awayScore: event.Tr2 ? parseInt(event.Tr2) : null,
+                                status: status,
+                                time: 'FT', // Finished
+                                date: dateStr, // Track date
+                                syncedAt: Timestamp.now()
+                            };
+                            await setDoc(doc(db, 'fixtures', String(event.Eid)), fixtureData, { merge: true });
+                        }
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.error("Past results sync failed:", e);
     }
 };
 

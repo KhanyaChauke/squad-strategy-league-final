@@ -33,8 +33,8 @@ export const LiveGamesView = () => {
         }
     };
 
-    // Check if match is relevant (South African or AFCON)
-    const isRelevantMatch = (fixture: Fixture): boolean => {
+    // Check relevance tier (1 = High/SA, 2 = Medium/Major Intl, 3 = Low/Other)
+    const getRelevanceTier = (fixture: Fixture): number => {
         const saTeams = [
             'south africa', 'bafana', 'banyana',
             'kaizer chiefs', 'chiefs',
@@ -47,35 +47,30 @@ export const LiveGamesView = () => {
             'polokwane', 'royal am', 'magesi'
         ];
 
-        const afconKeywords = [
-            'afcon', 'africa cup', 'african cup', 'caf', 'african nations'
-        ];
-
         const pslLeagues = [
             'premier soccer league', 'psl', 'south africa premier',
-            'dstv premiership', 'premiership'
+            'dstv premiership', 'premiership', 'betway premiership'
+        ];
+
+        const majorLeagues = [
+            'premier league', 'laliga', 'bundesliga', 'serie a', 'ligue 1',
+            'champions league', 'europa league', 'fa cup', 'carabao cup'
         ];
 
         const homeTeam = fixture.homeTeam.toLowerCase();
         const awayTeam = fixture.awayTeam.toLowerCase();
         const league = fixture.league.toLowerCase();
 
-        // Check if it's a PSL league
-        if (pslLeagues.some(l => league.includes(l))) {
-            return true;
-        }
+        // Tier 1: South African context
+        if (pslLeagues.some(l => league.includes(l))) return 1;
+        if (league.includes('afcon') || league.includes('africa cup')) return 1;
+        if (saTeams.some(team => homeTeam.includes(team) || awayTeam.includes(team))) return 1;
 
-        // Check if it's AFCON related
-        if (afconKeywords.some(keyword => league.includes(keyword))) {
-            return true;
-        }
+        // Tier 2: Major European Leagues
+        if (majorLeagues.some(l => league.includes(l))) return 2;
 
-        // Check if any South African team is playing
-        if (saTeams.some(team => homeTeam.includes(team) || awayTeam.includes(team))) {
-            return true;
-        }
-
-        return false;
+        // Tier 3: Everything else
+        return 3;
     };
 
     const loadFixtures = async () => {
@@ -84,14 +79,49 @@ export const LiveGamesView = () => {
         try {
             const data = await fetchFixtures();
 
-            // Filter for South African and AFCON matches only
-            const relevantFixtures = data.filter(isRelevantMatch);
+            // Sort and filter: Include Tier 1 first, then Tier 2 if needed to fill up to 5
+            const tieredFixtures = data.map(f => ({ ...f, tier: getRelevanceTier(f) }));
+
+            // We want all Tier 1, and enough Tier 2 to make at least 5 total if needed
+            // Or just show all Tier 1 + All Tier 2? 
+            // The user said "at least 5". Let's show all Tier 1 and Tier 2. 
+            // If total < 5, add top Tier 3 (live ones preferred).
+
+            let relevantFixtures = tieredFixtures.filter(f => f.tier <= 2);
+
+            // If we still don't have 5, add some random ones (preferably LIVE or upcoming) from Tier 3
+            if (relevantFixtures.length < 5) {
+                const others = tieredFixtures.filter(f => f.tier === 3);
+                // Prioritize LIVE games
+                others.sort((a, b) => {
+                    if (a.status === 'In Progress' && b.status !== 'In Progress') return -1;
+                    if (b.status === 'In Progress' && a.status !== 'In Progress') return 1;
+                    return 0;
+                });
+                const needed = 5 - relevantFixtures.length;
+                relevantFixtures = [...relevantFixtures, ...others.slice(0, needed)];
+            }
+
+            // Sort by Tier, then by Status (Live first), then Time
+            relevantFixtures.sort((a, b) => {
+                if (a.tier !== b.tier) return a.tier - b.tier;
+                if (a.status === 'In Progress' && b.status !== 'In Progress') return -1;
+                if (b.status === 'In Progress' && a.status !== 'In Progress') return 1;
+                return a.time.localeCompare(b.time);
+            });
 
             // Convert all times to SA time
             const fixturesWithSATime = relevantFixtures.map(fixture => ({
                 ...fixture,
                 time: convertToSATime(fixture.time)
             }));
+
+            // If we have literally 0 fixtures from API/Database
+            if (fixturesWithSATime.length === 0) {
+                // Fallback to sample data for demo purposes if absolutely nothing is found?
+                // No, standard error/empty state handles this.
+            }
+
             setFixtures(fixturesWithSATime);
         } catch (err) {
             console.error(err);
@@ -128,7 +158,7 @@ export const LiveGamesView = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900">Live Games</h2>
-                    <p className="text-sm text-gray-600">Follow today's live PSL action (SAST)</p>
+                    <p className="text-sm text-gray-600">Latest Action & Results (SAST)</p>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-gray-500">
                     <Calendar className="h-4 w-4" />

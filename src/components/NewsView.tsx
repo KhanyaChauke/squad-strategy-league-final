@@ -19,15 +19,21 @@ export const NewsView = () => {
         setError(null);
         try {
             const articles = await fetchPSLNews('');
-            // Ensure we use what we get, even if it's empty, to test the API connection
             setNews(articles || []);
         } catch (err) {
             console.error(err);
-            setError('Failed to fetch latest news.');
+            setError(err instanceof Error ? err.message : 'Failed to fetch latest news.');
             setNews([]);
         } finally {
             setLoading(false);
         }
+    };
+
+    const getStatusIndicator = () => {
+        if (loading) return <Badge variant="outline" className="border-yellow-200 text-yellow-700 bg-yellow-50 animate-pulse">Connecting...</Badge>;
+        if (error) return <Badge variant="destructive" className="animate-pulse">Offline / Error</Badge>;
+        if (news.length === 0) return <Badge variant="outline" className="border-orange-200 text-orange-700 bg-orange-50">No News Found</Badge>;
+        return <Badge variant="outline" className="border-green-200 text-green-700 bg-green-50 flex gap-1 items-center"><div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Live</Badge>;
     };
 
     useEffect(() => {
@@ -66,7 +72,8 @@ export const NewsView = () => {
                     </h2>
                     <p className="text-gray-500 mt-1 font-medium italic">Your daily digest of South African football</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-3 items-center">
+                    {getStatusIndicator()}
                     <Button
                         variant="outline"
                         onClick={loadNews}
@@ -74,7 +81,7 @@ export const NewsView = () => {
                         className="rounded-full px-6 hover:bg-green-50 hover:text-green-700 hover:border-green-200 transition-all border-gray-200"
                     >
                         <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                        Refresh Feed
+                        Refresh
                     </Button>
                 </div>
             </div>

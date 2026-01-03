@@ -92,10 +92,9 @@ export const fetchPSLNews = async (apiKey: string): Promise<NewsArticle[]> => {
     } catch (e) {
         console.warn("Firestore fetch failed, checking local cache...", e);
         const localCached = getFromCache(CACHE_KEY_NEWS);
-        // If we have cached news, filtered by strict soccer check, return it.
-        // We trust the cache was filtered.
         if (localCached) return localCached;
-        return [];
+        // If we have no cache and an error occurred, propagate it
+        throw new Error(e instanceof Error ? e.message : "Failed to connect to news service");
     }
 };
 
@@ -108,33 +107,44 @@ const getTwoWeeksAgoDate = () => {
 const syncNewsWithAPI = async (apiKey: string) => {
     // Default to 'newsapi' since we have a valid key for it now
     const provider = localStorage.getItem('psl_news_provider') || 'newsapi';
-    let syncSuccess = false;
+    let result = { success: false, error: 'Unknown error' };
 
     if (provider === 'rapidapi') {
         const effectiveKey = import.meta.env.VITE_RAPID_API_KEY || apiKey || getStoredNewsApiKey() || HARDCODED_API_KEY;
         if (effectiveKey) {
-            syncSuccess = await syncFromRapidAPI(effectiveKey);
+            result = await syncFromRapidAPI(effectiveKey);
+        } else {
+            result = { success: false, error: 'Missing RapidAPI Key' };
         }
     } else if (provider === 'newsapi') {
         const key = getStoredNewsApiKey() || apiKey || NEWS_API_ORG_KEY;
         if (key) {
-            syncSuccess = await syncFromNewsOrg(key);
+            result = await syncFromNewsOrg(key);
+        } else {
+            result = { success: false, error: 'Missing NewsAPI Key' };
         }
     }
 
     // Fallback to GNews if primary failed
-    if (!syncSuccess) {
-        console.log("Primary news provider failed or not configured. Attempting fallback to GNews...");
-        await syncFromGNews(GNEWS_API_KEY);
+    if (!result.success) {
+        console.log(`Primary news provider failed (${result.error}). Attempting fallback to GNews...`);
+        const fallbackResult = await syncFromGNews(GNEWS_API_KEY);
+        if (!fallbackResult.success) {
+            throw new Error(`All news sources failed. Primary: ${result.error}. Fallback: ${fallbackResult.error}`);
+        }
     }
 };
 
-const syncFromGNews = async (apiKey: string) => {
+const syncFromGNews = async (apiKey: string): Promise<{ success: boolean; error?: string }> => {
     try {
         console.log("Fetching news from GNews...");
         // Search for specific SA football terms, with broader fallback tags
         const response = await fetch(`https://gnews.io/api/v4/search?q=psl OR "kaizer chiefs" OR "orlando pirates" OR sundowns OR "bafana bafana" OR soccer OR football&lang=en&country=za&max=10&apikey=${apiKey}`);
         const data = await response.json();
+
+        if (response.status !== 200) {
+            return { success: false, error: data.errors?.[0] || `GNews Error ${response.status}` };
+        }
 
         if (data.articles && Array.isArray(data.articles)) {
             const syncTime = Timestamp.now();
@@ -144,10 +154,6 @@ const syncFromGNews = async (apiKey: string) => {
                 const title = item.title;
                 const lowerTitle = title.toLowerCase();
                 const description = item.description || '';
-
-                // Skip non-sports logic handled by query generally, but double check context if needed
-                // GNews search is usually pretty accurate with these keywords
-
                 let tag = 'Soccer';
                 let tagColor = 'bg-blue-600';
 
@@ -162,7 +168,7 @@ const syncFromGNews = async (apiKey: string) => {
                     tagColor = 'bg-green-600';
                 }
 
-                const docId = btoa(item.url).slice(0, 20); // Unique ID from URL
+                const docId = btoa(item.url).slice(0, 20);
                 const publishedAt = item.publishedAt ? Timestamp.fromDate(new Date(item.publishedAt)) : Timestamp.now();
 
                 const newsData = {
@@ -180,14 +186,12 @@ const syncFromGNews = async (apiKey: string) => {
 
                 await setDoc(doc(db, 'news', docId), newsData, { merge: true });
             }
-            return true;
+            return { success: true };
         } else {
-            console.error("GNews Error:", data.errors);
-            return false;
+            return { success: false, error: "Invalid GNews response format" };
         }
     } catch (e) {
-        console.error("GNews Sync failed:", e);
-        return false;
+        return { success: false, error: e instanceof Error ? e.message : "GNews Network Error" };
     }
 };
 
@@ -270,7 +274,7 @@ const syncFromNewsOrg = async (apiKey: string): Promise<boolean> => {
     }
 };
 
-const syncFromRapidAPI = async (effectiveKey: string): Promise<boolean> => {
+const syncFromRapidAPI = async (effectiveKey: string): Promise<{ success: boolean; error?: string }> => {
     const apiHost = 'livescore6.p.rapidapi.com';
 
     try {
@@ -282,7 +286,11 @@ const syncFromRapidAPI = async (effectiveKey: string): Promise<boolean> => {
             }
         });
 
-        const data = response.ok ? await response.json() : null;
+        if (response.status !== 200) {
+            return { success: false, error: `RapidAPI Error ${response.status}` };
+        }
+
+        const data = await response.json();
 
         if (data && data.topStories && Array.isArray(data.topStories)) {
             const syncTime = Timestamp.now();
@@ -328,12 +336,12 @@ const syncFromRapidAPI = async (effectiveKey: string): Promise<boolean> => {
                 await setDoc(doc(db, 'news', docId), newsData, { merge: true });
             }
             console.log(`Successfully synced ${data.topStories.length} stories to Firebase.`);
-            return true;
+            console.log(`Successfully synced ${data.topStories.length} stories to Firebase.`);
+            return { success: true };
         }
-        return false;
+        return { success: false, error: "RapidAPI format unexpected (no topStories)" };
     } catch (e) {
-        console.error("API Sync failed:", e);
-        return false;
+        return { success: false, error: e instanceof Error ? e.message : "RapidAPI Connection Error" };
     }
 };
 
@@ -435,7 +443,9 @@ export const fetchFixtures = async (apiKey?: string): Promise<Fixture[]> => {
         });
     } catch (e) {
         console.warn("Fixture sync failed:", e);
-        return getFromCache(CACHE_KEY_FIXTURES) || [];
+        const cached = getFromCache(CACHE_KEY_FIXTURES);
+        if (cached) return cached;
+        throw new Error(e instanceof Error ? e.message : "Failed to load fixtures");
     }
 };
 

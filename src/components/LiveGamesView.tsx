@@ -82,11 +82,6 @@ export const LiveGamesView = () => {
             // Sort and filter: Include Tier 1 first, then Tier 2 if needed to fill up to 5
             const tieredFixtures = data.map(f => ({ ...f, tier: getRelevanceTier(f) }));
 
-            // We want all Tier 1, and enough Tier 2 to make at least 5 total if needed
-            // Or just show all Tier 1 + All Tier 2? 
-            // The user said "at least 5". Let's show all Tier 1 and Tier 2. 
-            // If total < 5, add top Tier 3 (live ones preferred).
-
             let relevantFixtures = tieredFixtures.filter(f => f.tier <= 2);
 
             // If we still don't have 5, add some random ones (preferably LIVE or upcoming) from Tier 3
@@ -116,19 +111,20 @@ export const LiveGamesView = () => {
                 time: convertToSATime(fixture.time)
             }));
 
-            // If we have literally 0 fixtures from API/Database
-            if (fixturesWithSATime.length === 0) {
-                // Fallback to sample data for demo purposes if absolutely nothing is found?
-                // No, standard error/empty state handles this.
-            }
-
             setFixtures(fixturesWithSATime);
         } catch (err) {
             console.error(err);
-            setError("Failed to load live games. Please check your API connection.");
+            setError(err instanceof Error ? err.message : "Failed to load live games.");
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const getStatusIndicator = () => {
+        if (isLoading) return <Badge variant="outline" className="border-yellow-200 text-yellow-700 bg-yellow-50 animate-pulse">Syncing...</Badge>;
+        if (error) return <Badge variant="destructive" className="animate-pulse">Offline / Error</Badge>;
+        if (fixtures.length === 0) return <Badge variant="outline" className="border-orange-200 text-orange-700 bg-orange-50">No Matches</Badge>;
+        return <Badge variant="outline" className="border-green-200 text-green-700 bg-green-50 flex gap-1 items-center"><div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Live</Badge>;
     };
 
     useEffect(() => {
@@ -157,7 +153,9 @@ export const LiveGamesView = () => {
         <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Live Games</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                        Live Games {getStatusIndicator()}
+                    </h2>
                     <p className="text-sm text-gray-600">Latest Action & Results (SAST)</p>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-gray-500">

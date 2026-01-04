@@ -28,16 +28,29 @@ import {
   Database,
   Newspaper,
   Layout,
-  Menu
+  Menu,
+  Pencil
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type DashboardView = 'home' | 'players' | 'squad' | 'psl' | 'news' | 'live-games' | 'leaderboard' | 'fpls';
 
 const Dashboard = () => {
   const [currentView, setCurrentView] = useState<DashboardView>('news');
-  const { user, logout, simulateGameweekForUser, simulateGameweekForAllUsers } = useAuth();
+  const { user, logout, simulateGameweekForUser, simulateGameweekForAllUsers, updateTeamName } = useAuth();
   const { toast } = useToast();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isEditTeamNameOpen, setIsEditTeamNameOpen] = useState(false);
+  const [newTeamName, setNewTeamName] = useState('');
 
   const handleSyncPlayers = async () => {
     if (!user?.isAdmin) return;
@@ -55,6 +68,20 @@ const Dashboard = () => {
         description: "Could not sync players. Check console for details.",
         variant: "destructive"
       });
+    }
+  };
+
+  const handleUpdateTeamName = async () => {
+    if (!newTeamName.trim()) {
+      toast({ title: "Error", description: "Team name cannot be empty", variant: "destructive" });
+      return;
+    }
+    const success = await updateTeamName(newTeamName.trim());
+    if (success) {
+      toast({ title: "Success", description: "Team name updated successfully!", className: "bg-green-50 border-green-200" });
+      setIsEditTeamNameOpen(false);
+    } else {
+      toast({ title: "Error", description: "Failed to update team name.", variant: "destructive" });
     }
   };
 
@@ -241,7 +268,23 @@ const Dashboard = () => {
   const renderHomeView = () => (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg p-8">
-        <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.fullName}!</h1>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.fullName}!</h1>
+            <div className="flex items-center space-x-2 text-green-100 mb-2">
+              <Trophy className="h-5 w-5" />
+              <span className="text-xl font-semibold">{user?.teamName || "No Team Name"}</span>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 hover:bg-green-500 hover:text-white rounded-full ml-2 text-green-100"
+                onClick={() => { setNewTeamName(user?.teamName || ''); setIsEditTeamNameOpen(true); }}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
         <p className="text-green-100">Ready to build your dream PSL squad?</p>
       </div>
 
@@ -420,7 +463,36 @@ const Dashboard = () => {
         {currentView === 'psl' && <PSLDashboard />}
         {currentView === 'live-games' && <LiveGamesView />}
       </div>
-    </div>
+
+      <Dialog open={isEditTeamNameOpen} onOpenChange={setIsEditTeamNameOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Team Name</DialogTitle>
+            <DialogDescription>
+              Give your squad a fresh new identity.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="teamName">Team Name</Label>
+              <Input
+                id="teamName"
+                value={newTeamName}
+                onChange={(e) => setNewTeamName(e.target.value)}
+                placeholder="Enter new team name..."
+                maxLength={30}
+                autoFocus
+              />
+              <p className="text-xs text-muted-foreground">{newTeamName.length}/30 characters</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditTeamNameOpen(false)}>Cancel</Button>
+            <Button onClick={handleUpdateTeamName} className="bg-green-600 hover:bg-green-700">Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div >
   );
 };
 

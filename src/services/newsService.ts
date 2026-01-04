@@ -72,9 +72,10 @@ export const fetchPSLNews = async (apiKey: string): Promise<NewsArticle[]> => {
         })) as NewsArticle[];
 
         // 2. Decide if we need to sync with API
-        // Sync if: No news in DB OR oldest news is more than 6 hours old
-        const shouldSync = cachedNews.length === 0 ||
-            (cachedNews[0] as any).syncedAt?.toMillis() < Date.now() - (1000 * 60 * 60 * 6);
+        // DISABLE AUTOMATIC SYNC: User requested that clients do not hit the API directly.
+        // Data must be seeded manually via admin scripts.
+        const shouldSync = false; /* cachedNews.length === 0 ||
+            (cachedNews[0] as any).syncedAt?.toMillis() < Date.now() - (1000 * 60 * 60 * 6); */
 
         if (shouldSync) {
             try {
@@ -114,7 +115,7 @@ const getTwoWeeksAgoDate = () => {
     return date.toISOString().split('T')[0]; // YYYY-MM-DD
 };
 
-const syncNewsWithAPI = async (apiKey: string) => {
+export const syncNewsWithAPI = async (apiKey: string) => {
     // Default to 'newsapi' since we have a valid key for it now
     const provider = localStorage.getItem('psl_news_provider') || 'newsapi';
     let result: { success: boolean; error?: string } = { success: false, error: 'Unknown error' };

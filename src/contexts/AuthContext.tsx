@@ -459,10 +459,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateTeamName = async (name: string): Promise<boolean> => {
     if (!user) return false;
 
-    if (user.teamName && user.teamName.trim() !== '') {
+    // Constraint removed to allow team name updates
+    /* if (user.teamName && user.teamName.trim() !== '') {
       console.warn('Team name already set. Cannot change until next season.');
       return false;
-    }
+    } */
 
     try {
       const updatedUser = {

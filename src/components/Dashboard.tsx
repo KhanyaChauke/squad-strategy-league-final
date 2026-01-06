@@ -392,7 +392,7 @@ const Dashboard = () => {
               onClick={() => setCurrentView('squad')}
             >
               <Target className="h-4 w-4 mr-2" />
-              View My Squad
+              {(user?.squad.length || 0) + (user?.bench.length || 0) < 15 ? "Build My Squad" : "View My Squad"}
             </Button>
 
             {user?.isAdmin && (

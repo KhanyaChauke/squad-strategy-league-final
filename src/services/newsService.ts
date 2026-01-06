@@ -25,6 +25,7 @@ export const getStoredNewsApiKey = () => {
 const NEWS_API_ORG_KEY = "92c9846c875047eeac8fda27eeacb14d";
 const HARDCODED_API_KEY = "1a5d324f62mshf82070b791b2f3ap10994fjsnd9dc8ed92749"; // Legacy RapidAPI key
 const GNEWS_API_KEY = "46b746a39e92802f3adcc087019909cc";
+const JINA_API_KEY = "jina_dbf46d3721184e1caf32abf59aca6abe1GfgenzyFdPyFlnA9c3ZT3bs3J-k";
 
 const CACHE_KEY_NEWS = 'cached_psl_news_v2';
 const CACHE_KEY_FIXTURES = 'cached_live_fixtures';
@@ -72,10 +73,13 @@ export const fetchPSLNews = async (apiKey: string): Promise<NewsArticle[]> => {
         })) as NewsArticle[];
 
         // 2. Decide if we need to sync with API
-        // DISABLE AUTOMATIC SYNC: User requested that clients do not hit the API directly.
-        // Data must be seeded manually via admin scripts.
-        const shouldSync = false; /* cachedNews.length === 0 ||
-            (cachedNews[0] as any).syncedAt?.toMillis() < Date.now() - (1000 * 60 * 60 * 6); */
+        // Checks if the news is older than 12 hours (ensures daily updates approx noon if user visits)
+        const lastSyncTime = cachedNews.length > 0 && (cachedNews[0] as any).syncedAt
+            ? (cachedNews[0] as any).syncedAt.toMillis()
+            : 0;
+
+        // Sync if empty or older than 12 hours
+        const shouldSync = cachedNews.length === 0 || (Date.now() - lastSyncTime > (1000 * 60 * 60 * 12));
 
         if (shouldSync) {
             try {
@@ -134,6 +138,12 @@ export const syncNewsWithAPI = async (apiKey: string) => {
             result = { success, error: success ? undefined : 'NewsAPI Sync Failed' };
         } else {
             result = { success: false, error: 'Missing NewsAPI Key' };
+        }
+    } else if (provider === 'jina' || true) { // Default to Jina if likely new default
+        const key = getStoredNewsApiKey() || JINA_API_KEY;
+        if (key) {
+            const success = await syncFromJina(key);
+            result = { success, error: success ? undefined : 'Jina Sync Failed' };
         }
     }
 
@@ -337,6 +347,81 @@ const syncFromGNews = async (apiKey: string): Promise<{ success: boolean; error?
         }
     } catch (e) {
         return { success: false, error: e instanceof Error ? e.message : "GNews Network Error" };
+    }
+};
+
+const syncFromJina = async (apiKey: string): Promise<boolean> => {
+    try {
+        console.log("Fetching news from Jina DeepSearch...");
+        const query = 'South African PSL Football News kaizer chiefs orlando pirates sundowns';
+
+        const response = await fetch(`https://s.jina.ai/${encodeURIComponent(query)}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Accept': 'application/json',
+                'X-Retain-Images': 'none'
+            }
+        });
+
+        if (!response.ok) {
+            console.error(`Jina API Error: ${response.status}`);
+            return false;
+        }
+
+        const responseData = await response.json();
+        // handling potential structure difference: { data: [...] } or just [...]
+        const articles = responseData.data || responseData;
+
+        if (Array.isArray(articles)) {
+            const syncTime = Timestamp.now();
+            console.log(`Synced ${articles.length} articles from Jina`);
+
+            for (const item of articles) {
+                const title = item.title || 'Football News';
+                const lowerTitle = title.toLowerCase();
+                const description = item.description || item.content?.slice(0, 200) || 'Click to read more';
+
+                let tag = 'Soccer';
+                let tagColor = 'bg-blue-600';
+
+                if (lowerTitle.includes('chiefs') || lowerTitle.includes('pirates') || lowerTitle.includes('sundowns')) {
+                    tag = 'PSL Giants';
+                    tagColor = 'bg-yellow-600';
+                } else if (lowerTitle.includes('transfer') || lowerTitle.includes('sign')) {
+                    tag = 'Transfer News';
+                    tagColor = 'bg-purple-600';
+                } else if (lowerTitle.includes('bafana')) {
+                    tag = 'National Team';
+                    tagColor = 'bg-green-600';
+                }
+
+                const docId = btoa(item.url || title).slice(0, 20);
+                // Jina doesn't always give published date, use now
+                const publishedAt = Timestamp.now();
+
+                const newsData = {
+                    title,
+                    summary: description,
+                    date: 'Just now',
+                    publishedAt,
+                    syncedAt: syncTime,
+                    source: 'Jina/Web',
+                    // Jina search often doesn't give images, use random fallback
+                    imageUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=800',
+                    tag,
+                    tagColor,
+                    url: item.url || '#'
+                };
+
+                await setDoc(doc(db, 'news', docId), newsData, { merge: true });
+            }
+            return true;
+        }
+        return false;
+    } catch (e) {
+        console.error("Jina Sync failed:", e);
+        return false;
     }
 };
 

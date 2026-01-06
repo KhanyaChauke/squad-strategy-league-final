@@ -9,7 +9,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAuth } from '@/contexts/AuthContext';
 import { Trash2, Users, TrendingUp, Target, Star, Settings, Plus, X, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { TeamChemistry } from '@/components/TeamChemistry';
 import { FormationSelector, formations, Formation } from '@/components/FormationSelector';
 import { playersDatabase, Player } from '@/data/playersData';
 import { FifaCard } from '@/components/FifaCard';
@@ -348,17 +347,7 @@ export const SquadView = () => {
           </CardContent>
         </Card>
 
-        <TeamChemistry
-          squad={user?.squad.map(player => ({
-            id: player.id,
-            name: player.name,
-            club: player.team,
-            nationality: player.nationality,
-            position: player.position
-          })) || []}
-          className="col-span-1"
-          compact={true}
-        />
+
       </div>
 
       {/* Formation Visualization */}

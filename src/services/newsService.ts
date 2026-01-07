@@ -1,5 +1,5 @@
 import { db } from '@/integrations/firebase/client';
-import { collection, getDocs, setDoc, doc, query, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, setDoc, doc, deleteDoc, query, orderBy, limit, Timestamp } from 'firebase/firestore';
 
 export interface NewsArticle {
     id: string;
@@ -119,6 +119,21 @@ const getTwoWeeksAgoDate = () => {
     return date.toISOString().split('T')[0]; // YYYY-MM-DD
 };
 
+const clearNewsCollection = async () => {
+    try {
+        const newsRef = collection(db, 'news');
+        const snapshot = await getDocs(newsRef);
+        if (!snapshot.empty) {
+            console.log(`Clearing ${snapshot.size} old news articles...`);
+            const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+            await Promise.all(deletePromises);
+            console.log('Old news articles cleared.');
+        }
+    } catch (e) {
+        console.error('Error clearing news collection:', e);
+    }
+};
+
 export const syncNewsWithAPI = async (apiKey: string) => {
     // Default to 'newsapi' since we have a valid key for it now
     const provider = localStorage.getItem('psl_news_provider') || 'newsapi';
@@ -155,139 +170,20 @@ export const syncNewsWithAPI = async (apiKey: string) => {
         if (!fallbackResult.success) {
             console.warn(`GNews also failed (${fallbackResult.error}).`);
 
-            // CRITICAL CHECK: Only use mock data if the DB is completely empty.
-            // If we have "stale" data (from yesterday/earlier), keep it! 
-            // It's better to show old news than fake news if we already have something.
+            // Check if we have any data at all
             const newsRef = collection(db, 'news');
             const snapshot = await getDocs(query(newsRef, limit(1)));
 
             if (snapshot.empty) {
-                console.warn("Database is empty. Activating Demo Mode (Mock Data) to prevent empty screen...");
-                await syncFromMockData();
+                console.warn("Database is empty and all APIs failed. No news available.");
             } else {
-                console.log("Database has existing (stale) data. Keeping it instead of overwriting with Mock Data.");
+                console.log("Database has existing (stale) data. Keeping it.");
             }
         }
     }
 };
 
-const syncFromMockData = async () => {
-    console.log("Generating Demo/Mock News Data (Extended Database)...");
-    const mockNews: any[] = [
-        {
-            title: "Sundowns Secure Another Title Victory",
-            summary: "Mamelodi Sundowns have once again proved their dominance in the PSL with a convincing win that secures the league title.",
-            url: "https://www.psl.co.za",
-            tag: "PSL Giants",
-            tagColor: "bg-yellow-600",
-            source: "Sowetan Live",
-            imageUrl: "https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=800"
-        },
-        {
-            title: "Chiefs Announce New European Coach",
-            summary: "Kaizer Chiefs have officially parted ways with their interim manager and announced a high-profile European tactician.",
-            url: "https://www.kaizerchiefs.com",
-            tag: "Management",
-            tagColor: "bg-red-600",
-            source: "KickOff",
-            imageUrl: "https://images.unsplash.com/photo-1518091043644-c1d4457512c6?auto=format&fit=crop&q=80&w=800"
-        },
-        {
-            title: "Bafana Squad Announced For AFCON Qualifiers",
-            summary: "Hugo Broos has named his 23-man squad for the upcoming crucial AFCON qualifiers, with some surprise inclusions.",
-            url: "https://www.safa.net",
-            tag: "National Team",
-            tagColor: "bg-green-600",
-            source: "SAFA",
-            imageUrl: "https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&q=80&w=800"
-        },
-        {
-            title: "Pirates Star Set for European Move?",
-            summary: "Reports suggest that a key Orlando Pirates playmaker has attracted interest from heavyweights in the French Ligue 1.",
-            url: "https://www.orlandopiratesfc.com",
-            tag: "Transfer News",
-            tagColor: "bg-purple-600",
-            source: "Citizen",
-            imageUrl: "https://images.unsplash.com/photo-1504124637672-c51638056d7b?auto=format&fit=crop&q=80&w=800"
-        },
-        {
-            title: "Cape Town City Unveil New Kit for 2024",
-            summary: "The Citizens have dropped their latest home and away kits, featuring a bold new design inspired by Table Mountain.",
-            url: "https://www.capetowncityfc.co.za",
-            tag: "Soccer",
-            tagColor: "bg-blue-600",
-            source: "Soccer Laduma",
-            imageUrl: "https://images.unsplash.com/photo-1511886929837-354d827aae26?auto=format&fit=crop&q=80&w=800"
-        },
-        {
-            title: "Stellenbosch FC Promote Academy Trio",
-            summary: "Continuing their philosophy of youth development, Stellies have promoted three promising youngsters to the first team.",
-            url: "https://www.stellenboschfc.com",
-            tag: "Transfer News",
-            tagColor: "bg-purple-600",
-            source: "Idiski Times",
-            imageUrl: "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?auto=format&fit=crop&q=80&w=800"
-        },
-        {
-            title: "PSL Chairman Announces Record Prize Money",
-            summary: "The Premier Soccer League has confirmed a significant increase in prize money for the upcoming season winners.",
-            url: "https://www.psl.co.za",
-            tag: "Management",
-            tagColor: "bg-red-600",
-            source: "SuperSport",
-            imageUrl: "https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&q=80&w=800"
-        },
-        {
-            title: "Royal AM Face Transfer Ban",
-            summary: "FIFA has imposed a transfer ban on Royal AM following disputes over unpaid player wages from the previous season.",
-            url: "https://www.royalam.co.za",
-            tag: "Management",
-            tagColor: "bg-red-600",
-            source: "News24",
-            imageUrl: "https://images.unsplash.com/photo-1628153351221-872f232b5358?auto=format&fit=crop&q=80&w=800"
-        },
-        {
-            title: "Amazulu Sack Coach After Poor Run",
-            summary: "Usuthu have parted ways with their head coach after failing to secure a win in their last five league matches.",
-            url: "https://www.amazulufc.net",
-            tag: "Management",
-            tagColor: "bg-red-600",
-            source: "SABC Sport",
-            imageUrl: "https://images.unsplash.com/photo-1521537634581-0dced7ec15f6?auto=format&fit=crop&q=80&w=800"
-        },
-        {
-            title: "SuperSport United Sign Experienced Striker",
-            summary: "Matsatsantsa have bolstered their attack with the signing of a veteran striker who returns to the PSL.",
-            url: "https://www.supersportunited.co.za",
-            tag: "Transfer News",
-            tagColor: "bg-purple-600",
-            source: "KickOff",
-            imageUrl: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=800"
-        },
-        {
-            title: "Chippa United Appoint New Goalkeeper Coach",
-            summary: "The Chilli Boys have revamped their technical team with the addition of a renowned Nigerian goalkeeper trainer.",
-            url: "https://www.chippautdfc.co.za",
-            tag: "Management",
-            tagColor: "bg-red-600",
-            source: "FarPost",
-            imageUrl: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=800"
-        }
-    ];
 
-    const syncTime = Timestamp.now();
-    for (const item of mockNews) {
-        const docId = btoa(item.title).slice(0, 20);
-        const newsData = {
-            ...item,
-            date: 'Recently',
-            publishedAt: syncTime,
-            syncedAt: syncTime
-        };
-        await setDoc(doc(db, 'news', docId), newsData, { merge: true });
-    }
-    return { success: true };
-};
 
 const syncFromGNews = async (apiKey: string): Promise<{ success: boolean; error?: string }> => {
     try {
@@ -301,7 +197,8 @@ const syncFromGNews = async (apiKey: string): Promise<{ success: boolean; error?
             return { success: false, error: data.errors?.[0] || `GNews Error ${response.status}` };
         }
 
-        if (data.articles && Array.isArray(data.articles)) {
+        if (data.articles && Array.isArray(data.articles) && data.articles.length > 0) {
+            await clearNewsCollection();
             const syncTime = Timestamp.now();
             console.log(`Synced ${data.articles.length} articles from GNews`);
 
@@ -373,7 +270,8 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
         // handling potential structure difference: { data: [...] } or just [...]
         const articles = responseData.data || responseData;
 
-        if (Array.isArray(articles)) {
+        if (Array.isArray(articles) && articles.length > 0) {
+            await clearNewsCollection();
             const syncTime = Timestamp.now();
             console.log(`Synced ${articles.length} articles from Jina`);
 
@@ -436,7 +334,8 @@ const syncFromNewsOrg = async (apiKey: string): Promise<boolean> => {
         const response = await fetch(`https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&from=${fromDate}&sortBy=publishedAt&language=en&apiKey=${apiKey}`);
         const data = await response.json();
 
-        if (data.status === 'ok' && Array.isArray(data.articles)) {
+        if (data.status === 'ok' && Array.isArray(data.articles) && data.articles.length > 0) {
+            await clearNewsCollection();
             const syncTime = Timestamp.now();
             console.log(`Synced ${data.articles.length} articles from NewsAPI.org (Everything)`);
 
@@ -517,7 +416,8 @@ const syncFromRapidAPI = async (effectiveKey: string): Promise<{ success: boolea
 
         const data = await response.json();
 
-        if (data && data.topStories && Array.isArray(data.topStories)) {
+        if (data && data.topStories && Array.isArray(data.topStories) && data.topStories.length > 0) {
+            await clearNewsCollection();
             const syncTime = Timestamp.now();
 
             for (const item of data.topStories) {

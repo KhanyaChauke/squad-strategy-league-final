@@ -7,26 +7,8 @@ import { db } from '@/integrations/firebase/client';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { Trophy, TrendingUp, Star, Users, Target } from 'lucide-react';
 
-// Sample PSL data since we don't have a standings table yet
-// Sample PSL data for 2024/25 Season (Projected Final)
-const sampleStandings = [
-  { rank: 1, team: "Mamelodi Sundowns", points: 72, played: 30, win: 22, draw: 6, loss: 2, goalsFor: 62, goalsAgainst: 14, goalDifference: 48 },
-  { rank: 2, team: "Orlando Pirates", points: 65, played: 30, win: 19, draw: 8, loss: 3, goalsFor: 55, goalsAgainst: 22, goalDifference: 33 },
-  { rank: 3, team: "Stellenbosch FC", points: 54, played: 30, win: 15, draw: 9, loss: 6, goalsFor: 44, goalsAgainst: 28, goalDifference: 16 },
-  { rank: 4, team: "Sekhukhune United", points: 48, played: 30, win: 12, draw: 12, loss: 6, goalsFor: 35, goalsAgainst: 26, goalDifference: 9 },
-  { rank: 5, team: "Cape Town City", points: 45, played: 30, win: 12, draw: 9, loss: 9, goalsFor: 38, goalsAgainst: 33, goalDifference: 5 },
-  { rank: 6, team: "TS Galaxy", points: 42, played: 30, win: 11, draw: 9, loss: 10, goalsFor: 32, goalsAgainst: 29, goalDifference: 3 },
-  { rank: 7, team: "SuperSport United", points: 40, played: 30, win: 9, draw: 13, loss: 8, goalsFor: 34, goalsAgainst: 34, goalDifference: 0 },
-  { rank: 8, team: "Kaizer Chiefs", points: 39, played: 30, win: 10, draw: 9, loss: 11, goalsFor: 30, goalsAgainst: 32, goalDifference: -2 },
-  { rank: 9, team: "Polokwane City", points: 37, played: 30, win: 8, draw: 13, loss: 9, goalsFor: 25, goalsAgainst: 28, goalDifference: -3 },
-  { rank: 10, team: "Golden Arrows", points: 35, played: 30, win: 9, draw: 8, loss: 13, goalsFor: 31, goalsAgainst: 42, goalDifference: -11 },
-  { rank: 11, team: "Chippa United", points: 33, played: 30, win: 8, draw: 9, loss: 13, goalsFor: 28, goalsAgainst: 38, goalDifference: -10 },
-  { rank: 12, team: "AmaZulu FC", points: 32, played: 30, win: 7, draw: 11, loss: 12, goalsFor: 24, goalsAgainst: 35, goalDifference: -11 },
-  { rank: 13, team: "Royal AM", points: 30, played: 30, win: 8, draw: 6, loss: 16, goalsFor: 29, goalsAgainst: 48, goalDifference: -19 },
-  { rank: 14, team: "Magesi FC", points: 28, played: 30, win: 6, draw: 10, loss: 14, goalsFor: 22, goalsAgainst: 40, goalDifference: -18 },
-  { rank: 15, team: "Richards Bay", points: 26, played: 30, win: 6, draw: 8, loss: 16, goalsFor: 20, goalsAgainst: 39, goalDifference: -19 },
-  { rank: 16, team: "Marumo Gallants", points: 21, played: 30, win: 4, draw: 9, loss: 17, goalsFor: 18, goalsAgainst: 42, goalDifference: -24 },
-];
+// Sample data removed to prevent false information
+const sampleStandings: PSLStanding[] = [];
 
 interface PSLStanding {
   rank: number;
@@ -207,28 +189,36 @@ export const PSLDashboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {standings.map((team) => (
-                      <TableRow key={team.rank} className="group hover:bg-gray-50">
-                        <TableCell>
-                          <Badge className={getRankBadgeColor(team.rank)}>
-                            {team.rank}
-                          </Badge>
+                    {standings.length > 0 ? (
+                      standings.map((team) => (
+                        <TableRow key={team.rank} className="group hover:bg-gray-50">
+                          <TableCell>
+                            <Badge className={getRankBadgeColor(team.rank)}>
+                              {team.rank}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">{team.team}</TableCell>
+                          <TableCell className="text-center">{team.played}</TableCell>
+                          <TableCell className="text-center">{team.win}</TableCell>
+                          <TableCell className="text-center">{team.draw}</TableCell>
+                          <TableCell className="text-center">{team.loss}</TableCell>
+                          <TableCell className="text-center">{team.goalsFor}</TableCell>
+                          <TableCell className="text-center">{team.goalsAgainst}</TableCell>
+                          <TableCell className="text-center">
+                            <span className={team.goalDifference > 0 ? 'text-green-600' : team.goalDifference < 0 ? 'text-red-600' : 'text-gray-600'}>
+                              {team.goalDifference > 0 ? '+' : ''}{team.goalDifference}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center font-bold sticky right-0 bg-white group-hover:bg-gray-50 z-10 shadow-[-2px_0_5px_rgba(0,0,0,0.1)]">{team.points}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={10} className="text-center py-8 text-gray-500">
+                          No standings data available at the moment.
                         </TableCell>
-                        <TableCell className="font-medium">{team.team}</TableCell>
-                        <TableCell className="text-center">{team.played}</TableCell>
-                        <TableCell className="text-center">{team.win}</TableCell>
-                        <TableCell className="text-center">{team.draw}</TableCell>
-                        <TableCell className="text-center">{team.loss}</TableCell>
-                        <TableCell className="text-center">{team.goalsFor}</TableCell>
-                        <TableCell className="text-center">{team.goalsAgainst}</TableCell>
-                        <TableCell className="text-center">
-                          <span className={team.goalDifference > 0 ? 'text-green-600' : team.goalDifference < 0 ? 'text-red-600' : 'text-gray-600'}>
-                            {team.goalDifference > 0 ? '+' : ''}{team.goalDifference}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-center font-bold sticky right-0 bg-white group-hover:bg-gray-50 z-10 shadow-[-2px_0_5px_rgba(0,0,0,0.1)]">{team.points}</TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </div>

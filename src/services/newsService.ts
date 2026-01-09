@@ -130,6 +130,43 @@ const getOneWeekAgoDate = () => {
     return date.toISOString().split('T')[0]; // YYYY-MM-DD
 };
 
+const getFallbackImage = (title: string): string => {
+    const lowerTitle = title.toLowerCase();
+
+    // Kaizer Chiefs (Yellow/Gold vibes)
+    if (lowerTitle.includes('chiefs') || lowerTitle.includes('amakhosi') || lowerTitle.includes('naturena')) {
+        return 'https://images.unsplash.com/photo-1560272564-c83b66b1ad12?auto=format&fit=crop&q=80&w=800';
+    }
+    // Orlando Pirates (Black/White/Dark vibes)
+    if (lowerTitle.includes('pirates') || lowerTitle.includes('buccaneers')) {
+        return 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=800';
+    }
+    // Sundowns (Yellow/Blue/Bright)
+    if (lowerTitle.includes('sundowns') || lowerTitle.includes('downs') || lowerTitle.includes('masandawana')) {
+        return 'https://images.unsplash.com/photo-1614632537423-1e6c2e7e0aab?auto=format&fit=crop&q=80&w=800';
+    }
+    // National Team
+    if (lowerTitle.includes('bafana')) {
+        return 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=800';
+    }
+    // Transfers (Business/Writing/Jersey)
+    if (lowerTitle.includes('transfer') || lowerTitle.includes('sign') || lowerTitle.includes('deal')) {
+        return 'https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&q=80&w=800';
+    }
+
+    // General Football variants to avoid monotony
+    const generals = [
+        'https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=800',
+        'https://images.unsplash.com/photo-1517466787929-bc90951d6dbd?auto=format&fit=crop&q=80&w=800',
+        'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&q=80&w=800',
+        'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?auto=format&fit=crop&q=80&w=800'
+    ];
+
+    // Pick based on title length hash to be deterministic for same title
+    const index = title.length % generals.length;
+    return generals[index];
+};
+
 const clearNewsCollection = async () => {
     try {
         const newsRef = collection(db, 'news');
@@ -228,7 +265,7 @@ const syncFromGNews = async (apiKey: string): Promise<{ success: boolean; error?
                     publishedAt,
                     syncedAt: syncTime,
                     source: item.source.name || 'GNews',
-                    imageUrl: item.image || 'https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=800',
+                    imageUrl: item.image || getFallbackImage(title),
                     tag,
                     tagColor,
                     url: item.url
@@ -317,7 +354,7 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
                     syncedAt: syncTime,
                     source: 'Jina/Web',
                     // Jina search might give images in 'image' or 'imageUrl'
-                    imageUrl: item.image || item.imageUrl || item.thumbnail || 'https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=800',
+                    imageUrl: item.image || item.imageUrl || item.thumbnail || getFallbackImage(title),
                     tag,
                     tagColor,
                     url: item.url || '#'
@@ -391,7 +428,7 @@ const syncFromNewsOrg = async (apiKey: string): Promise<boolean> => {
                     publishedAt,
                     syncedAt: syncTime,
                     source: item.source.name || 'NewsAPI',
-                    imageUrl: item.urlToImage || 'https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=800',
+                    imageUrl: item.urlToImage || getFallbackImage(title),
                     tag,
                     tagColor,
                     url: item.url
@@ -465,7 +502,7 @@ const syncFromRapidAPI = async (effectiveKey: string): Promise<{ success: boolea
                     publishedAt,
                     syncedAt: syncTime,
                     source: item.source || 'LiveScore',
-                    imageUrl: item.mainMedia?.gallery?.[0]?.url || 'https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=800',
+                    imageUrl: item.mainMedia?.gallery?.[0]?.url || getFallbackImage(title),
                     tag,
                     tagColor,
                     url: item.url ? (item.url.startsWith('http') ? item.url : `https://www.livescore.com${item.url}`) : '#'

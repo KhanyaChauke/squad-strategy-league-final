@@ -1,4 +1,4 @@
-vn
+
 import { syncNewsWithAPI, NewsArticle } from './src/services/newsService';
 import { db } from './src/integrations/firebase/client';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';

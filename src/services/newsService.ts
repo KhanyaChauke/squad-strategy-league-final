@@ -89,7 +89,8 @@ export const fetchPSLNews = async (apiKey: string): Promise<NewsArticle[]> => {
         const isSyncStale = Date.now() - lastSyncTime > (1000 * 60 * 60 * 12);
         const isContentStale = Date.now() - latestArticleTime > (1000 * 60 * 60 * 48);
 
-        const shouldSync = cachedNews.length === 0 || isSyncStale || isContentStale;
+        const shouldSync = true; // FORCE SYNC ENABLED TEMPORARILY
+
 
         if (shouldSync) {
             try {
@@ -154,7 +155,7 @@ export const syncNewsWithAPI = async (apiKey: string) => {
         provider = 'jina';
         console.log("Detected Jina API Key, switching provider to Jina.");
     } else if (!provider) {
-        provider = 'newsapi'; // Fallback default
+        provider = 'jina'; // Fallback default
     }
 
     let result: { success: boolean; error?: string } = { success: false, error: 'Unknown error' };

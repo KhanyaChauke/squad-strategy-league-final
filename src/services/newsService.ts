@@ -242,12 +242,13 @@ const syncFromGNews = async (apiKey: string): Promise<{ success: boolean; error?
                 }
 
                 const docId = btoa(item.url).slice(0, 20);
-                const publishedAt = item.publishedAt ? Timestamp.fromDate(new Date(item.publishedAt)) : Timestamp.now();
+                // Default to yesterday for undated items so they don't displace confirmed fresh news
+                const publishedAt = item.publishedAt ? Timestamp.fromDate(new Date(item.publishedAt)) : Timestamp.fromMillis(Date.now() - 86400000);
 
                 const newsData = {
                     title,
                     summary: description,
-                    date: item.publishedAt ? formatRelativeTime(item.publishedAt) : 'Just now',
+                    date: item.publishedAt ? formatRelativeTime(item.publishedAt) : 'Recent',
                     publishedAt,
                     syncedAt: syncTime,
                     source: item.source.name || 'GNews',
@@ -328,7 +329,8 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
                     if (diffDays > 7) continue;
                 }
 
-                const publishedAt = rawDate ? Timestamp.fromDate(new Date(rawDate)) : Timestamp.now();
+                // Default to yesterday for undated items so they don't displace confirmed fresh news
+                const publishedAt = rawDate ? Timestamp.fromDate(new Date(rawDate)) : Timestamp.fromMillis(Date.now() - 86400000);
                 const displayDate = rawDate ? formatRelativeTime(rawDate) : 'Recent';
 
                 const newsData = {
@@ -403,12 +405,13 @@ const syncFromNewsOrg = async (apiKey: string): Promise<boolean> => {
                 }
 
                 const docId = btoa(item.url).slice(0, 20);
-                const publishedAt = item.publishedAt ? Timestamp.fromDate(new Date(item.publishedAt)) : Timestamp.now();
+                // Default to yesterday for undated items
+                const publishedAt = item.publishedAt ? Timestamp.fromDate(new Date(item.publishedAt)) : Timestamp.fromMillis(Date.now() - 86400000);
 
                 const newsData = {
                     title,
                     summary,
-                    date: item.publishedAt ? formatRelativeTime(item.publishedAt) : 'Just now',
+                    date: item.publishedAt ? formatRelativeTime(item.publishedAt) : 'Recent',
                     publishedAt,
                     syncedAt: syncTime,
                     source: item.source.name || 'NewsAPI',

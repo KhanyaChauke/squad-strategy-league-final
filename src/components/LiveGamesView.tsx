@@ -85,11 +85,10 @@ export const LiveGamesView = () => {
             // We display all fixtures available, sorted by relevance and status
             let relevantFixtures = tieredFixtures;
 
-            // Sort by Tier, then by Status (Live first), then Time
+            // Sort by Date (Descending/Newest first usually, but for fixtures Upcoming first?), Tier, then Time
             relevantFixtures.sort((a, b) => {
+                if (a.date !== b.date) return b.date.localeCompare(a.date); // Newest dates first (e.g. today/upcoming)
                 if (a.tier !== b.tier) return a.tier - b.tier;
-                if (a.status === 'In Progress' && b.status !== 'In Progress') return -1;
-                if (b.status === 'In Progress' && a.status !== 'In Progress') return 1;
                 return a.time.localeCompare(b.time);
             });
 
@@ -106,6 +105,36 @@ export const LiveGamesView = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const groupFixturesByDate = (fixtures: Fixture[]) => {
+        const groups: { [key: string]: Fixture[] } = {};
+
+        fixtures.forEach(fixture => {
+            let label = fixture.date || 'Upcoming';
+            // Try to make label pretty
+            try {
+                const dateObj = new Date(fixture.date);
+                const today = new Date();
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+
+                const dStr = dateObj.toISOString().split('T')[0];
+                const tStr = today.toISOString().split('T')[0];
+                const yStr = yesterday.toISOString().split('T')[0];
+
+                if (dStr === tStr) label = "Today's Action";
+                else if (dStr === yStr) label = "Yesterday's Results";
+                else label = dateObj.toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short' });
+            } catch (e) {
+                // Keep original string if parse fails
+            }
+
+            if (!groups[label]) groups[label] = [];
+            groups[label].push(fixture);
+        });
+
+        return groups;
     };
 
     const getStatusIndicator = () => {
@@ -173,55 +202,68 @@ export const LiveGamesView = () => {
                     <p className="text-sm text-gray-500">Check back later for live PSL fixtures.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {fixtures.map((fixture) => (
-                        <Card key={fixture.fixtureId} className="overflow-hidden hover:shadow-md transition-shadow">
-                            <CardContent className="p-4">
-                                {/* League & Status Row */}
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="flex items-center text-xs text-blue-600 font-semibold">
-                                        <Trophy className="h-3 w-3 mr-1" />
-                                        <span className="truncate">{fixture.league}</span>
-                                    </div>
-                                    <Badge className={`${getStatusColor(fixture.status)} text-xs px-2 py-1`}>
-                                        {getStatusText(fixture.status)}
-                                    </Badge>
-                                </div>
+                <div className="space-y-6">
+                    {Object.entries(groupFixturesByDate(fixtures)).map(([dateLabel, dateFixtures]) => (
+                        <div key={dateLabel}>
+                            <h3 className="text-sm font-bold text-gray-500 bg-gray-50 px-3 py-1 rounded inline-block mb-3 border border-gray-200">
+                                {dateLabel}
+                            </h3>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                {dateFixtures.map((fixture) => (
+                                    <Card key={fixture.fixtureId} className="overflow-hidden hover:shadow-md transition-shadow">
+                                        <CardContent className="p-4">
+                                            {/* League & Status Row */}
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center text-xs text-blue-600 font-semibold">
+                                                    <Trophy className="h-3 w-3 mr-1" />
+                                                    <span className="truncate">{fixture.league}</span>
+                                                </div>
+                                                <Badge className={`${getStatusColor(fixture.status)} text-xs px-2 py-1`}>
+                                                    {getStatusText(fixture.status)}
+                                                </Badge>
+                                            </div>
 
-                                {/* Match Details */}
-                                <div className="space-y-2">
-                                    {/* Home Team */}
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-2 flex-1 min-w-0">
-                                            <div className="w-8 h-8 bg-gray-200 rounded-full flex-shrink-0"></div>
-                                            <span className="text-sm font-bold text-gray-900 truncate">{fixture.homeTeam}</span>
-                                        </div>
-                                        <span className="text-2xl font-bold font-mono text-gray-800 ml-2">{fixture.homeScore ?? '-'}</span>
-                                    </div>
+                                            {/* Match Details */}
+                                            <div className="space-y-2">
+                                                {/* Home Team */}
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center space-x-2 flex-1 min-w-0">
+                                                        <div className="w-8 h-8 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-gray-500 text-xs shadow-inner">
+                                                            {fixture.homeTeam.substring(0, 2)}
+                                                        </div>
+                                                        <span className="text-sm font-bold text-gray-900 truncate">{fixture.homeTeam}</span>
+                                                    </div>
+                                                    <span className="text-2xl font-bold font-mono text-gray-800 ml-2">{fixture.homeScore ?? '-'}</span>
+                                                </div>
 
-                                    {/* Away Team */}
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-2 flex-1 min-w-0">
-                                            <div className="w-8 h-8 bg-gray-200 rounded-full flex-shrink-0"></div>
-                                            <span className="text-sm font-bold text-gray-900 truncate">{fixture.awayTeam}</span>
-                                        </div>
-                                        <span className="text-2xl font-bold font-mono text-gray-800 ml-2">{fixture.awayScore ?? '-'}</span>
-                                    </div>
-                                </div>
+                                                {/* Away Team */}
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center space-x-2 flex-1 min-w-0">
+                                                        <div className="w-8 h-8 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-gray-500 text-xs shadow-inner">
+                                                            {fixture.awayTeam.substring(0, 2)}
+                                                        </div>
+                                                        <span className="text-sm font-bold text-gray-900 truncate">{fixture.awayTeam}</span>
+                                                    </div>
+                                                    <span className="text-2xl font-bold font-mono text-gray-800 ml-2">{fixture.awayScore ?? '-'}</span>
+                                                </div>
+                                            </div>
 
-                                {/* Time & Broadcast */}
-                                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                                    <div className="flex items-center text-xs text-gray-500">
-                                        <Clock className="h-3 w-3 mr-1" />
-                                        <span className="font-semibold">{fixture.time} SAST</span>
-                                    </div>
-                                    <div className="flex items-center text-xs text-gray-400">
-                                        <Tv className="h-3 w-3 mr-1" />
-                                        <span>SS PSL</span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                            {/* Time & Broadcast */}
+                                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                                                <div className="flex items-center text-xs text-gray-500">
+                                                    <Clock className="h-3 w-3 mr-1" />
+                                                    <span className="font-semibold">{fixture.time} SAST</span>
+                                                </div>
+                                                <div className="flex items-center text-xs text-gray-400">
+                                                    <Tv className="h-3 w-3 mr-1" />
+                                                    <span>Live</span>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+                        </div>
                     ))}
                 </div>
             )}

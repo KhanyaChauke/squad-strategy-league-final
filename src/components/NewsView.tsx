@@ -3,12 +3,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, ExternalLink, ChevronRight, Newspaper, RefreshCw, AlertCircle, Clock } from 'lucide-react';
-import { fetchPSLNews, NewsArticle } from '@/services/newsService';
+import { useAuth } from '@/contexts/AuthContext';
+import { syncNewsWithAPI, fetchPSLNews, NewsArticle } from '@/services/newsService';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+const ADMIN_EMAILS = ['admin@psl.co.za', 'khanya@example.com', 'test@example.com']; // Valid admin emails
+
 export const NewsView = () => {
+    const { user } = useAuth();
+    const isAdmin = user && (ADMIN_EMAILS.includes(user.email) || user.email.startsWith('admin'));
     const [news, setNews] = useState<NewsArticle[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isSyncing, setIsSyncing] = useState(false); // For admin sync
     const [error, setError] = useState<string | null>(null);
     const [activeCategory, setActiveCategory] = useState('All');
 
@@ -26,6 +32,22 @@ export const NewsView = () => {
             setNews([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleAdminSync = async () => {
+        if (!isAdmin) return;
+        setIsSyncing(true);
+        try {
+            // Force sync with API (passing empty key relying on env/stored)
+            await syncNewsWithAPI('');
+            // Reload to see changes
+            await loadNews();
+        } catch (err) {
+            console.error("Admin sync failed:", err);
+            setError("Admin Manual Sync Failed");
+        } finally {
+            setIsSyncing(false);
         }
     };
 
@@ -77,12 +99,23 @@ export const NewsView = () => {
                     <Button
                         variant="outline"
                         onClick={loadNews}
-                        disabled={loading}
+                        disabled={loading || isSyncing}
                         className="rounded-full px-6 hover:bg-green-50 hover:text-green-700 hover:border-green-200 transition-all border-gray-200"
                     >
                         <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                         Refresh
                     </Button>
+                    {isAdmin && (
+                        <Button
+                            variant="destructive"
+                            onClick={handleAdminSync}
+                            disabled={isSyncing || loading}
+                            className="rounded-full px-4 shadow-sm"
+                        >
+                            <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                            {isSyncing ? 'Syncing...' : 'Force Sync'}
+                        </Button>
+                    )}
                 </div>
             </div>
 

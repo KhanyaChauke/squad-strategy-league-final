@@ -73,17 +73,27 @@ export const fetchPSLNews = async (apiKey: string): Promise<NewsArticle[]> => {
         })) as NewsArticle[];
 
         // 2. Decide if we need to sync with API
-        // Checks if the news is older than 12 hours (ensures daily updates approx noon if user visits)
-        const lastSyncTime = cachedNews.length > 0 && (cachedNews[0] as any).syncedAt
-            ? (cachedNews[0] as any).syncedAt.toMillis()
+        const latestArticle = cachedNews[0];
+        const lastSyncTime = latestArticle && (latestArticle as any).syncedAt
+            ? (latestArticle as any).syncedAt.toMillis()
             : 0;
 
-        // Sync if empty or older than 12 hours
-        const shouldSync = cachedNews.length === 0 || (Date.now() - lastSyncTime > (1000 * 60 * 60 * 12));
+        const latestArticleTime = latestArticle && latestArticle.publishedAt
+            ? latestArticle.publishedAt.toMillis()
+            : 0;
+
+        // Sync if:
+        // 1. No news (empty)
+        // 2. Last sync was > 12 hours ago (periodic update)
+        // 3. The latest news we have is > 48 hours old (content is stale, regardless of when we last checked)
+        const isSyncStale = Date.now() - lastSyncTime > (1000 * 60 * 60 * 12);
+        const isContentStale = Date.now() - latestArticleTime > (1000 * 60 * 60 * 48);
+
+        const shouldSync = cachedNews.length === 0 || isSyncStale || isContentStale;
 
         if (shouldSync) {
             try {
-                console.log('Syncing news with API...');
+                console.log(`Syncing news... (Empty: ${cachedNews.length === 0}, SyncStale: ${isSyncStale}, ContentStale: ${isContentStale})`);
                 await syncNewsWithAPI(apiKey);
 
                 // Re-fetch after sync
@@ -135,27 +145,37 @@ const clearNewsCollection = async () => {
 };
 
 export const syncNewsWithAPI = async (apiKey: string) => {
-    // Default to 'newsapi' since we have a valid key for it now
-    const provider = localStorage.getItem('psl_news_provider') || 'newsapi';
+    // Detect provider based on key format if possible, otherwise rely on stored preference
+    let provider = localStorage.getItem('psl_news_provider');
+    const storedKey = getStoredNewsApiKey();
+    const effectiveKey = apiKey || storedKey;
+
+    if (effectiveKey && effectiveKey.startsWith('jina_')) {
+        provider = 'jina';
+        console.log("Detected Jina API Key, switching provider to Jina.");
+    } else if (!provider) {
+        provider = 'newsapi'; // Fallback default
+    }
+
     let result: { success: boolean; error?: string } = { success: false, error: 'Unknown error' };
 
     if (provider === 'rapidapi') {
-        const effectiveKey = import.meta.env.VITE_RAPID_API_KEY || apiKey || getStoredNewsApiKey() || HARDCODED_API_KEY;
-        if (effectiveKey) {
-            result = await syncFromRapidAPI(effectiveKey);
+        const key = import.meta.env.VITE_RAPID_API_KEY || effectiveKey || HARDCODED_API_KEY;
+        if (key) {
+            result = await syncFromRapidAPI(key);
         } else {
             result = { success: false, error: 'Missing RapidAPI Key' };
         }
     } else if (provider === 'newsapi') {
-        const key = getStoredNewsApiKey() || apiKey || NEWS_API_ORG_KEY;
+        const key = effectiveKey || NEWS_API_ORG_KEY;
         if (key) {
             const success = await syncFromNewsOrg(key);
             result = { success, error: success ? undefined : 'NewsAPI Sync Failed' };
         } else {
             result = { success: false, error: 'Missing NewsAPI Key' };
         }
-    } else if (provider === 'jina' || true) { // Default to Jina if likely new default
-        const key = getStoredNewsApiKey() || JINA_API_KEY;
+    } else if (provider === 'jina' || true) { // Default/Fallthrough
+        const key = effectiveKey || JINA_API_KEY;
         if (key) {
             const success = await syncFromJina(key);
             result = { success, error: success ? undefined : 'Jina Sync Failed' };
@@ -250,7 +270,7 @@ const syncFromGNews = async (apiKey: string): Promise<{ success: boolean; error?
 const syncFromJina = async (apiKey: string): Promise<boolean> => {
     try {
         console.log("Fetching news from Jina DeepSearch...");
-        const query = 'South African PSL Football News kaizer chiefs orlando pirates sundowns';
+        const query = 'South African PSL Football News latest transfers matches';
 
         const response = await fetch(`https://s.jina.ai/${encodeURIComponent(query)}`, {
             method: 'GET',
@@ -295,13 +315,16 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
                 }
 
                 const docId = btoa(item.url || title).slice(0, 20);
-                // Jina doesn't always give published date, use now
-                const publishedAt = Timestamp.now();
+
+                // Try to find a date in Jina response (often 'publishedTime' or 'date')
+                const rawDate = item.publishedTime || item.date || item.publishedAt;
+                const publishedAt = rawDate ? Timestamp.fromDate(new Date(rawDate)) : Timestamp.now();
+                const displayDate = rawDate ? formatRelativeTime(rawDate) : 'Recent';
 
                 const newsData = {
                     title,
                     summary: description,
-                    date: 'Just now',
+                    date: displayDate,
                     publishedAt,
                     syncedAt: syncTime,
                     source: 'Jina/Web',
@@ -495,6 +518,7 @@ export interface Fixture {
     awayScore: number | null;
     status: 'Not Started' | 'In Progress' | 'Finished' | 'Postponed';
     time: string;
+    date: string; // YYYY-MM-DD or readable date string
     syncedAt?: any;
 }
 
@@ -607,6 +631,7 @@ const syncFixturesWithAPI = async (apiKey?: string) => {
                             awayScore: event.Tr2 ? parseInt(event.Tr2) : null,
                             status: status,
                             time: event.Esd ? String(event.Esd).slice(8, 10) + ':' + String(event.Esd).slice(10, 12) : 'TBD',
+                            date: event.Esd ? String(event.Esd).slice(0, 4) + '-' + String(event.Esd).slice(4, 6) + '-' + String(event.Esd).slice(6, 8) : new Date().toISOString().split('T')[0],
                             syncedAt: syncTime
                         };
                         await setDoc(doc(db, 'fixtures', String(event.Eid)), fixtureData, { merge: true });

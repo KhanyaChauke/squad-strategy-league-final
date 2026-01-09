@@ -124,9 +124,9 @@ export const fetchPSLNews = async (apiKey: string): Promise<NewsArticle[]> => {
     }
 };
 
-const getTwoWeeksAgoDate = () => {
+const getOneWeekAgoDate = () => {
     const date = new Date();
-    date.setDate(date.getDate() - 14);
+    date.setDate(date.getDate() - 7);
     return date.toISOString().split('T')[0]; // YYYY-MM-DD
 };
 
@@ -271,7 +271,7 @@ const syncFromGNews = async (apiKey: string): Promise<{ success: boolean; error?
 const syncFromJina = async (apiKey: string): Promise<boolean> => {
     try {
         console.log("Fetching news from Jina DeepSearch...");
-        const query = 'South African PSL Football News latest transfers matches';
+        const query = 'South African PSL Football News latest scores updates today this week';
 
         const response = await fetch(`https://s.jina.ai/${encodeURIComponent(query)}`, {
             method: 'GET',
@@ -319,6 +319,15 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
 
                 // Try to find a date in Jina response (often 'publishedTime' or 'date')
                 const rawDate = item.publishedTime || item.date || item.publishedAt;
+
+                // Filter out news older than 7 days if date is present
+                if (rawDate) {
+                    const dateObj = new Date(rawDate);
+                    const diffTime = Math.abs(Date.now() - dateObj.getTime());
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if (diffDays > 7) continue;
+                }
+
                 const publishedAt = rawDate ? Timestamp.fromDate(new Date(rawDate)) : Timestamp.now();
                 const displayDate = rawDate ? formatRelativeTime(rawDate) : 'Recent';
 
@@ -329,8 +338,8 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
                     publishedAt,
                     syncedAt: syncTime,
                     source: 'Jina/Web',
-                    // Jina search often doesn't give images, use random fallback
-                    imageUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=800',
+                    // Jina search might give images in 'image' or 'imageUrl'
+                    imageUrl: item.image || item.imageUrl || item.thumbnail || 'https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=800',
                     tag,
                     tagColor,
                     url: item.url || '#'
@@ -351,7 +360,8 @@ const syncFromNewsOrg = async (apiKey: string): Promise<boolean> => {
     try {
         // Use 'everything' endpoint to get older news (up to 2 weeks) if necessary to fill the quota
         // AND ensure we get enough relevant content.
-        const fromDate = getTwoWeeksAgoDate();
+        // Use 'everything' endpoint to get older news (up to 1 week)
+        const fromDate = getOneWeekAgoDate();
         const query = '(soccer OR football OR psl OR "kaizer chiefs" OR "orlando pirates" OR sundowns OR "bafana bafana")';
 
         // We use 'everything' instead of 'top-headlines' to get a broader history

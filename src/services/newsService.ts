@@ -146,61 +146,37 @@ const clearNewsCollection = async () => {
 };
 
 export const syncNewsWithAPI = async (apiKey: string) => {
-    // Detect provider based on key format if possible, otherwise rely on stored preference
-    let provider = localStorage.getItem('psl_news_provider');
-    const storedKey = getStoredNewsApiKey();
-    const effectiveKey = apiKey || storedKey;
+    console.log("Starting Aggregated News Sync (Cross-referencing multiple platforms)...");
 
-    if (effectiveKey && effectiveKey.startsWith('jina_')) {
-        provider = 'jina';
-        console.log("Detected Jina API Key, switching provider to Jina.");
-    } else if (!provider) {
-        provider = 'jina'; // Fallback default
+    // 1. Clear old news ONCE at the start
+    await clearNewsCollection();
+
+    // 2. Define sources
+    // We prioritize Jina (Deep Search) and NewsAPI (Mainstream) for cross-referencing
+    const syncTasks = [];
+
+    // Jina
+    const jinaKey = (apiKey && apiKey.startsWith('jina_')) ? apiKey : JINA_API_KEY;
+    if (jinaKey) {
+        syncTasks.push(syncFromJina(jinaKey).then(success => ({ source: 'Jina', success })));
     }
 
-    let result: { success: boolean; error?: string } = { success: false, error: 'Unknown error' };
-
-    if (provider === 'rapidapi') {
-        const key = import.meta.env.VITE_RAPID_API_KEY || effectiveKey || HARDCODED_API_KEY;
-        if (key) {
-            result = await syncFromRapidAPI(key);
-        } else {
-            result = { success: false, error: 'Missing RapidAPI Key' };
-        }
-    } else if (provider === 'newsapi') {
-        const key = effectiveKey || NEWS_API_ORG_KEY;
-        if (key) {
-            const success = await syncFromNewsOrg(key);
-            result = { success, error: success ? undefined : 'NewsAPI Sync Failed' };
-        } else {
-            result = { success: false, error: 'Missing NewsAPI Key' };
-        }
-    } else if (provider === 'jina' || true) { // Default/Fallthrough
-        const key = effectiveKey || JINA_API_KEY;
-        if (key) {
-            const success = await syncFromJina(key);
-            result = { success, error: success ? undefined : 'Jina Sync Failed' };
-        }
+    // NewsAPI
+    const newsKey = (apiKey && !apiKey.startsWith('jina_')) ? apiKey : NEWS_API_ORG_KEY;
+    if (newsKey) {
+        syncTasks.push(syncFromNewsOrg(newsKey).then(success => ({ source: 'NewsAPI', success })));
     }
 
-    // Fallback logic
-    if (!result.success) {
-        console.log(`Primary news provider failed (${result.error}). Attempting fallback to GNews...`);
-        const fallbackResult = await syncFromGNews(GNEWS_API_KEY);
+    // Execute in parallel to aggregate results
+    const results = await Promise.all(syncTasks);
+    const successCount = results.filter(r => r.success).length;
 
-        if (!fallbackResult.success) {
-            console.warn(`GNews also failed (${fallbackResult.error}).`);
+    console.log(`Sync completed. Successful sources: ${successCount}/${results.length}`);
 
-            // Check if we have any data at all
-            const newsRef = collection(db, 'news');
-            const snapshot = await getDocs(query(newsRef, limit(1)));
-
-            if (snapshot.empty) {
-                console.warn("Database is empty and all APIs failed. No news available.");
-            } else {
-                console.log("Database has existing (stale) data. Keeping it.");
-            }
-        }
+    // 3. Fallback if everything failed
+    if (successCount === 0) {
+        console.log("All primary sources failed. Attempting GNews fallback...");
+        await syncFromGNews(GNEWS_API_KEY);
     }
 };
 
@@ -219,7 +195,7 @@ const syncFromGNews = async (apiKey: string): Promise<{ success: boolean; error?
         }
 
         if (data.articles && Array.isArray(data.articles) && data.articles.length > 0) {
-            await clearNewsCollection();
+            // await clearNewsCollection(); // Removed for aggregation
             const syncTime = Timestamp.now();
             console.log(`Synced ${data.articles.length} articles from GNews`);
 
@@ -293,7 +269,7 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
         const articles = responseData.data || responseData;
 
         if (Array.isArray(articles) && articles.length > 0) {
-            await clearNewsCollection();
+            // await clearNewsCollection(); // Removed for aggregation
             const syncTime = Timestamp.now();
             console.log(`Synced ${articles.length} articles from Jina`);
 
@@ -371,7 +347,7 @@ const syncFromNewsOrg = async (apiKey: string): Promise<boolean> => {
         const data = await response.json();
 
         if (data.status === 'ok' && Array.isArray(data.articles) && data.articles.length > 0) {
-            await clearNewsCollection();
+            // await clearNewsCollection(); // Removed for aggregation
             const syncTime = Timestamp.now();
             console.log(`Synced ${data.articles.length} articles from NewsAPI.org (Everything)`);
 
@@ -454,7 +430,7 @@ const syncFromRapidAPI = async (effectiveKey: string): Promise<{ success: boolea
         const data = await response.json();
 
         if (data && data.topStories && Array.isArray(data.topStories) && data.topStories.length > 0) {
-            await clearNewsCollection();
+            // await clearNewsCollection(); // Removed for aggregation
             const syncTime = Timestamp.now();
 
             for (const item of data.topStories) {

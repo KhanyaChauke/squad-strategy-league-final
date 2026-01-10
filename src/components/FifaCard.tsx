@@ -123,7 +123,7 @@ export const FifaCard: React.FC<FifaCardProps> = ({
         <img
           src={getPlayerImage(player.team)}
           alt={player.team}
-          className={`${sizeClasses.image} object-contain drop-shadow-md mix-blend-multiply`}
+          className={`${sizeClasses.image} object-contain drop-shadow-md`}
         />
       </div>
 

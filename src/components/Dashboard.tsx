@@ -11,6 +11,7 @@ import { PSLDashboard } from '@/components/PSLDashboard';
 import { NewsView } from '@/components/NewsView';
 import { LiveGamesView } from '@/components/LiveGamesView';
 import { LeaderboardView } from '@/components/LeaderboardView';
+import { AuthModal } from '@/components/AuthModal';
 import {
   Sheet,
   SheetContent,
@@ -51,6 +52,19 @@ const Dashboard = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isEditTeamNameOpen, setIsEditTeamNameOpen] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState<'login' | 'register'>('login');
+
+  const handleViewChange = (view: DashboardView) => {
+    // Restricted views
+    if (!user && (view === 'fpls' || view === 'leaderboard' || view === 'squad' || view === 'players')) {
+      setAuthModalTab('login');
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setCurrentView(view);
+    setIsMobileMenuOpen(false);
+  };
 
   const handleSyncPlayers = async () => {
     if (!user?.isAdmin) return;
@@ -148,7 +162,7 @@ const Dashboard = () => {
     <Button
       variant={currentView === view ? 'default' : 'ghost'}
       onClick={() => {
-        setCurrentView(view);
+        handleViewChange(view);
         onClick?.();
       }}
       className={`flex items-center space-x-2 ${currentView === view ? '' : 'text-gray-600'}`}
@@ -172,7 +186,7 @@ const Dashboard = () => {
           <div className="hidden lg:flex items-center space-x-4">
             <nav className="flex space-x-1 lg:space-x-2">
               <NavButton view="news" icon={Newspaper} label="News" />
-              <NavButton view="fpls" icon={UserCircle} label="Fpls" />
+              <NavButton view="fpls" icon={UserCircle} label="Fantasy Squad" />
               <NavButton view="leaderboard" icon={Trophy} label="Leaderboard" />
               <NavButton view="psl" icon={Trophy} label="PSL Table" />
               <NavButton view="live-games" icon={Layout} label="Live Games" />
@@ -181,19 +195,40 @@ const Dashboard = () => {
             <div className="h-6 w-px bg-gray-200 mx-2" />
 
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <UserCircle className="h-5 w-5 text-gray-600" />
-                <span className="text-sm font-medium max-w-[100px] truncate">{user?.fullName}</span>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={logout}
-                className="flex items-center space-x-2"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden lg:inline">Logout</span>
-              </Button>
+              {user ? (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <UserCircle className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm font-medium max-w-[100px] truncate">{user.fullName}</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={logout}
+                    className="flex items-center space-x-2"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span className="hidden lg:inline">Logout</span>
+                  </Button>
+                </>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setAuthModalTab('login'); setIsAuthModalOpen(true); }}
+                  >
+                    Login
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={() => { setAuthModalTab('register'); setIsAuthModalOpen(true); }}
+                  >
+                    Register
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -220,19 +255,19 @@ const Dashboard = () => {
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-gray-500 mb-2 px-2">Menu</p>
                     <div className="grid gap-1">
-                      <Button variant={currentView === 'news' ? 'default' : 'ghost'} className="justify-start w-full" onClick={() => { setCurrentView('news'); setIsMobileMenuOpen(false); }}>
+                      <Button variant={currentView === 'news' ? 'default' : 'ghost'} className="justify-start w-full" onClick={() => handleViewChange('news')}>
                         <Newspaper className="mr-2 h-4 w-4" /> News
                       </Button>
-                      <Button variant={currentView === 'fpls' ? 'default' : 'ghost'} className="justify-start w-full" onClick={() => { setCurrentView('fpls'); setIsMobileMenuOpen(false); }}>
-                        <UserCircle className="mr-2 h-4 w-4" /> Fpls (My Team)
+                      <Button variant={currentView === 'fpls' ? 'default' : 'ghost'} className="justify-start w-full" onClick={() => handleViewChange('fpls')}>
+                        <UserCircle className="mr-2 h-4 w-4" /> Fantasy Squad (My Team)
                       </Button>
-                      <Button variant={currentView === 'leaderboard' ? 'default' : 'ghost'} className="justify-start w-full" onClick={() => { setCurrentView('leaderboard'); setIsMobileMenuOpen(false); }}>
+                      <Button variant={currentView === 'leaderboard' ? 'default' : 'ghost'} className="justify-start w-full" onClick={() => handleViewChange('leaderboard')}>
                         <Trophy className="mr-2 h-4 w-4" /> Leaderboard
                       </Button>
-                      <Button variant={currentView === 'psl' ? 'default' : 'ghost'} className="justify-start w-full" onClick={() => { setCurrentView('psl'); setIsMobileMenuOpen(false); }}>
+                      <Button variant={currentView === 'psl' ? 'default' : 'ghost'} className="justify-start w-full" onClick={() => handleViewChange('psl')}>
                         <Trophy className="mr-2 h-4 w-4" /> PSL Table
                       </Button>
-                      <Button variant={currentView === 'live-games' ? 'default' : 'ghost'} className="justify-start w-full" onClick={() => { setCurrentView('live-games'); setIsMobileMenuOpen(false); }}>
+                      <Button variant={currentView === 'live-games' ? 'default' : 'ghost'} className="justify-start w-full" onClick={() => handleViewChange('live-games')}>
                         <Layout className="mr-2 h-4 w-4" /> Live Games
                       </Button>
                     </div>
@@ -240,21 +275,41 @@ const Dashboard = () => {
 
                   <div className="border-t pt-4">
                     <p className="text-sm font-medium text-gray-500 mb-2 px-2">Account</p>
-                    <div className="flex items-center space-x-2 p-2 mb-2 bg-gray-50 rounded-md">
-                      <UserCircle className="h-8 w-8 text-gray-400" />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium">{user?.fullName}</span>
-                        <span className="text-xs text-gray-500 truncate max-w-[180px]">{user?.email}</span>
+                    {user ? (
+                      <>
+                        <div className="flex items-center space-x-2 p-2 mb-2 bg-gray-50 rounded-md">
+                          <UserCircle className="h-8 w-8 text-gray-400" />
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">{user.fullName}</span>
+                            <span className="text-xs text-gray-500 truncate max-w-[180px]">{user.email}</span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="destructive"
+                          onClick={() => { logout(); setIsMobileMenuOpen(false); }}
+                          className="w-full justify-start"
+                        >
+                          <LogOut className="mr-2 h-4 w-4" />
+                          Logout
+                        </Button>
+                      </>
+                    ) : (
+                      <div className="space-y-2">
+                        <Button
+                          variant="ghost"
+                          onClick={() => { setAuthModalTab('login'); setIsAuthModalOpen(true); setIsMobileMenuOpen(false); }}
+                          className="w-full justify-start"
+                        >
+                          Login
+                        </Button>
+                        <Button
+                          className="w-full justify-start bg-green-600 hover:bg-green-700"
+                          onClick={() => { setAuthModalTab('register'); setIsAuthModalOpen(true); setIsMobileMenuOpen(false); }}
+                        >
+                          Register
+                        </Button>
                       </div>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      onClick={logout}
-                      className="w-full justify-start"
-                    >
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Logout
-                    </Button>
+                    )}
                   </div>
                 </div>
               </SheetContent>
@@ -292,7 +347,7 @@ const Dashboard = () => {
         <Card className="card-hover">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Budget Remaining</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <span className="text-xs font-bold text-muted-foreground">ZAR</span>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
@@ -449,13 +504,13 @@ const Dashboard = () => {
         )}
         {currentView === 'squad' && (
           <div>
-            <Button onClick={() => setCurrentView('fpls')} variant="ghost" className="mb-4">← Back to Fpls</Button>
+            <Button onClick={() => setCurrentView('fpls')} variant="ghost" className="mb-4">← Back to Fantasy Squad</Button>
             <SquadView />
           </div>
         )}
         {currentView === 'players' && (
           <div>
-            <Button onClick={() => setCurrentView('fpls')} variant="ghost" className="mb-4">← Back to Fpls</Button>
+            <Button onClick={() => setCurrentView('fpls')} variant="ghost" className="mb-4">← Back to Fantasy Squad</Button>
             <PlayersView />
           </div>
         )}
@@ -492,6 +547,12 @@ const Dashboard = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onOpenChange={setIsAuthModalOpen}
+        defaultTab={authModalTab}
+      />
     </div >
   );
 };

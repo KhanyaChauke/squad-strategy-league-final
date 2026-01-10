@@ -123,7 +123,7 @@ export const FifaCard: React.FC<FifaCardProps> = ({
         <img
           src={getPlayerImage(player.team)}
           alt={player.team}
-          className={`${sizeClasses.image} object-contain drop-shadow-md`}
+          className={`${sizeClasses.image} object-contain pb-1`}
         />
       </div>
 
@@ -134,22 +134,17 @@ export const FifaCard: React.FC<FifaCardProps> = ({
         </div>
       )}
 
-      {/* Info Box (Surname & Position/Rating context) */}
-      <div className="w-full mt-auto relative z-20 flex flex-col items-center space-y-1">
+      {/* Info Box (Surname & Position/Opponent context) */}
+      <div className="w-full mt-auto relative z-20 flex flex-col items-center gap-[1px]">
 
-        {/* Surname Box */}
-        <div className={`bg-[#0f172a] text-white font-bold uppercase tracking-wider text-center shadow-lg rounded-sm w-full truncate ${sizeClasses.nameBox}`}>
+        {/* Surname Box - FPL Purple */}
+        <div className={`bg-[#37003c] text-white font-bold uppercase tracking-wider text-center shadow-sm w-full truncate rounded-t-sm ${sizeClasses.nameBox}`}>
           {getSurname(player.name)}
         </div>
 
-        {/* Optional: Position indicator below name */}
-        <div className="flex space-x-1">
-          <Badge variant="secondary" className={`text-[9px] h-4 px-1 ${opponent ? 'bg-gray-700' : 'bg-slate-900/90'} text-white font-bold border border-slate-700`}>
-            {opponent || player.position}
-          </Badge>
-          <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-green-600 text-white font-bold border border-green-700">
-            {player.rating}
-          </Badge>
+        {/* Opponent/Position Box - FPL Green */}
+        <div className="bg-[#00ff85] text-[#37003c] font-black uppercase text-center w-full truncate rounded-b-sm text-[10px] py-0.5 leading-tight">
+          {opponent || player.position}
         </div>
       </div>
 

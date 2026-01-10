@@ -228,9 +228,13 @@ export const LiveGamesView = () => {
                                                 {/* Home Team */}
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center space-x-2 flex-1 min-w-0">
-                                                        <div className="w-8 h-8 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-gray-500 text-xs shadow-inner">
-                                                            {fixture.homeTeam.substring(0, 2)}
-                                                        </div>
+                                                        {fixture.homeLogo ? (
+                                                            <img src={fixture.homeLogo} alt={fixture.homeTeam} className="w-8 h-8 rounded-full flex-shrink-0 object-contain bg-white shadow-sm p-0.5" />
+                                                        ) : (
+                                                            <div className="w-8 h-8 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-gray-500 text-xs shadow-inner">
+                                                                {fixture.homeTeam.substring(0, 2)}
+                                                            </div>
+                                                        )}
                                                         <span className="text-sm font-bold text-gray-900 truncate">{fixture.homeTeam}</span>
                                                     </div>
                                                     <span className="text-2xl font-bold font-mono text-gray-800 ml-2">{fixture.homeScore ?? '-'}</span>
@@ -239,9 +243,13 @@ export const LiveGamesView = () => {
                                                 {/* Away Team */}
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center space-x-2 flex-1 min-w-0">
-                                                        <div className="w-8 h-8 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-gray-500 text-xs shadow-inner">
-                                                            {fixture.awayTeam.substring(0, 2)}
-                                                        </div>
+                                                        {fixture.awayLogo ? (
+                                                            <img src={fixture.awayLogo} alt={fixture.awayTeam} className="w-8 h-8 rounded-full flex-shrink-0 object-contain bg-white shadow-sm p-0.5" />
+                                                        ) : (
+                                                            <div className="w-8 h-8 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-gray-500 text-xs shadow-inner">
+                                                                {fixture.awayTeam.substring(0, 2)}
+                                                            </div>
+                                                        )}
                                                         <span className="text-sm font-bold text-gray-900 truncate">{fixture.awayTeam}</span>
                                                     </div>
                                                     <span className="text-2xl font-bold font-mono text-gray-800 ml-2">{fixture.awayScore ?? '-'}</span>

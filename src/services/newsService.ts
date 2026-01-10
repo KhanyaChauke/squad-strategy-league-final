@@ -547,6 +547,8 @@ export interface Fixture {
     time: string;
     date: string; // YYYY-MM-DD or readable date string
     syncedAt?: any;
+    homeLogo?: string;
+    awayLogo?: string;
 }
 
 export interface PSLStanding {
@@ -664,7 +666,9 @@ const syncFixturesWithAPI = async (apiKey?: string) => {
                             status: status,
                             time: event.Esd ? String(event.Esd).slice(8, 10) + ':' + String(event.Esd).slice(10, 12) : 'TBD',
                             date: event.Esd ? String(event.Esd).slice(0, 4) + '-' + String(event.Esd).slice(4, 6) + '-' + String(event.Esd).slice(6, 8) : new Date().toISOString().split('T')[0],
-                            syncedAt: syncTime
+                            syncedAt: syncTime,
+                            homeLogo: event.T1?.[0]?.Img || undefined,
+                            awayLogo: event.T2?.[0]?.Img || undefined
                         };
                         await setDoc(doc(db, 'fixtures', String(event.Eid)), fixtureData, { merge: true });
                     }
@@ -771,7 +775,9 @@ const syncScheduledFixtures = async (apiKey?: string) => {
                                 status: status,
                                 time: timeStr,
                                 date: dateStr.slice(0, 4) + '-' + dateStr.slice(4, 6) + '-' + dateStr.slice(6, 8), // Format YYYY-MM-DD
-                                syncedAt: Timestamp.now()
+                                syncedAt: Timestamp.now(),
+                                homeLogo: event.T1?.[0]?.Img || undefined,
+                                awayLogo: event.T2?.[0]?.Img || undefined
                             };
                             await setDoc(doc(db, 'fixtures', String(event.Eid)), fixtureData, { merge: true });
                         }

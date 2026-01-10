@@ -136,7 +136,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   const userData = docSnapshot.data() as User;
                   // Handle potential string/number mismatch from Firestore
                   const rawBudget = userData.budget;
-                  const safeBudget = typeof rawBudget === 'string' ? parseFloat(rawBudget) : (typeof rawBudget === 'number' ? rawBudget : 1000000000);
+                  let safeBudget = 1000000000;
+
+                  if (typeof rawBudget === 'number') {
+                    safeBudget = rawBudget;
+                  } else if (typeof rawBudget === 'string') {
+                    // Remove commas and other non-numeric chars (except decimal point)
+                    const cleanString = (rawBudget as string).replace(/,/g, '').replace(/[^\d.-]/g, '');
+                    safeBudget = parseFloat(cleanString);
+                  }
 
                   setUser({
                     totalPoints: 0,

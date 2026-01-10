@@ -600,8 +600,8 @@ export const fetchFixtures = async (apiKey?: string): Promise<Fixture[]> => {
         // We want at least 5 relevant fixtures.
         const totalRelevant = cachedFixtures.length; // We trust the cache has a mix
         if (totalRelevant < 5) {
-            console.log('Not enough fixtures in cache, fetching recent past results...');
-            await syncRecentResults(apiKey);
+            console.log('Not enough fixtures in cache, fetching scheduled fixtures (Match Week)...');
+            await syncScheduledFixtures(apiKey);
             // Re-fetch
             const freshSnapshot = await getDocs(q);
             return freshSnapshot.docs.map(doc => ({
@@ -610,19 +610,21 @@ export const fetchFixtures = async (apiKey?: string): Promise<Fixture[]> => {
             })) as Fixture[];
         }
 
-        return cachedFixtures.sort((a, b) => {
-            const isRelevantA = isSouthAfrican(a.homeTeam) || isSouthAfrican(a.awayTeam);
-            const isRelevantB = isSouthAfrican(b.homeTeam) || isSouthAfrican(b.awayTeam);
-            if (isRelevantA && !isRelevantB) return -1;
-            if (!isRelevantA && isRelevantB) return 1;
-            return 0;
-        });
+        return cachedFixtures;
     } catch (e) {
         console.warn("Fixture sync failed:", e);
         const cached = getFromCache(CACHE_KEY_FIXTURES);
         if (cached) return cached;
         throw new Error(e instanceof Error ? e.message : "Failed to load fixtures");
     }
+};
+
+const isPSLRelevant = (stage: any, event: any) => {
+    const isRelevantLeague = ['premier soccer league', 'psl', 'dstv premiership', 'betway premiership', 'south africa'].some(t => (stage.Snm || '').toLowerCase().includes(t));
+    const home = (event.T1?.[0]?.Nm || '').toLowerCase();
+    const away = (event.T2?.[0]?.Nm || '').toLowerCase();
+    const isRelevantTeam = ['final', 'chiefs', 'pirates', 'sundowns', 'bafana', 'supersport', 'amazulu', 'stellenbosch', 'cape town city', 'chippa', 'galaxy', 'arrows', 'polokwane', 'sekhukhune', 'royal am', 'richards bay', 'magesi'].some(t => home.includes(t) || away.includes(t));
+    return isRelevantLeague || isRelevantTeam;
 };
 
 const syncFixturesWithAPI = async (apiKey?: string) => {
@@ -642,9 +644,12 @@ const syncFixturesWithAPI = async (apiKey?: string) => {
         const data = response.ok ? await response.json() : null;
         if (data && data.Stages) {
             const syncTime = Timestamp.now();
+
             for (const stage of data.Stages) {
                 if (stage.Events) {
                     for (const event of stage.Events) {
+                        if (!isPSLRelevant(stage, event)) continue;
+
                         const statusShort = event.Eps;
                         let status: Fixture['status'] = 'Not Started';
                         if (['1H', '2H', 'HT', 'ET', 'P', 'BT', 'LIVE'].includes(statusShort)) status = 'In Progress';
@@ -671,21 +676,38 @@ const syncFixturesWithAPI = async (apiKey?: string) => {
     }
 };
 
-const syncRecentResults = async (apiKey?: string) => {
+const formatDateForApi = (date: Date): string => {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}${mm}${dd}`;
+};
+
+const syncScheduledFixtures = async (apiKey?: string) => {
     const effectiveKey = import.meta.env.VITE_RAPID_API_KEY || apiKey || getStoredNewsApiKey();
     if (!effectiveKey) return;
     const apiHost = 'livescore6.p.rapidapi.com';
 
-    // Fetch fixtures for yesterday and the day before to fill up the list
+    // Fetch fixtures for a "Match Week" window:
+    // - Yesterday (Results)
+    // - Today (Live/Upcoming)
+    // - Next 5 days (Upcoming)
     const datesToSync = [];
     const today = new Date();
-    for (let i = 1; i <= 3; i++) {
+
+    // Previous day (Yesterday)
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    datesToSync.push(formatDateForApi(yesterday));
+
+    // Today
+    datesToSync.push(formatDateForApi(today));
+
+    // Next 5 days
+    for (let i = 1; i <= 5; i++) {
         const d = new Date(today);
-        d.setDate(today.getDate() - i);
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        datesToSync.push(`${yyyy}${mm}${dd}`);
+        d.setDate(today.getDate() + i);
+        datesToSync.push(formatDateForApi(d));
     }
 
     try {
@@ -709,20 +731,46 @@ const syncRecentResults = async (apiKey?: string) => {
                     const leagueName = stage.Snm || '';
 
                     // League filtering REMOVED - process all relevant soccer events returned
-
-
                     if (stage.Events) {
                         for (const event of stage.Events) {
-                            const status = 'Finished';
+                            if (!isPSLRelevant(stage, event)) continue;
+
+                            // Parse Status properly
+                            const statusShort = event.Eps;
+                            let status: Fixture['status'] = 'Not Started';
+                            if (['1H', '2H', 'HT', 'ET', 'P', 'BT', 'LIVE'].includes(statusShort)) status = 'In Progress';
+                            else if (['FT', 'AET', 'PEN'].includes(statusShort)) status = 'Finished';
+                            else if (['Postp.', 'Canc.'].includes(statusShort)) status = 'Postponed';
+
+                            // Parse Time
+                            // Esd is YYYYMMDDHHMMSS e.g. 20231024173000
+                            // We need HH:MM
+                            let timeStr = 'TBD';
+                            if (event.Esd) {
+                                const esdStr = String(event.Esd);
+                                if (esdStr.length >= 12) {
+                                    timeStr = esdStr.slice(8, 10) + ':' + esdStr.slice(10, 12);
+                                }
+                            }
+                            if (status === 'Finished') timeStr = 'FT';
+                            if (status === 'Postponed') timeStr = 'P-P';
+
+                            // Safe score parsing (handle "0" vs null correctly)
+                            const parseScore = (val: any) => {
+                                if (val === undefined || val === null || val === '') return null;
+                                const parsed = parseInt(val);
+                                return isNaN(parsed) ? null : parsed;
+                            };
+
                             const fixtureData = {
                                 league: stage.Snm || 'International',
                                 homeTeam: event.T1?.[0]?.Nm || 'Home',
                                 awayTeam: event.T2?.[0]?.Nm || 'Away',
-                                homeScore: event.Tr1 ? parseInt(event.Tr1) : null,
-                                awayScore: event.Tr2 ? parseInt(event.Tr2) : null,
+                                homeScore: parseScore(event.Tr1),
+                                awayScore: parseScore(event.Tr2),
                                 status: status,
-                                time: 'FT', // Finished
-                                date: dateStr, // Track date
+                                time: timeStr,
+                                date: dateStr.slice(0, 4) + '-' + dateStr.slice(4, 6) + '-' + dateStr.slice(6, 8), // Format YYYY-MM-DD
                                 syncedAt: Timestamp.now()
                             };
                             await setDoc(doc(db, 'fixtures', String(event.Eid)), fixtureData, { merge: true });

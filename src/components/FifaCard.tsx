@@ -34,6 +34,7 @@ interface FifaCardProps {
   onPlayerClick?: (player: Player) => void;
   showRemoveOverlay?: boolean;
   points?: number;
+  opponent?: string;
 }
 
 const getSurname = (name: string) => {
@@ -92,7 +93,8 @@ export const FifaCard: React.FC<FifaCardProps> = ({
   onEmptyClick,
   onPlayerClick,
   showRemoveOverlay = false,
-  points
+  points,
+  opponent
 }) => {
   const sizeClasses = getSizeClasses(size);
 
@@ -121,7 +123,7 @@ export const FifaCard: React.FC<FifaCardProps> = ({
         <img
           src={getPlayerImage(player.team)}
           alt={player.team}
-          className={`${sizeClasses.image} object-contain drop-shadow-md`}
+          className={`${sizeClasses.image} object-contain drop-shadow-md mix-blend-multiply`}
         />
       </div>
 
@@ -142,8 +144,8 @@ export const FifaCard: React.FC<FifaCardProps> = ({
 
         {/* Optional: Position indicator below name */}
         <div className="flex space-x-1">
-          <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-slate-900/90 text-white font-bold border border-slate-700">
-            {player.position}
+          <Badge variant="secondary" className={`text-[9px] h-4 px-1 ${opponent ? 'bg-gray-700' : 'bg-slate-900/90'} text-white font-bold border border-slate-700`}>
+            {opponent || player.position}
           </Badge>
           <Badge variant="secondary" className="text-[9px] h-4 px-1 bg-green-600 text-white font-bold border border-green-700">
             {player.rating}

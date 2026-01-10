@@ -13,6 +13,7 @@ import { FormationSelector, formations, Formation } from '@/components/Formation
 import { playersDatabase, Player } from '@/data/playersData';
 import { FifaCard } from '@/components/FifaCard';
 import { usePlayers } from '@/hooks/usePlayers';
+import { getNextOpponent } from '@/data/pslFixtures';
 
 // ... (existing imports for jerseys)
 import sundownsJersey from '@/assets/jerseys/sundowns-jersey.png';
@@ -42,6 +43,10 @@ export const SquadView = () => {
   };
 
   // ... (existing handlers: handleFormationSelect, formatCurrency)
+
+  const getPlayerOpponent = (playerTeam: string) => {
+    return getNextOpponent(playerTeam);
+  };
 
   const handleManualSave = async () => {
     setIsSaveDialogOpen(false);
@@ -358,7 +363,7 @@ export const SquadView = () => {
         </CardHeader>
         <CardContent className="p-4">
           <div
-            className="relative w-full h-[700px] rounded-lg overflow-hidden border-2 border-white"
+            className="relative w-full h-[700px] rounded-lg overflow-hidden shadow-2xl"
             style={{
               background: 'linear-gradient(180deg, #1e5128 0%, #2d7a2d 20%, #4ade80 40%, #22c55e 60%, #4ade80 80%, #2d7a2d 100%)',
               backgroundSize: '100% 100%'
@@ -426,6 +431,7 @@ export const SquadView = () => {
                       onPlayerClick={handleRemovePlayer}
                       showRemoveOverlay
                       points={getPlayerPoints(player.id)}
+                      opponent={getPlayerOpponent(player.team)}
                     />
                   ))}
                   {Array(Math.max(0, (selectedFormation?.positions.ATT || 3) - positionCounts.ATT)).fill(0).map((_, index) => (
@@ -450,6 +456,7 @@ export const SquadView = () => {
                       onPlayerClick={handleRemovePlayer}
                       showRemoveOverlay
                       points={getPlayerPoints(player.id)}
+                      opponent={getPlayerOpponent(player.team)}
                     />
                   ))}
                   {Array(Math.max(0, (selectedFormation?.positions.MID || 4) - positionCounts.MID)).fill(0).map((_, index) => (
@@ -474,6 +481,7 @@ export const SquadView = () => {
                       onPlayerClick={handleRemovePlayer}
                       showRemoveOverlay
                       points={getPlayerPoints(player.id)}
+                      opponent={getPlayerOpponent(player.team)}
                     />
                   ))}
                   {Array(Math.max(0, (selectedFormation?.positions.DEF || 4) - positionCounts.DEF)).fill(0).map((_, index) => (
@@ -497,6 +505,7 @@ export const SquadView = () => {
                     onPlayerClick={handleRemovePlayer}
                     showRemoveOverlay
                     points={getPlayerPoints(player.id)}
+                    opponent={getPlayerOpponent(player.team)}
                   />
                 ))}
                 {Array(Math.max(0, (selectedFormation?.positions.GK || 1) - positionCounts.GK)).fill(0).map((_, index) => (

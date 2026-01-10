@@ -134,6 +134,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 console.log("[AuthContext] Profile snapshot update. Exists:", docSnapshot.exists());
                 if (docSnapshot.exists()) {
                   const userData = docSnapshot.data() as User;
+                  // Handle potential string/number mismatch from Firestore
+                  const rawBudget = userData.budget;
+                  const safeBudget = typeof rawBudget === 'string' ? parseFloat(rawBudget) : (typeof rawBudget === 'number' ? rawBudget : 1000000000);
+
                   setUser({
                     totalPoints: 0,
                     history: [],
@@ -142,8 +146,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     transferCost: 0,
                     squad: [],
                     bench: [],
-                    budget: 1000000000,
                     ...userData,
+                    budget: isNaN(safeBudget) ? 1000000000 : safeBudget,
                     id: authUser.uid,
                     email: authUser.email || '',
                     isAdmin: isAdminEmail(authUser.email || '')
@@ -341,11 +345,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
-    if (user.budget < player.price) {
+    const budgetNum = Number(user.budget);
+    const priceNum = Number(player.price);
+
+    if (budgetNum < priceNum) {
+      console.warn(`[AuthContext] Insufficient Funds. Budget: ${budgetNum} (Original: ${user.budget}), Price: ${priceNum} (Original: ${player.price})`);
       return false;
     }
 
     if (user.squad.some(p => p.id === player.id)) {
+      console.warn(`[AuthContext] Player already in squad: ${player.id}`);
       return false;
     }
 

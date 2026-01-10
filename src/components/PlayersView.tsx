@@ -75,22 +75,29 @@ export const PlayersView = () => {
       });
     } else {
       let message = "Failed to add player.";
+      console.log("Add Player Failed - Debug:", {
+        budget: user?.budget,
+        price: player.price,
+        isBudgetIssue: (user?.budget || 0) < player.price,
+        formation: selectedFormation,
+        positionCount: user?.squad?.filter(p => p.position === player.position).length
+      });
 
       if (selectedFormation) {
         const currentPositionCount = user?.squad?.filter(p => p.position === player.position).length || 0;
         const maxForPosition = selectedFormation.positions[player.position as keyof typeof selectedFormation.positions];
         if (currentPositionCount >= maxForPosition) {
           message = `Your ${selectedFormation.name} formation only allows ${maxForPosition} ${player.position} players.`;
-        } else if (user?.budget && user.budget < player.price) {
-          message = "Insufficient budget for this player.";
+        } else if ((user?.budget || 0) < player.price) {
+          message = `Insufficient budget. You have ${formatCurrency(user?.budget || 0)} but this player costs ${formatCurrency(player.price)}.`;
         } else if (user?.squad?.some(p => p.id === player.id)) {
           message = "Player is already in your squad.";
         }
       } else {
         if ((user?.squad?.length || 0) + (user?.bench?.length || 0) >= 15) {
           message = "Your total squad is full (15 players maximum).";
-        } else if (user?.budget && user.budget < player.price) {
-          message = "Insufficient budget for this player.";
+        } else if ((user?.budget || 0) < player.price) {
+          message = `Insufficient budget. You have ${formatCurrency(user?.budget || 0)} but this player costs ${formatCurrency(player.price)}.`;
         } else if (user?.squad?.some(p => p.id === player.id)) {
           message = "Player is already in your squad.";
         }

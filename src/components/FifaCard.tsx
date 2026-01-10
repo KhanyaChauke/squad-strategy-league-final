@@ -5,7 +5,7 @@ import { Shield, Flag } from 'lucide-react';
 // Import jersey images for player representation
 import sundownsJersey from '@/assets/jerseys/sundowns-jersey.png';
 import piratesJersey from '@/assets/jerseys/pirates-jersey.png';
-import chiefsJersey from '@/assets/jerseys/chiefs-jersey.png';
+import chiefsJersey from '@/assets/jerseys/chiefs-jersey.jpg';
 import capeTownCityJersey from '@/assets/jerseys/cape-town-city-jersey.png';
 import supersportJersey from '@/assets/jerseys/supersport-jersey.png';
 import defaultJersey from '@/assets/jerseys/default-jersey.png';
@@ -123,7 +123,7 @@ export const FifaCard: React.FC<FifaCardProps> = ({
         <img
           src={getPlayerImage(player.team)}
           alt={player.team}
-          className={`${sizeClasses.image} object-contain pb-1`}
+          className={`${sizeClasses.image} object-contain pb-1 mix-blend-multiply`}
         />
       </div>
 

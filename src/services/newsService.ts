@@ -573,6 +573,8 @@ export interface TopScorer {
     played: number;
 }
 
+import { pslFixtures as staticFallbackFixtures } from '@/data/pslFixtures';
+
 export const fetchFixtures = async (apiKey?: string): Promise<Fixture[]> => {
     try {
         const fixturesRef = collection(db, 'fixtures');
@@ -592,32 +594,66 @@ export const fetchFixtures = async (apiKey?: string): Promise<Fixture[]> => {
             console.log('Syncing fixtures with API...');
             await syncFixturesWithAPI(apiKey);
             const freshSnapshot = await getDocs(q);
-            return freshSnapshot.docs.map(doc => ({
+            const freshData = freshSnapshot.docs.map(doc => ({
                 ...doc.data(),
                 fixtureId: doc.id
             })) as Fixture[];
+
+            if (freshData.length > 0) return freshData;
         }
 
-        // Check if we need to sync OLDER fixtures/results because we don't have enough
-        // We want at least 5 relevant fixtures.
-        const totalRelevant = cachedFixtures.length; // We trust the cache has a mix
-        if (totalRelevant < 5) {
-            console.log('Not enough fixtures in cache, fetching scheduled fixtures (Match Week)...');
-            await syncScheduledFixtures(apiKey);
-            // Re-fetch
-            const freshSnapshot = await getDocs(q);
-            return freshSnapshot.docs.map(doc => ({
-                ...doc.data(),
-                fixtureId: doc.id
-            })) as Fixture[];
+        if (cachedFixtures.length > 0) {
+            // Check if we need to sync OLDER fixtures/results because we don't have enough
+            // We want at least 5 relevant fixtures.
+            const totalRelevant = cachedFixtures.length; // We trust the cache has a mix
+            if (totalRelevant < 5) {
+                console.log('Not enough fixtures in cache, fetching scheduled fixtures (Match Week)...');
+                await syncScheduledFixtures(apiKey);
+                // Re-fetch
+                const freshSnapshot = await getDocs(q);
+                return freshSnapshot.docs.map(doc => ({
+                    ...doc.data(),
+                    fixtureId: doc.id
+                })) as Fixture[];
+            }
+            return cachedFixtures;
         }
 
-        return cachedFixtures;
+        // --- FALLBACK: If API/Cache is completely empty, use static "Game Week 1" data ---
+        console.log("No live/cached fixtures found. Using static First Game Week data.");
+        return staticFallbackFixtures.map(f => ({
+            fixtureId: f.id,
+            league: 'Betway Premiership', // Default league
+            homeTeam: f.homeTeam,
+            awayTeam: f.awayTeam,
+            homeScore: null,
+            awayScore: null,
+            status: f.status === 'Scheduled' ? 'Not Started' : 'Finished',
+            time: f.time,
+            date: f.date,
+            syncedAt: Timestamp.now(),
+            // No logos in static data, View will handle defaults
+        }));
+
     } catch (e) {
         console.warn("Fixture sync failed:", e);
         const cached = getFromCache(CACHE_KEY_FIXTURES);
         if (cached) return cached;
-        throw new Error(e instanceof Error ? e.message : "Failed to load fixtures");
+
+        // Fallback on error too
+        console.log("Error fetching live fixtures. Using static data as fallback.");
+        return staticFallbackFixtures.map(f => ({
+            fixtureId: f.id,
+            league: 'Betway Premiership',
+            homeTeam: f.homeTeam,
+            awayTeam: f.awayTeam,
+            homeScore: null,
+            awayScore: null,
+            status: f.status === 'Scheduled' ? 'Not Started' : 'Finished',
+            time: f.time,
+            date: f.date,
+            syncedAt: Timestamp.now()
+        }));
     }
 };
 

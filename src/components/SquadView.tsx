@@ -365,7 +365,7 @@ export const SquadView = () => {
           <div
             className="relative w-full h-[700px] rounded-lg overflow-hidden shadow-2xl"
             style={{
-              background: 'linear-gradient(180deg, #1e5128 0%, #2d7a2d 20%, #4ade80 40%, #22c55e 60%, #4ade80 80%, #2d7a2d 100%)',
+              background: 'linear-gradient(180deg, #60ba22 0%, #8edf56 50%, #60ba22 100%)',
               backgroundSize: '100% 100%'
             }}
           >

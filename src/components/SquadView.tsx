@@ -363,60 +363,53 @@ export const SquadView = () => {
         </CardHeader>
         <CardContent className="p-4">
           <div
-            className="relative w-full h-[700px] rounded-lg overflow-hidden shadow-2xl"
+            className="relative w-full h-[700px] rounded-lg overflow-hidden shadow-2xl border-4 border-[#4a8a2a]"
             style={{
-              background: 'linear-gradient(180deg, #60ba22 0%, #8edf56 50%, #60ba22 100%)',
-              backgroundSize: '100% 100%'
+              background: 'repeating-linear-gradient(to bottom, #63aa36, #63aa36 5%, #589a2f 5%, #589a2f 10%)'
             }}
           >
-            {/* Soccer pitch markings */}
-            <div className="absolute inset-0">
-              {/* Outer boundary */}
-              <div className="absolute inset-4 border-2 border-white/80 rounded-sm"></div>
+            {/* Soccer pitch markings using SVG for precision */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 150" preserveAspectRatio="none">
+              {/* Outline / Touchlines & Goal lines */}
+              <rect x="5" y="5" width="90" height="140" fill="none" stroke="white" strokeWidth="0.6" />
 
-              {/* Center line */}
-              <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-white/80 transform -translate-y-0.5"></div>
+              {/* Center Line */}
+              <line x1="5" y1="75" x2="95" y2="75" stroke="white" strokeWidth="0.6" />
 
-              {/* Center circle */}
-              <div className="absolute top-1/2 left-1/2 w-32 h-32 border-2 border-white/80 rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
-              <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-white/80 rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
+              {/* Center Circle */}
+              <circle cx="50" cy="75" r="10" fill="none" stroke="white" strokeWidth="0.6" />
+              <circle cx="50" cy="75" r="0.8" fill="white" />
 
-              {/* Goal area (bottom - our goal) */}
-              <div className="absolute bottom-4 left-1/2 w-48 h-16 border-2 border-white/80 border-b-0 transform -translate-x-1/2"></div>
+              {/* --- TOP GOAL (Opponent) --- */}
+              {/* Penalty Area */}
+              <rect x="22" y="5" width="56" height="24" fill="none" stroke="white" strokeWidth="0.6" />
+              {/* Goal Area */}
+              <rect x="37" y="5" width="26" height="8" fill="none" stroke="white" strokeWidth="0.6" />
+              {/* Penalty Arc */}
+              <path d="M 42,29 A 9,9 0 0,0 58,29" fill="none" stroke="white" strokeWidth="0.6" />
+              {/* Penalty Spot */}
+              <circle cx="50" cy="17" r="0.6" fill="white" />
 
-              {/* 6-yard box (bottom) */}
-              <div className="absolute bottom-4 left-1/2 w-24 h-8 border-2 border-white/80 border-b-0 transform -translate-x-1/2"></div>
+              {/* --- BOTTOM GOAL (Home) --- */}
+              {/* Penalty Area */}
+              <rect x="22" y="121" width="56" height="24" fill="none" stroke="white" strokeWidth="0.6" />
+              {/* Goal Area */}
+              <rect x="37" y="137" width="26" height="8" fill="none" stroke="white" strokeWidth="0.6" />
+              {/* Penalty Arc */}
+              <path d="M 42,121 A 9,9 0 0,1 58,121" fill="none" stroke="white" strokeWidth="0.6" />
+              {/* Penalty Spot */}
+              <circle cx="50" cy="133" r="0.6" fill="white" />
 
-              {/* Penalty area (bottom) */}
-              <div className="absolute bottom-4 left-1/2 w-56 h-20 border-2 border-white/80 border-b-0 transform -translate-x-1/2"></div>
+              {/* Corner Arcs */}
+              <path d="M 5,8 A 3,3 0 0,0 8,5" fill="none" stroke="white" strokeWidth="0.6" />
+              <path d="M 92,5 A 3,3 0 0,0 95,8" fill="none" stroke="white" strokeWidth="0.6" />
+              <path d="M 5,142 A 3,3 0 0,1 8,145" fill="none" stroke="white" strokeWidth="0.6" />
+              <path d="M 95,142 A 3,3 0 0,0 92,145" fill="none" stroke="white" strokeWidth="0.6" />
 
-              {/* Penalty spot (bottom) */}
-              <div className="absolute bottom-16 left-1/2 w-2 h-2 bg-white/80 rounded-full transform -translate-x-1/2"></div>
-
-              {/* Goal posts (bottom) */}
-              <div className="absolute bottom-4 left-1/2 w-16 h-1 bg-white transform -translate-x-1/2"></div>
-
-              {/* Goal area (top - opponent goal) */}
-              <div className="absolute top-4 left-1/2 w-48 h-16 border-2 border-white/80 border-t-0 transform -translate-x-1/2"></div>
-
-              {/* 6-yard box (top) */}
-              <div className="absolute top-4 left-1/2 w-24 h-8 border-2 border-white/80 border-t-0 transform -translate-x-1/2"></div>
-
-              {/* Penalty area (top) */}
-              <div className="absolute top-4 left-1/2 w-56 h-20 border-2 border-white/80 border-t-0 transform -translate-x-1/2"></div>
-
-              {/* Penalty spot (top) */}
-              <div className="absolute top-16 left-1/2 w-2 h-2 bg-white/80 rounded-full transform -translate-x-1/2"></div>
-
-              {/* Goal posts (top) */}
-              <div className="absolute top-4 left-1/2 w-16 h-1 bg-white transform -translate-x-1/2"></div>
-
-              {/* Corner arcs */}
-              <div className="absolute top-4 left-4 w-8 h-8 border-2 border-white/80 border-r-0 border-b-0 rounded-tl-full"></div>
-              <div className="absolute top-4 right-4 w-8 h-8 border-2 border-white/80 border-l-0 border-b-0 rounded-tr-full"></div>
-              <div className="absolute bottom-4 left-4 w-8 h-8 border-2 border-white/80 border-r-0 border-t-0 rounded-bl-full"></div>
-              <div className="absolute bottom-4 right-4 w-8 h-8 border-2 border-white/80 border-l-0 border-t-0 rounded-br-full"></div>
-            </div>
+              {/* Goals (Visual only, slightly outside lines) */}
+              <rect x="44" y="2" width="12" height="3" fill="transparent" stroke="white" strokeWidth="0.5" strokeOpacity="0.5" />
+              <rect x="44" y="145" width="12" height="3" fill="transparent" stroke="white" strokeWidth="0.5" strokeOpacity="0.5" />
+            </svg>
 
             {/* Players positioned on field */}
             <div className="absolute inset-0 flex flex-col justify-between py-12 px-8">

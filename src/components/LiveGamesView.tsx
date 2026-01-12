@@ -15,7 +15,7 @@ export const LiveGamesView = () => {
     const getTeamLogo = (teamName: string): string | undefined => {
         // Try to get from our local team kits first (High Quality Jerseys/Logos)
         const localKit = getTeamKit(teamName);
-        if (localKit && localKit.homeKit) return localKit.homeKit;
+        if (localKit && (localKit.logo || localKit.homeKit)) return localKit.logo || localKit.homeKit;
 
         const t = teamName.toLowerCase();
         let logoUrl: string | undefined;

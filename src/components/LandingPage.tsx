@@ -9,11 +9,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Trophy, Users, Target, Shield } from 'lucide-react';
 
+import { Onboarding } from '@/components/Onboarding';
+
 const LandingPage = () => {
+  const [showOnboarding, setShowOnboarding] = useState(!localStorage.getItem('hasOnboarded'));
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({ fullName: '', email: '', password: '', confirmPassword: '' });
   const { login, register, isLoading } = useAuth();
   const { toast } = useToast();
+
+  if (showOnboarding) {
+    return <Onboarding onComplete={() => setShowOnboarding(false)} />;
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

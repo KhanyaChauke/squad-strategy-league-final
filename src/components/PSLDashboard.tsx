@@ -238,9 +238,9 @@ export const PSLDashboard = () => {
                           </TableCell>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
-                              {getTeamKit(team.team)?.homeKit && (
+                              {(getTeamKit(team.team)?.logo || getTeamKit(team.team)?.homeKit) && (
                                 <img
-                                  src={getTeamKit(team.team)?.homeKit}
+                                  src={getTeamKit(team.team)?.logo || getTeamKit(team.team)?.homeKit}
                                   alt={team.team}
                                   className="h-8 w-8 object-contain rounded-sm"
                                   onError={(e) => {

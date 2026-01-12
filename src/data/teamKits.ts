@@ -2,37 +2,42 @@ export interface TeamKit {
     teamName: string;
     homeKit: string; // URL to image
     awayKit: string; // URL to image
+    logo?: string; // URL to logo
     thirdKit?: string; // Optional
     goalkeeperKit?: string; // Optional
 }
 
 // Placeholder URL or empty string indicates "no jersey"
-// Placeholder URL or empty string indicates "no jersey"
 export const teamKits: Record<string, TeamKit> = {
     'Mamelodi Sundowns': {
         teamName: 'Mamelodi Sundowns',
         homeKit: '/jerseys/sundowns.jpg',
-        awayKit: ''
+        awayKit: '',
+        logo: '/logos/Mamelodi Sundowns logo.png'
     },
     'Orlando Pirates': {
         teamName: 'Orlando Pirates',
         homeKit: '/jerseys/orlando pirates.webp',
-        awayKit: ''
+        awayKit: '',
+        logo: '/logos/Orland Pirates logo.png'
     },
     'Stellenbosch FC': {
         teamName: 'Stellenbosch FC',
         homeKit: '/jerseys/stellenbosch.png',
-        awayKit: ''
+        awayKit: '',
+        logo: '/logos/Stellenbosch FC logo.png'
     },
     'Sekhukhune United': {
         teamName: 'Sekhukhune United',
         homeKit: '/jerseys/sekhukhune.jpeg',
-        awayKit: ''
+        awayKit: '',
+        logo: '/logos/Sekhukhune United FC logo.png'
     },
     'Kaizer Chiefs': {
         teamName: 'Kaizer Chiefs',
         homeKit: '/jerseys/chiefs.jpeg',
-        awayKit: ''
+        awayKit: '',
+        logo: '/logos/Kaizer Chiefs logo.png'
     },
     'SuperSport United': {
         teamName: 'SuperSport United',
@@ -47,52 +52,62 @@ export const teamKits: Record<string, TeamKit> = {
     'TS Galaxy': {
         teamName: 'TS Galaxy',
         homeKit: '/jerseys/Ts galaxy.jpeg',
-        awayKit: ''
+        awayKit: '',
+        logo: '/logos/TS galaxy logo.png'
     },
     'Polokwane City': {
         teamName: 'Polokwane City',
         homeKit: '/jerseys/polokwane Fc.jpeg',
-        awayKit: ''
+        awayKit: '',
+        logo: '/logos/Polokwane City logo.png'
     },
     'Golden Arrows': {
         teamName: 'Golden Arrows',
         homeKit: '/jerseys/golden arrows.jpeg',
-        awayKit: ''
+        awayKit: '',
+        logo: '/logos/Golden Arrows logo.png'
     },
     'AmaZulu FC': {
         teamName: 'AmaZulu',
         homeKit: '/jerseys/Amzulu2.jpeg',
-        awayKit: ''
+        awayKit: '',
+        logo: '/logos/AmaZulu FC logo.png'
     },
     'AmaZulu': {
         teamName: 'AmaZulu',
         homeKit: '/jerseys/Amzulu2.jpeg',
-        awayKit: ''
+        awayKit: '',
+        logo: '/logos/AmaZulu FC logo.png'
     },
     'Chippa United': {
         teamName: 'Chippa United',
         homeKit: '/jerseys/chippa united.jpeg',
-        awayKit: ''
+        awayKit: '',
+        logo: '/logos/Chippa United logo.png'
     },
     'Royal AM': {
         teamName: 'Royal AM',
         homeKit: '/jerseys/siwelele fc.jpeg',
-        awayKit: ''
+        awayKit: '',
+        logo: '/logos/Siwelele FC logo.png'
     },
     'Richards Bay': {
         teamName: 'Richards Bay',
         homeKit: '/jerseys/richards.png',
-        awayKit: ''
+        awayKit: '',
+        logo: '/logos/Richards Bay logo.png'
     },
     'Marumo Gallants': {
         teamName: 'Marumo Gallants',
         homeKit: '/jerseys/Marumo.jpeg',
-        awayKit: ''
+        awayKit: '',
+        logo: '/logos/Marumo Gallants logo.png'
     },
     'Magesi FC': {
         teamName: 'Magesi FC',
         homeKit: '/jerseys/Orbit college.jpeg',
-        awayKit: ''
+        awayKit: '',
+        logo: '/logos/Magesi FC logo.png'
     }
 };
 

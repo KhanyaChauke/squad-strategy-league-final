@@ -22,7 +22,7 @@ export const pslFixtures: Fixture[] = [
     { id: 'jan21-1', homeTeam: 'TS Galaxy', awayTeam: 'Marumo Gallants', date: '2026-01-21', time: '19:30', venue: 'Mbombela Stadium, Nelspruit', status: 'Scheduled' },
 
     // 23 Jan
-    { id: 'jan23-1', homeTeam: 'Richards Bay', awayTeam: 'Royal AM', date: '2026-01-23', time: '19:30', venue: 'Richards Bay Stadium, Richards Bay', status: 'Scheduled' }, // "Siwelele" usually refers to Bloem Celtic/Royal AM culture
+    { id: 'jan23-1', homeTeam: 'Richards Bay', awayTeam: 'Siwelele', date: '2026-01-23', time: '19:30', venue: 'Richards Bay Stadium, Richards Bay', status: 'Scheduled' }, // "Siwelele" refers to the Celtic identity match
 
     // 24 Jan
     { id: 'jan24-1', homeTeam: 'Orbit College FC', awayTeam: 'Chippa United', date: '2026-01-24', time: '15:30', venue: 'Olympia Park, Rustenburg', status: 'Scheduled' },

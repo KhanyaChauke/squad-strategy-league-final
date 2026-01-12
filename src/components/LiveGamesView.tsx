@@ -13,6 +13,12 @@ export const LiveGamesView = () => {
     // Helper to get static logos for PSL teams if API doesn't provide them
     const getTeamLogo = (teamName: string): string | undefined => {
         const t = teamName.toLowerCase();
+
+        // Specific logos for user request
+        if (t.includes('orbit')) return 'https://upload.wikimedia.org/wikipedia/en/2/23/Orbit_College_FC_logo.png';
+        if (t.includes('siwelele') || t.includes('celtic')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2322.png&h=200&w=200'; // Celtic identity
+
+        // PSL Standard
         if (t.includes('sundowns')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2324.png&h=200&w=200';
         if (t.includes('pirates')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2327.png&h=200&w=200';
         if (t.includes('chiefs')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2323.png&h=200&w=200';
@@ -27,7 +33,7 @@ export const LiveGamesView = () => {
         if (t.includes('richards')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20347.png&h=200&w=200';
         if (t.includes('polokwane')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/14107.png&h=200&w=200';
         if (t.includes('royal')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20346.png&h=200&w=200';
-        if (t.includes('gallants')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20349.png&h=200&w=200'; // Marumo Gallants
+        if (t.includes('gallants') || t.includes('marumo')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20349.png&h=200&w=200';
         return undefined;
     };
 
@@ -268,8 +274,8 @@ export const LiveGamesView = () => {
                                                     <span className="text-sm font-bold text-gray-900 hidden sm:block truncate">{fixture.homeTeam}</span>
                                                     <span className="text-xs font-bold text-gray-900 sm:hidden truncate max-w-[80px]">{fixture.homeTeam.substring(0, 3).toUpperCase()}</span>
 
-                                                    {fixture.homeLogo ? (
-                                                        <img src={fixture.homeLogo} alt={fixture.homeTeam} className="w-8 h-8 rounded-full object-contain bg-white shadow-sm p-0.5" />
+                                                    {fixture.homeLogo || getTeamLogo(fixture.homeTeam) ? (
+                                                        <img src={fixture.homeLogo || getTeamLogo(fixture.homeTeam)} alt={fixture.homeTeam} className="w-8 h-8 rounded-full object-contain bg-white shadow-sm p-0.5" />
                                                     ) : (
                                                         <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-500 text-[10px] shadow-inner">
                                                             {fixture.homeTeam.substring(0, 2)}
@@ -305,8 +311,8 @@ export const LiveGamesView = () => {
 
                                                 {/* Away Team (Right) */}
                                                 <div className="flex items-center justify-start flex-1 space-x-3 text-left">
-                                                    {fixture.awayLogo ? (
-                                                        <img src={fixture.awayLogo} alt={fixture.awayTeam} className="w-8 h-8 rounded-full object-contain bg-white shadow-sm p-0.5" />
+                                                    {fixture.awayLogo || getTeamLogo(fixture.awayTeam) ? (
+                                                        <img src={fixture.awayLogo || getTeamLogo(fixture.awayTeam)} alt={fixture.awayTeam} className="w-8 h-8 rounded-full object-contain bg-white shadow-sm p-0.5" />
                                                     ) : (
                                                         <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-500 text-[10px] shadow-inner">
                                                             {fixture.awayTeam.substring(0, 2)}

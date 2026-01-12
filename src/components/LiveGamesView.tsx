@@ -236,7 +236,7 @@ export const LiveGamesView = () => {
                             <h3 className="text-sm font-bold text-gray-500 bg-gray-50 px-3 py-1 rounded inline-block mb-3 border border-gray-200">
                                 {dateLabel}
                             </h3>
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-4">
                                 {dateFixtures.map((fixture) => (
                                     <Card key={fixture.fixtureId} className="overflow-hidden hover:shadow-md transition-shadow">
                                         <CardContent className="p-4">

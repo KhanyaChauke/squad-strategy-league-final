@@ -57,7 +57,8 @@ export const PSLDashboard = () => {
       setApiError(null);
 
       try {
-        // 1. Fetch Top Valued Players (from your existing players collection)
+        // 1. Fetch Top Valued Players (always current state)
+        // We do this regardless of season view as it shows "Market Leaders"
         const playersRef = collection(db, 'players');
         const q = query(playersRef, orderBy('price', 'desc'), limit(3));
         const querySnapshot = await getDocs(q);
@@ -69,33 +70,42 @@ export const PSLDashboard = () => {
 
         setTopPlayers(playersData);
 
-        // 2. Fetch Standings & Scorers (from Google-synced Firebase collections)
-        const { fetchStandings, fetchTopScorers } = await import('@/services/newsService');
+        // 2. Check for Historical Data
+        const { getHistoricalStandings } = await import('@/data/historicalStandings');
+        const historicalData = getHistoricalStandings(selectedSeason);
 
-        // This will automatically check if sync is needed
-        const [liveStandings, liveScorers] = await Promise.all([
-          fetchStandings(),
-          fetchTopScorers()
-        ]);
+        if (historicalData) {
+          setStandings(historicalData);
+          setLeagueTopScorers([]); // Clear scorers for historical views
+        } else {
+          // 3. Fetch Live Standings & Scorers (Current Season)
+          const { fetchStandings, fetchTopScorers } = await import('@/services/newsService');
 
-        if (liveStandings && liveStandings.length > 0) {
-          setStandings(liveStandings);
-        }
+          // This will automatically check if sync is needed
+          const [liveStandings, liveScorers] = await Promise.all([
+            fetchStandings(),
+            fetchTopScorers()
+          ]);
 
-        if (liveScorers && liveScorers.length > 0) {
-          setLeagueTopScorers(liveScorers);
+          if (liveStandings && liveStandings.length > 0) {
+            setStandings(liveStandings);
+          }
+
+          if (liveScorers && liveScorers.length > 0) {
+            setLeagueTopScorers(liveScorers);
+          }
         }
 
       } catch (error) {
         console.error("Error loading dashboard data:", error);
-        setApiError("Using cached data. Some live stats might be delayed.");
+        setApiError("Using cached or limited data.");
       } finally {
         setLoading(false);
       }
     };
 
     loadData();
-  }, []);
+  }, [selectedSeason]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-ZA', {
@@ -146,7 +156,7 @@ export const PSLDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col space-y-4">
         <div>
           <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
             <Trophy className="h-8 w-8 text-yellow-500" />

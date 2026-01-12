@@ -36,12 +36,12 @@ export const teamKits: Record<string, TeamKit> = {
     },
     'SuperSport United': {
         teamName: 'SuperSport United',
-        homeKit: '', // Image not found in provided list
+        homeKit: '', // No image available yet
         awayKit: ''
     },
     'Cape Town City': {
         teamName: 'Cape Town City',
-        homeKit: '', // Image not found in provided list
+        homeKit: '', // No image available yet
         awayKit: ''
     },
     'TS Galaxy': {
@@ -60,7 +60,12 @@ export const teamKits: Record<string, TeamKit> = {
         awayKit: ''
     },
     'AmaZulu FC': {
-        teamName: 'AmaZulu', // Match standard usage often 'AmaZulu' without FC in some contexts, but keys here are what matters
+        teamName: 'AmaZulu',
+        homeKit: '/jerseys/Amzulu2.jpeg',
+        awayKit: ''
+    },
+    'AmaZulu': {
+        teamName: 'AmaZulu',
         homeKit: '/jerseys/Amzulu2.jpeg',
         awayKit: ''
     },
@@ -71,7 +76,7 @@ export const teamKits: Record<string, TeamKit> = {
     },
     'Royal AM': {
         teamName: 'Royal AM',
-        homeKit: '/jerseys/siwelele fc.jpeg', // Best guess based on user files
+        homeKit: '/jerseys/siwelele fc.jpeg',
         awayKit: ''
     },
     'Richards Bay': {
@@ -86,7 +91,7 @@ export const teamKits: Record<string, TeamKit> = {
     },
     'Magesi FC': {
         teamName: 'Magesi FC',
-        homeKit: '', // Image not found in provided list
+        homeKit: '/jerseys/Orbit college.jpeg',
         awayKit: ''
     }
 };

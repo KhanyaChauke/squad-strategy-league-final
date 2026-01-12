@@ -472,6 +472,22 @@ const Dashboard = () => {
                     Simulate ALL Users Gameweek
                   </Button>
                   <Button
+                    onClick={async () => {
+                      toast({ title: "Seeding Database", description: "Populating historical standings..." });
+                      try {
+                        const { seedHistoricalDatabase } = await import('@/services/standingsDb');
+                        await seedHistoricalDatabase();
+                        toast({ title: "Success", description: "Database populated with historical data!", className: "bg-green-50 border-green-200" });
+                      } catch (e) {
+                        toast({ title: "Error", description: "Failed to seed database", variant: "destructive" });
+                      }
+                    }}
+                    className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+                  >
+                    <Database className="h-4 w-4 mr-2" />
+                    Seed Historical Standings DB
+                  </Button>
+                  <Button
                     onClick={handleSyncPlayers}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                   >

@@ -70,30 +70,44 @@ export const PSLDashboard = () => {
 
         setTopPlayers(playersData);
 
-        // 2. Check for Historical Data
-        const { getHistoricalStandings } = await import('@/data/historicalStandings');
-        const historicalData = getHistoricalStandings(selectedSeason);
+        // 2. Fetch Standings (Db First Strategy)
+        const { getSeasonStandingsFromDb, saveSeasonStandings } = await import('@/services/standingsDb');
 
-        if (historicalData) {
-          setStandings(historicalData);
-          setLeagueTopScorers([]); // Clear scorers for historical views
+        let fetchedStandings = await getSeasonStandingsFromDb(selectedSeason);
+        let fetchedScorers: TopScorer[] = [];
+
+        if (!fetchedStandings || fetchedStandings.length === 0) {
+          console.log(`No data in DB for ${selectedSeason}, attempting source fetch...`);
+
+          if (selectedSeason === '2025/2026') {
+            // Live Season: Fetch from API
+            const { fetchStandings } = await import('@/services/newsService');
+            fetchedStandings = await fetchStandings();
+            if (fetchedStandings && fetchedStandings.length > 0) {
+              await saveSeasonStandings(selectedSeason, fetchedStandings);
+            }
+          } else {
+            // Historical Season: Fetch from Static Files
+            const { getHistoricalStandings } = await import('@/data/historicalStandings');
+            fetchedStandings = getHistoricalStandings(selectedSeason) || []; // Ensure array
+            if (fetchedStandings && fetchedStandings.length > 0) {
+              await saveSeasonStandings(selectedSeason, fetchedStandings);
+            }
+          }
+        }
+
+        if (fetchedStandings && fetchedStandings.length > 0) {
+          setStandings(fetchedStandings);
+        }
+
+        // 3. Handle Top Scorers (Live Only for now)
+        if (selectedSeason === '2025/2026') {
+          const { fetchTopScorers } = await import('@/services/newsService');
+          // TODO: Add DB persistence for scorers too if needed
+          const liveScorers = await fetchTopScorers();
+          if (liveScorers) setLeagueTopScorers(liveScorers);
         } else {
-          // 3. Fetch Live Standings & Scorers (Current Season)
-          const { fetchStandings, fetchTopScorers } = await import('@/services/newsService');
-
-          // This will automatically check if sync is needed
-          const [liveStandings, liveScorers] = await Promise.all([
-            fetchStandings(),
-            fetchTopScorers()
-          ]);
-
-          if (liveStandings && liveStandings.length > 0) {
-            setStandings(liveStandings);
-          }
-
-          if (liveScorers && liveScorers.length > 0) {
-            setLeagueTopScorers(liveScorers);
-          }
+          setLeagueTopScorers([]);
         }
 
       } catch (error) {

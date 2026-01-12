@@ -166,8 +166,8 @@ export const LiveGamesView = () => {
     };
 
     const getStatusIndicator = () => {
-        if (isLoading) return <Badge variant="outline" className="border-yellow-200 text-yellow-700 bg-yellow-50 animate-pulse">Syncing...</Badge>;
-        if (error) return <Badge variant="destructive" className="animate-pulse">Offline / Error</Badge>;
+        if (isLoading && fixtures.length === 0) return <Badge variant="outline" className="border-yellow-200 text-yellow-700 bg-yellow-50 animate-pulse">Syncing...</Badge>;
+        if (error && fixtures.length === 0) return <Badge variant="destructive" className="animate-pulse">Offline / Error</Badge>;
         if (fixtures.length === 0) return <Badge variant="outline" className="border-orange-200 text-orange-700 bg-orange-50">No Matches</Badge>;
         return <Badge variant="outline" className="border-green-200 text-green-700 bg-green-50 flex gap-1 items-center"><div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Live</Badge>;
     };

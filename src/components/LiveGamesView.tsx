@@ -10,6 +10,27 @@ export const LiveGamesView = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // Helper to get static logos for PSL teams if API doesn't provide them
+    const getTeamLogo = (teamName: string): string | undefined => {
+        const t = teamName.toLowerCase();
+        if (t.includes('sundowns')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2324.png&h=200&w=200';
+        if (t.includes('pirates')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2327.png&h=200&w=200';
+        if (t.includes('chiefs')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2323.png&h=200&w=200';
+        if (t.includes('stellenbosch')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/18804.png&h=200&w=200';
+        if (t.includes('city') && t.includes('cape')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/17724.png&h=200&w=200';
+        if (t.includes('supersport')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2627.png&h=200&w=200';
+        if (t.includes('amazulu')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2326.png&h=200&w=200';
+        if (t.includes('arrows')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4556.png&h=200&w=200';
+        if (t.includes('galaxy')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/19864.png&h=200&w=200';
+        if (t.includes('sekhukhune')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20348.png&h=200&w=200';
+        if (t.includes('chippa')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/13735.png&h=200&w=200';
+        if (t.includes('richards')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20347.png&h=200&w=200';
+        if (t.includes('polokwane')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/14107.png&h=200&w=200';
+        if (t.includes('royal')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20346.png&h=200&w=200';
+        if (t.includes('gallants')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20349.png&h=200&w=200'; // Marumo Gallants
+        return undefined;
+    };
+
     // Convert UTC time to South African time (SAST = UTC+2)
     const convertToSATime = (utcTime: string): string => {
         if (!utcTime || utcTime === 'TBD') return utcTime;

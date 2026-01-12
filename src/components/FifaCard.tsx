@@ -1,13 +1,9 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Shield, Flag } from 'lucide-react';
+import { getTeamKit } from '@/data/teamKits';
 
 // Import jersey images for player representation
-import sundownsJersey from '@/assets/jerseys/sundowns-jersey.png';
-import piratesJersey from '@/assets/jerseys/pirates-2026.jpg';
-import chiefsJersey from '@/assets/jerseys/chiefs-jersey.jpg';
-import capeTownCityJersey from '@/assets/jerseys/cape-town-city-jersey.png';
-import supersportJersey from '@/assets/jerseys/supersport-jersey.png';
 import defaultJersey from '@/assets/jerseys/default-jersey.png';
 
 interface Player {
@@ -44,13 +40,8 @@ const getSurname = (name: string) => {
 };
 
 const getPlayerImage = (teamName: string) => {
-  const team = teamName.toLowerCase();
-  if (team.includes('sundowns')) return sundownsJersey;
-  if (team.includes('pirates')) return piratesJersey;
-  if (team.includes('chiefs')) return chiefsJersey;
-  if (team.includes('cape town city')) return capeTownCityJersey;
-  if (team.includes('supersport')) return supersportJersey;
-  return defaultJersey;
+  const kit = getTeamKit(teamName);
+  return kit?.homeKit || defaultJersey;
 };
 
 const getSizeClasses = (size: 'small' | 'medium' | 'large' | 'responsive') => {

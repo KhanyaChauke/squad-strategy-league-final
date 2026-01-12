@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Trophy, Tv, RefreshCw } from 'lucide-react';
 import { fetchFixtures, Fixture } from '@/services/newsService';
 import { Button } from '@/components/ui/button';
+import { getTeamKit } from '@/data/teamKits';
 
 export const LiveGamesView = () => {
     const [fixtures, setFixtures] = useState<Fixture[]>([]);
@@ -12,6 +13,10 @@ export const LiveGamesView = () => {
 
     // Helper to get static logos for PSL teams if API doesn't provide them
     const getTeamLogo = (teamName: string): string | undefined => {
+        // Try to get from our local team kits first (High Quality Jerseys/Logos)
+        const localKit = getTeamKit(teamName);
+        if (localKit && localKit.homeKit) return localKit.homeKit;
+
         const t = teamName.toLowerCase();
         let logoUrl: string | undefined;
 

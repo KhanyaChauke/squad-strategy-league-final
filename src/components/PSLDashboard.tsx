@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { db } from '@/integrations/firebase/client';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { Trophy, TrendingUp, Star, Users, Target } from 'lucide-react';
@@ -48,6 +49,7 @@ export const PSLDashboard = () => {
   const [leagueTopScorers, setLeagueTopScorers] = useState<TopScorer[]>([]); // New State
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [selectedSeason, setSelectedSeason] = useState('2025/2026');
 
   useEffect(() => {
     const loadData = async () => {
@@ -151,6 +153,18 @@ export const PSLDashboard = () => {
             PSL Season Overview
           </h2>
           <p className="text-gray-600">Current standings and top performers</p>
+        </div>
+        <div className="w-40">
+          <Select value={selectedSeason} onValueChange={setSelectedSeason}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Season" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2025/2026">2025/2026</SelectItem>
+              <SelectItem value="2024/2025">2024/2025</SelectItem>
+              <SelectItem value="2023/2024">2023/2024</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

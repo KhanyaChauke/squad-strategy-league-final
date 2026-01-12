@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Trophy, Medal, User as UserIcon } from 'lucide-react';
 import { db } from '@/integrations/firebase/client';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { getTeamKit } from '@/data/teamKits';
 
 interface LeaderboardEntry {
     id: string;
@@ -61,6 +62,8 @@ export const LeaderboardView = () => {
 
     // Helper to get static logos (Duplicated from LiveGamesView for consistency)
     const getTeamLogo = (teamName: string): string | undefined => {
+        const localKit = getTeamKit(teamName);
+        if (localKit && localKit.homeKit) return localKit.homeKit;
         const t = teamName.toLowerCase();
         if (t.includes('orbit')) return 'https://upload.wikimedia.org/wikipedia/en/2/23/Orbit_College_FC_logo.png';
         if (t.includes('siwelele') || t.includes('celtic')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2322.png&h=200&w=200';
@@ -115,140 +118,74 @@ export const LeaderboardView = () => {
                 </div>
             </div>
 
-            <Tabs defaultValue="psl" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-8">
-                    <TabsTrigger value="psl">Betway Premiership</TabsTrigger>
-                    <TabsTrigger value="managers">Top Managers</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="managers">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Top 50 Managers</CardTitle>
-                            <CardDescription>Global rankings updated after every gameweek.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            {isLoading ? (
-                                <div className="text-center py-8">
-                                    <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                                    <p className="text-gray-500">Loading standings...</p>
-                                </div>
-                            ) : leaderboard.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500">No managers found yet. Be the first to join!</div>
-                            ) : (
-                                <div className="overflow-x-auto w-full">
-                                    <table className="w-full">
-                                        <thead>
-                                            <tr className="border-b text-left text-[10px] md:text-xs font-semibold uppercase tracking-wider text-gray-500 bg-gray-50">
-                                                <th className="px-2 py-2 md:px-6 md:py-3 w-8 md:w-auto">Pos</th>
-                                                <th className="px-2 py-2 md:px-6 md:py-3">
-                                                    <span className="md:hidden">Team</span>
-                                                    <span className="hidden md:inline">Team & Manager</span>
-                                                </th>
-                                                <th className="px-2 py-2 md:px-6 md:py-3 text-right">
-                                                    <span className="md:hidden">GW</span>
-                                                    <span className="hidden md:inline">GW Points</span>
-                                                </th>
-                                                <th className="px-2 py-2 md:px-6 md:py-3 text-right">
-                                                    <span className="md:hidden">Tot</span>
-                                                    <span className="hidden md:inline">Total Points</span>
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-100">
-                                            {leaderboard.map((entry) => (
-                                                <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
-                                                    <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap">
-                                                        <div className="flex items-center justify-center md:justify-start">
-                                                            {getRankIcon(entry.rank)}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-2 py-2 md:px-6 md:py-4">
-                                                        <div className="flex items-center">
-                                                            <div className="hidden md:block bg-blue-100 p-2 rounded-full mr-3">
-                                                                <UserIcon className="h-5 w-5 text-blue-600" />
-                                                            </div>
-                                                            <div>
-                                                                <div className="font-bold text-gray-900 text-xs md:text-base truncate max-w-[120px] md:max-w-none">{entry.teamName}</div>
-                                                                <div className="text-[10px] md:text-xs text-gray-500 truncate max-w-[120px] md:max-w-none">{entry.managerName}</div>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-2 py-2 md:px-6 md:py-4 text-right whitespace-nowrap">
-                                                        <span className="inline-flex items-center px-1.5 py-0.5 md:px-2.5 md:py-0.5 rounded-full text-[10px] md:text-xs font-medium bg-green-100 text-green-800">
-                                                            {entry.gameweekPoints}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-2 py-2 md:px-6 md:py-4 text-right whitespace-nowrap">
-                                                        <span className="text-sm md:text-lg font-bold text-gray-900">{entry.totalPoints}</span>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="psl">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Betway Premiership Table</CardTitle>
-                            <CardDescription>Live PSL Standings (2025/2026 Season)</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead>
-                                        <tr className="border-b text-left text-[10px] md:text-xs font-semibold uppercase tracking-wider text-gray-500 bg-gray-50">
-                                            <th className="px-3 py-3 text-center w-10">#</th>
-                                            <th className="px-3 py-3">Team</th>
-                                            <th className="px-3 py-3 text-center">MP</th>
-                                            <th className="px-3 py-3 text-center hidden md:table-cell">W</th>
-                                            <th className="px-3 py-3 text-center hidden md:table-cell">D</th>
-                                            <th className="px-3 py-3 text-center hidden md:table-cell">L</th>
-                                            <th className="px-3 py-3 text-center hidden md:table-cell">GD</th>
-                                            <th className="px-3 py-3 text-center font-bold">Pts</th>
-                                            <th className="px-3 py-3 text-center hidden lg:table-cell">Form</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100">
-                                        {pslStandings.map((team) => (
-                                            <tr key={team.team} className={`hover:bg-gray-50 transition-colors ${team.rank <= 2 ? 'bg-blue-50/30' : team.rank >= 15 ? 'bg-red-50/30' : ''}`}>
-                                                <td className="px-3 py-3 text-center font-medium text-gray-500">{team.rank}</td>
-                                                <td className="px-3 py-3 font-semibold text-gray-900 flex items-center gap-2">
-                                                    <TeamLogo name={team.team} />
-                                                    {team.team}
-                                                </td>
-                                                <td className="px-3 py-3 text-center text-gray-600">{team.played}</td>
-                                                <td className="px-3 py-3 text-center hidden md:table-cell text-gray-500">{team.won}</td>
-                                                <td className="px-3 py-3 text-center hidden md:table-cell text-gray-500">{team.drawn}</td>
-                                                <td className="px-3 py-3 text-center hidden md:table-cell text-gray-500">{team.lost}</td>
-                                                <td className="px-3 py-3 text-center hidden md:table-cell font-mono text-gray-600">
-                                                    {team.goalDifference > 0 ? `+${team.goalDifference}` : team.goalDifference}
-                                                </td>
-                                                <td className="px-3 py-3 text-center font-bold text-gray-900 text-base">{team.points}</td>
-                                                <td className="px-3 py-3 text-center hidden lg:table-cell">
-                                                    <div className="flex items-center justify-center gap-1">
-                                                        {team.form.map((result, i) => (
-                                                            <span key={i} className={`text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full text-white ${result === 'W' ? 'bg-green-500' : result === 'D' ? 'bg-gray-400' : 'bg-red-500'
-                                                                }`}>
-                                                                {result}
-                                                            </span>
-                                                        ))}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Top 50 Managers</CardTitle>
+                    <CardDescription>Global rankings updated after every gameweek.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {isLoading ? (
+                        <div className="text-center py-8">
+                            <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                            <p className="text-gray-500">Loading standings...</p>
+                        </div>
+                    ) : leaderboard.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">No managers found yet. Be the first to join!</div>
+                    ) : (
+                        <div className="overflow-x-auto w-full">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="border-b text-left text-[10px] md:text-xs font-semibold uppercase tracking-wider text-gray-500 bg-gray-50">
+                                        <th className="px-2 py-2 md:px-6 md:py-3 w-8 md:w-auto">Pos</th>
+                                        <th className="px-2 py-2 md:px-6 md:py-3">
+                                            <span className="md:hidden">Team</span>
+                                            <span className="hidden md:inline">Team & Manager</span>
+                                        </th>
+                                        <th className="px-2 py-2 md:px-6 md:py-3 text-right">
+                                            <span className="md:hidden">GW</span>
+                                            <span className="hidden md:inline">GW Points</span>
+                                        </th>
+                                        <th className="px-2 py-2 md:px-6 md:py-3 text-right">
+                                            <span className="md:hidden">Tot</span>
+                                            <span className="hidden md:inline">Total Points</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {leaderboard.map((entry) => (
+                                        <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap">
+                                                <div className="flex items-center justify-center md:justify-start">
+                                                    {getRankIcon(entry.rank)}
+                                                </div>
+                                            </td>
+                                            <td className="px-2 py-2 md:px-6 md:py-4">
+                                                <div className="flex items-center">
+                                                    <div className="hidden md:block bg-blue-100 p-2 rounded-full mr-3">
+                                                        <UserIcon className="h-5 w-5 text-blue-600" />
                                                     </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-            </Tabs>
+                                                    <div>
+                                                        <div className="font-bold text-gray-900 text-xs md:text-base truncate max-w-[120px] md:max-w-none">{entry.teamName}</div>
+                                                        <div className="text-[10px] md:text-xs text-gray-500 truncate max-w-[120px] md:max-w-none">{entry.managerName}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-2 py-2 md:px-6 md:py-4 text-right whitespace-nowrap">
+                                                <span className="inline-flex items-center px-1.5 py-0.5 md:px-2.5 md:py-0.5 rounded-full text-[10px] md:text-xs font-medium bg-green-100 text-green-800">
+                                                    {entry.gameweekPoints}
+                                                </span>
+                                            </td>
+                                            <td className="px-2 py-2 md:px-6 md:py-4 text-right whitespace-nowrap">
+                                                <span className="text-sm md:text-lg font-bold text-gray-900">{entry.totalPoints}</span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 };

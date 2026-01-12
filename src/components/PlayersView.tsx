@@ -13,6 +13,7 @@ import { FifaCardDetailed } from '@/components/FifaCard';
 export const PlayersView = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [positionFilter, setPositionFilter] = useState('all');
+  const [teamFilter, setTeamFilter] = useState('all');
   const [sortBy, setSortBy] = useState('rating');
   const { user, addPlayerToSquad, addPlayerToBench } = useAuth();
   const { toast } = useToast();
@@ -36,6 +37,11 @@ export const PlayersView = () => {
           player.team.toLowerCase().includes(searchQuery.toLowerCase())
         );
       }
+    }
+
+    // Apply team filter
+    if (teamFilter !== 'all') {
+      players = players.filter(player => player.team === teamFilter);
     }
 
     // Apply sorting
@@ -159,6 +165,9 @@ export const PlayersView = () => {
 
   const filteredPlayers = getFilteredPlayers();
 
+  // Get unique teams for dropdown
+  const uniqueTeams = Array.from(new Set(playersDatabase.map(player => player.team))).sort();
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
@@ -226,6 +235,20 @@ export const PlayersView = () => {
                 <SelectItem value="DEF">Defender</SelectItem>
                 <SelectItem value="MID">Midfielder</SelectItem>
                 <SelectItem value="ATT">Attacker</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={teamFilter} onValueChange={setTeamFilter}>
+              <SelectTrigger className="w-full md:w-48">
+                <SelectValue placeholder="Team" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Teams</SelectItem>
+                {uniqueTeams.map((team) => (
+                  <SelectItem key={team} value={team}>
+                    {team}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 

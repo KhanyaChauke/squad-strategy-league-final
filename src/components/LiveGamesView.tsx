@@ -262,6 +262,11 @@ export const LiveGamesView = () => {
                                                         <>
                                                             <div className="text-xs font-black text-gray-400 mb-0.5">VS</div>
                                                             <div className="text-[10px] text-gray-500 font-mono">{fixture.time}</div>
+                                                            {(fixture as any).venue && (
+                                                                <div className="text-[8px] text-gray-400 text-center truncate w-32 mt-0.5 leading-tight">
+                                                                    {(fixture as any).venue}
+                                                                </div>
+                                                            )}
                                                         </>
                                                     ) : (
                                                         <>

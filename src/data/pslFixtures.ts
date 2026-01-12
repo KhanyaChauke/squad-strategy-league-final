@@ -3,22 +3,33 @@ export interface Fixture {
     id: string;
     homeTeam: string;
     awayTeam: string;
-    date: string;
+    date: string; // YYYY-MM-DD
     time: string;
+    venue?: string;
     status: 'Scheduled' | 'Finished';
 }
 
-// A mock of the upcoming Gameweek (Matchday 12/13/14 etc)
-// Ideally this would cover the full season, but here is the active set for the "Next Opponent" feature.
+// Fixtures based on provided schedule (Jan 2026)
 export const pslFixtures: Fixture[] = [
-    { id: 'gw15-1', homeTeam: 'Mamelodi Sundowns', awayTeam: 'Orlando Pirates', date: '2026-01-14', time: '15:30', status: 'Scheduled' },
-    { id: 'gw15-2', homeTeam: 'Kaizer Chiefs', awayTeam: 'Stellenbosch FC', date: '2026-01-14', time: '17:30', status: 'Scheduled' },
-    { id: 'gw15-3', homeTeam: 'Cape Town City', awayTeam: 'SuperSport United', date: '2026-01-15', time: '19:30', status: 'Scheduled' },
-    { id: 'gw15-4', homeTeam: 'AmaZulu', awayTeam: 'Golden Arrows', date: '2026-01-15', time: '15:30', status: 'Scheduled' },
-    { id: 'gw15-5', homeTeam: 'TS Galaxy', awayTeam: 'Sekhukhune United', date: '2026-01-16', time: '15:30', status: 'Scheduled' },
-    { id: 'gw15-6', homeTeam: 'Chippa United', awayTeam: 'Richards Bay', date: '2026-01-16', time: '19:30', status: 'Scheduled' },
-    { id: 'gw15-7', homeTeam: 'Polokwane City', awayTeam: 'Royal AM', date: '2026-01-17', time: '15:30', status: 'Scheduled' },
-    { id: 'gw15-8', homeTeam: 'Magesi FC', awayTeam: 'Gallants', date: '2026-01-17', time: '15:30', status: 'Scheduled' }
+    // 19 Jan
+    { id: 'jan19-1', homeTeam: 'Mamelodi Sundowns', awayTeam: 'Orbit College FC', date: '2026-01-19', time: '19:30', venue: 'Loftus Versfeld Stadium, Pretoria', status: 'Scheduled' },
+
+    // 20 Jan
+    { id: 'jan20-1', homeTeam: 'Kaizer Chiefs', awayTeam: 'Golden Arrows', date: '2026-01-20', time: '19:30', venue: 'FNB Stadium, Johannesburg', status: 'Scheduled' },
+    { id: 'jan20-2', homeTeam: 'Sekhukhune United', awayTeam: 'Stellenbosch FC', date: '2026-01-20', time: '19:30', venue: 'Peter Mokaba Stadium, Polokwane', status: 'Scheduled' },
+
+    // 21 Jan
+    { id: 'jan21-1', homeTeam: 'TS Galaxy', awayTeam: 'Marumo Gallants', date: '2026-01-21', time: '19:30', venue: 'Mbombela Stadium, Nelspruit', status: 'Scheduled' },
+
+    // 23 Jan
+    { id: 'jan23-1', homeTeam: 'Richards Bay', awayTeam: 'Royal AM', date: '2026-01-23', time: '19:30', venue: 'Richards Bay Stadium, Richards Bay', status: 'Scheduled' }, // "Siwelele" usually refers to Bloem Celtic/Royal AM culture
+
+    // 24 Jan
+    { id: 'jan24-1', homeTeam: 'Orbit College FC', awayTeam: 'Chippa United', date: '2026-01-24', time: '15:30', venue: 'Olympia Park, Rustenburg', status: 'Scheduled' },
+    { id: 'jan24-2', homeTeam: 'Sekhukhune United', awayTeam: 'Orlando Pirates', date: '2026-01-24', time: '15:30', venue: 'Peter Mokaba Stadium, Polokwane', status: 'Scheduled' },
+
+    // 25 Jan (Listed under 24 Jan block header often in schedules but date is 25th)
+    { id: 'jan25-1', homeTeam: 'AmaZulu FC', awayTeam: 'TS Galaxy', date: '2026-01-25', time: '15:30', venue: 'Moses Mabhida Stadium, Durban', status: 'Scheduled' }
 ];
 
 export const getNextOpponent = (teamName: string): string | undefined => {

@@ -13,28 +13,65 @@ export const LiveGamesView = () => {
     // Helper to get static logos for PSL teams if API doesn't provide them
     const getTeamLogo = (teamName: string): string | undefined => {
         const t = teamName.toLowerCase();
+        let logoUrl: string | undefined;
 
         // Specific logos for user request
-        if (t.includes('orbit')) return 'https://upload.wikimedia.org/wikipedia/en/2/23/Orbit_College_FC_logo.png';
-        if (t.includes('siwelele') || t.includes('celtic')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2322.png&h=200&w=200'; // Celtic identity
-
+        if (t.includes('orbit')) logoUrl = 'https://upload.wikimedia.org/wikipedia/en/2/23/Orbit_College_FC_logo.png';
+        else if (t.includes('siwelele') || t.includes('celtic')) logoUrl = 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2322.png&h=200&w=200'; // Celtic identity
         // PSL Standard
-        if (t.includes('sundowns')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2324.png&h=200&w=200';
-        if (t.includes('pirates')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2327.png&h=200&w=200';
-        if (t.includes('chiefs')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2323.png&h=200&w=200';
-        if (t.includes('stellenbosch')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/18804.png&h=200&w=200';
-        if (t.includes('city') && t.includes('cape')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/17724.png&h=200&w=200';
-        if (t.includes('supersport')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2627.png&h=200&w=200';
-        if (t.includes('amazulu')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2326.png&h=200&w=200';
-        if (t.includes('arrows')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4556.png&h=200&w=200';
-        if (t.includes('galaxy')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/19864.png&h=200&w=200';
-        if (t.includes('sekhukhune')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20348.png&h=200&w=200';
-        if (t.includes('chippa')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/13735.png&h=200&w=200';
-        if (t.includes('richards')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20347.png&h=200&w=200';
-        if (t.includes('polokwane')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/14107.png&h=200&w=200';
-        if (t.includes('royal')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20346.png&h=200&w=200';
-        if (t.includes('gallants') || t.includes('marumo')) return 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20349.png&h=200&w=200';
-        return undefined;
+        else if (t.includes('sundowns')) logoUrl = 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2324.png&h=200&w=200';
+        else if (t.includes('pirates')) logoUrl = 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2327.png&h=200&w=200';
+        else if (t.includes('chiefs')) logoUrl = 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2323.png&h=200&w=200';
+        else if (t.includes('stellenbosch')) logoUrl = 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/18804.png&h=200&w=200';
+        else if (t.includes('city') && t.includes('cape')) logoUrl = 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/17724.png&h=200&w=200';
+        else if (t.includes('supersport')) logoUrl = 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2627.png&h=200&w=200';
+        else if (t.includes('amazulu')) logoUrl = 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2326.png&h=200&w=200';
+        else if (t.includes('arrows')) logoUrl = 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4556.png&h=200&w=200';
+        else if (t.includes('galaxy')) logoUrl = 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/19864.png&h=200&w=200';
+        else if (t.includes('sekhukhune')) logoUrl = 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20348.png&h=200&w=200';
+        else if (t.includes('chippa')) logoUrl = 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/13735.png&h=200&w=200';
+        else if (t.includes('richards')) logoUrl = 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20347.png&h=200&w=200';
+        else if (t.includes('polokwane')) logoUrl = 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/14107.png&h=200&w=200';
+        else if (t.includes('royal')) logoUrl = 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20346.png&h=200&w=200';
+        else if (t.includes('gallants') || t.includes('marumo')) logoUrl = 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20349.png&h=200&w=200';
+
+        // console.log(`GetLogo for ${teamName}: ${logoUrl}`);
+        return logoUrl;
+    };
+
+    // New component to handle image errors robustly
+    // New component to handle image errors robustly
+    const TeamLogo = ({ name, url }: { name: string, url?: string }) => {
+        const [imgError, setImgError] = useState(false);
+        const effectiveUrl = url || getTeamLogo(name);
+
+        if (effectiveUrl && !imgError) {
+            return (
+                <img
+                    src={effectiveUrl}
+                    alt={name}
+                    className="w-8 h-8 rounded-full object-contain bg-white shadow-sm p-0.5"
+                    onError={(e) => {
+                        console.warn(`Failed to load logo for ${name}: ${effectiveUrl}`);
+                        setImgError(true);
+                    }}
+                    referrerPolicy="no-referrer"
+                />
+            );
+        }
+
+        // Fallback: Colorful Initials
+        const initials = name.substring(0, 2).toUpperCase();
+        // Simple hash for consistent color
+        const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const colors = ['bg-blue-500', 'bg-green-500', 'bg-red-500', 'bg-yellow-500', 'bg-purple-500', 'bg-indigo-500', 'bg-orange-500', 'bg-pink-500'];
+        const colorClass = colors[hash % colors.length];
+
+        return (
+            <div className={`w-8 h-8 ${colorClass} rounded-full flex items-center justify-center font-bold text-white text-[10px] shadow-sm border border-white`}>
+                {initials}
+            </div>
+        );
     };
 
     // Convert UTC time to South African time (SAST = UTC+2)
@@ -273,14 +310,7 @@ export const LiveGamesView = () => {
                                                 <div className="flex items-center justify-end flex-1 space-x-3 text-right">
                                                     <span className="text-sm font-bold text-gray-900 hidden sm:block truncate">{fixture.homeTeam}</span>
                                                     <span className="text-xs font-bold text-gray-900 sm:hidden truncate max-w-[80px]">{fixture.homeTeam.substring(0, 3).toUpperCase()}</span>
-
-                                                    {fixture.homeLogo || getTeamLogo(fixture.homeTeam) ? (
-                                                        <img src={fixture.homeLogo || getTeamLogo(fixture.homeTeam)} alt={fixture.homeTeam} className="w-8 h-8 rounded-full object-contain bg-white shadow-sm p-0.5" />
-                                                    ) : (
-                                                        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-500 text-[10px] shadow-inner">
-                                                            {fixture.homeTeam.substring(0, 2)}
-                                                        </div>
-                                                    )}
+                                                    <TeamLogo name={fixture.homeTeam} url={fixture.homeLogo} />
                                                 </div>
 
                                                 {/* Center Status/Score/VS */}
@@ -311,14 +341,7 @@ export const LiveGamesView = () => {
 
                                                 {/* Away Team (Right) */}
                                                 <div className="flex items-center justify-start flex-1 space-x-3 text-left">
-                                                    {fixture.awayLogo || getTeamLogo(fixture.awayTeam) ? (
-                                                        <img src={fixture.awayLogo || getTeamLogo(fixture.awayTeam)} alt={fixture.awayTeam} className="w-8 h-8 rounded-full object-contain bg-white shadow-sm p-0.5" />
-                                                    ) : (
-                                                        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-500 text-[10px] shadow-inner">
-                                                            {fixture.awayTeam.substring(0, 2)}
-                                                        </div>
-                                                    )}
-
+                                                    <TeamLogo name={fixture.awayTeam} url={fixture.awayLogo} />
                                                     <span className="text-sm font-bold text-gray-900 hidden sm:block truncate">{fixture.awayTeam}</span>
                                                     <span className="text-xs font-bold text-gray-900 sm:hidden truncate max-w-[80px]">{fixture.awayTeam.substring(0, 3).toUpperCase()}</span>
                                                 </div>

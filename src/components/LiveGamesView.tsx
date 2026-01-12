@@ -61,6 +61,8 @@ export const LiveGamesView = () => {
         const awayTeam = fixture.awayTeam.toLowerCase();
         const league = fixture.league.toLowerCase();
 
+        console.log(`Checking Relevance: ${homeTeam} vs ${awayTeam} (${league})`);
+
         // Tier 1: South African context
         if (pslLeagues.some(l => league.includes(l))) return 1;
         if (league.includes('afcon') || league.includes('africa cup')) return 1;
@@ -76,7 +78,27 @@ export const LiveGamesView = () => {
     const loadFixtures = async () => {
         setIsLoading(true);
         setError(null);
+
+        // 1. Immediate Load: Use static Game Week fixtures so screen is never empty
+        const { pslFixtures } = await import('@/data/pslFixtures');
+        const staticFixtures = pslFixtures.map(f => ({
+            fixtureId: f.id,
+            league: 'Betway Premiership',
+            homeTeam: f.homeTeam,
+            awayTeam: f.awayTeam,
+            homeScore: null,
+            awayScore: null,
+            status: f.status === 'Scheduled' ? 'Not Started' : 'Finished',
+            time: f.time,
+            date: f.date,
+            tier: 1 // Always relevant
+        })) as unknown as (Fixture & { tier: number })[];
+
+        // Start with static data to avoid blank screen
+        setFixtures(staticFixtures.map(f => ({ ...f, time: convertToSATime(f.time) })));
+
         try {
+            // 2. Background Sync: Try to get fresh live data
             const data = await fetchFixtures();
 
             // Sort and filter: Include Tier 1 first, then Tier 2 if needed to fill up to 5
@@ -98,10 +120,16 @@ export const LiveGamesView = () => {
                 time: convertToSATime(fixture.time)
             }));
 
-            setFixtures(fixturesWithSATime);
+            console.log("Fixtures Loaded into View:", fixturesWithSATime);
+
+            // Only update if we actually found something relevant via API
+            if (fixturesWithSATime.length > 0) {
+                setFixtures(fixturesWithSATime);
+            }
         } catch (err) {
             console.error(err);
-            setError(err instanceof Error ? err.message : "Failed to load live games.");
+            // Don't show error to user if we have static data showing successfully
+            // setError(err instanceof Error ? err.message : "Failed to load live games.");
         } finally {
             setIsLoading(false);
         }

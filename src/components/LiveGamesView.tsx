@@ -237,63 +237,60 @@ export const LiveGamesView = () => {
                                 {dateLabel}
                             </h3>
                             <div className="flex flex-col gap-4">
-                                {dateFixtures.map((fixture) => (
+                                {dateFixtures.map(fixture => (
                                     <Card key={fixture.fixtureId} className="overflow-hidden hover:shadow-md transition-shadow">
-                                        <CardContent className="p-4">
-                                            {/* League & Status Row */}
-                                            <div className="flex items-center justify-between mb-3">
-                                                <div className="flex items-center text-xs text-blue-600 font-semibold">
-                                                    <Trophy className="h-3 w-3 mr-1" />
-                                                    <span className="truncate">{fixture.league}</span>
-                                                </div>
-                                                <Badge className={`${getStatusColor(fixture.status)} text-xs px-2 py-1`}>
-                                                    {getStatusText(fixture.status)}
-                                                </Badge>
-                                            </div>
+                                        <CardContent className="p-3">
+                                            <div className="flex items-center justify-between">
 
-                                            {/* Match Details */}
-                                            <div className="space-y-2">
-                                                {/* Home Team */}
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center space-x-2 flex-1 min-w-0">
-                                                        {fixture.homeLogo ? (
-                                                            <img src={fixture.homeLogo} alt={fixture.homeTeam} className="w-8 h-8 rounded-full flex-shrink-0 object-contain bg-white shadow-sm p-0.5" />
-                                                        ) : (
-                                                            <div className="w-8 h-8 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-gray-500 text-xs shadow-inner">
-                                                                {fixture.homeTeam.substring(0, 2)}
+                                                {/* Home Team (Left) */}
+                                                <div className="flex items-center justify-end flex-1 space-x-3 text-right">
+                                                    <span className="text-sm font-bold text-gray-900 hidden sm:block truncate">{fixture.homeTeam}</span>
+                                                    <span className="text-xs font-bold text-gray-900 sm:hidden truncate max-w-[80px]">{fixture.homeTeam.substring(0, 3).toUpperCase()}</span>
+
+                                                    {fixture.homeLogo ? (
+                                                        <img src={fixture.homeLogo} alt={fixture.homeTeam} className="w-8 h-8 rounded-full object-contain bg-white shadow-sm p-0.5" />
+                                                    ) : (
+                                                        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-500 text-[10px] shadow-inner">
+                                                            {fixture.homeTeam.substring(0, 2)}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Center Status/Score/VS */}
+                                                <div className="flex flex-col items-center justify-center w-24 px-1 mx-2 bg-gray-50 rounded py-1">
+                                                    {fixture.status === 'Not Started' ? (
+                                                        <>
+                                                            <div className="text-xs font-black text-gray-400 mb-0.5">VS</div>
+                                                            <div className="text-[10px] text-gray-500 font-mono">{fixture.time}</div>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <div className="flex items-center space-x-1 font-mono font-black text-lg text-gray-800">
+                                                                <span>{fixture.homeScore ?? 0}</span>
+                                                                <span className="text-gray-400 text-xs">-</span>
+                                                                <span>{fixture.awayScore ?? 0}</span>
                                                             </div>
-                                                        )}
-                                                        <span className="text-sm font-bold text-gray-900 truncate">{fixture.homeTeam}</span>
-                                                    </div>
-                                                    <span className="text-2xl font-bold font-mono text-gray-800 ml-2">{fixture.homeScore ?? '-'}</span>
+                                                            <Badge variant="outline" className={`${getStatusColor(fixture.status)} text-[8px] h-4 px-1 py-0`}>
+                                                                {fixture.status === 'In Progress' ? 'LIVE' : 'FT'}
+                                                            </Badge>
+                                                        </>
+                                                    )}
                                                 </div>
 
-                                                {/* Away Team */}
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center space-x-2 flex-1 min-w-0">
-                                                        {fixture.awayLogo ? (
-                                                            <img src={fixture.awayLogo} alt={fixture.awayTeam} className="w-8 h-8 rounded-full flex-shrink-0 object-contain bg-white shadow-sm p-0.5" />
-                                                        ) : (
-                                                            <div className="w-8 h-8 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-gray-500 text-xs shadow-inner">
-                                                                {fixture.awayTeam.substring(0, 2)}
-                                                            </div>
-                                                        )}
-                                                        <span className="text-sm font-bold text-gray-900 truncate">{fixture.awayTeam}</span>
-                                                    </div>
-                                                    <span className="text-2xl font-bold font-mono text-gray-800 ml-2">{fixture.awayScore ?? '-'}</span>
-                                                </div>
-                                            </div>
+                                                {/* Away Team (Right) */}
+                                                <div className="flex items-center justify-start flex-1 space-x-3 text-left">
+                                                    {fixture.awayLogo ? (
+                                                        <img src={fixture.awayLogo} alt={fixture.awayTeam} className="w-8 h-8 rounded-full object-contain bg-white shadow-sm p-0.5" />
+                                                    ) : (
+                                                        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-500 text-[10px] shadow-inner">
+                                                            {fixture.awayTeam.substring(0, 2)}
+                                                        </div>
+                                                    )}
 
-                                            {/* Time & Broadcast */}
-                                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                                                <div className="flex items-center text-xs text-gray-500">
-                                                    <Clock className="h-3 w-3 mr-1" />
-                                                    <span className="font-semibold">{fixture.time} SAST</span>
+                                                    <span className="text-sm font-bold text-gray-900 hidden sm:block truncate">{fixture.awayTeam}</span>
+                                                    <span className="text-xs font-bold text-gray-900 sm:hidden truncate max-w-[80px]">{fixture.awayTeam.substring(0, 3).toUpperCase()}</span>
                                                 </div>
-                                                <div className="flex items-center text-xs text-gray-400">
-                                                    <Tv className="h-3 w-3 mr-1" />
-                                                    <span>Live</span>
-                                                </div>
+
                                             </div>
                                         </CardContent>
                                     </Card>

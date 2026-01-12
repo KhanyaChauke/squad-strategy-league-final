@@ -4,7 +4,7 @@ import { Shield, Flag } from 'lucide-react';
 
 // Import jersey images for player representation
 import sundownsJersey from '@/assets/jerseys/sundowns-jersey.png';
-import piratesJersey from '@/assets/jerseys/pirates-jersey.png';
+import piratesJersey from '@/assets/jerseys/pirates-jersey.jpg';
 import chiefsJersey from '@/assets/jerseys/chiefs-jersey.jpg';
 import capeTownCityJersey from '@/assets/jerseys/cape-town-city-jersey.png';
 import supersportJersey from '@/assets/jerseys/supersport-jersey.png';

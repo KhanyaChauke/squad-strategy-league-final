@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { db } from '@/integrations/firebase/client';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { Trophy, TrendingUp, Star, Users, Target } from 'lucide-react';
+import { getTeamKit } from '@/data/teamKits';
 
 // Sample data removed to prevent false information
 const sampleStandings: PSLStanding[] = [];
@@ -197,7 +198,21 @@ export const PSLDashboard = () => {
                               {team.rank}
                             </Badge>
                           </TableCell>
-                          <TableCell className="font-medium">{team.team}</TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              {getTeamKit(team.team)?.homeKit && (
+                                <img
+                                  src={getTeamKit(team.team)?.homeKit}
+                                  alt={team.team}
+                                  className="h-8 w-8 object-contain rounded-sm"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                  }}
+                                />
+                              )}
+                              <span>{team.team}</span>
+                            </div>
+                          </TableCell>
                           <TableCell className="text-center">{team.played}</TableCell>
                           <TableCell className="text-center">{team.win}</TableCell>
                           <TableCell className="text-center">{team.draw}</TableCell>
@@ -267,7 +282,19 @@ export const PSLDashboard = () => {
                       <TableCell className="w-8 font-bold text-gray-500">#{scorer.rank}</TableCell>
                       <TableCell>
                         <div className="font-semibold">{scorer.player}</div>
-                        <div className="text-xs text-gray-500">{scorer.team}</div>
+                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                          {getTeamKit(scorer.team)?.homeKit && (
+                            <img
+                              src={getTeamKit(scorer.team)?.homeKit}
+                              alt={scorer.team}
+                              className="h-4 w-4 object-contain"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          )}
+                          {scorer.team}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right font-bold text-green-600">
                         {scorer.goals} <span className="text-xs font-normal text-gray-400">Goals</span>
@@ -308,6 +335,16 @@ export const PSLDashboard = () => {
                   <div className="space-y-1">
                     <CardTitle className="text-lg">{player.name}</CardTitle>
                     <CardDescription className="flex items-center gap-2">
+                      {getTeamKit(player.team)?.homeKit && (
+                        <img
+                          src={getTeamKit(player.team)?.homeKit}
+                          alt={player.team}
+                          className="h-6 w-6 object-contain rounded-sm"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      )}
                       <span>{player.team}</span>
                       <Badge className={getPositionColor(player.position)} variant="outline">
                         {player.position}

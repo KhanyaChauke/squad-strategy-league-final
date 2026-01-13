@@ -42,12 +42,14 @@ export const teamKits: Record<string, TeamKit> = {
     'SuperSport United': {
         teamName: 'SuperSport United',
         homeKit: '', // No image available yet
-        awayKit: ''
+        awayKit: '',
+        logo: '' // No distinct logo found in list, might be one of the screenshots or missing
     },
     'Cape Town City': {
         teamName: 'Cape Town City',
         homeKit: '', // No image available yet
-        awayKit: ''
+        awayKit: '',
+        logo: '' // No distinct logo found in list
     },
     'TS Galaxy': {
         teamName: 'TS Galaxy',
@@ -108,6 +110,24 @@ export const teamKits: Record<string, TeamKit> = {
         homeKit: '/jerseys/Orbit college.jpeg',
         awayKit: '',
         logo: '/logos/Magesi FC logo.png'
+    },
+    'Durban City': {
+        teamName: 'Durban City',
+        homeKit: '', // No jersey yet
+        awayKit: '',
+        logo: '/logos/Durban City FC logo.png'
+    },
+    'Orbit College FC': {
+        teamName: 'Orbit College FC',
+        homeKit: '', // No jersey yet
+        awayKit: '',
+        logo: '/logos/Orbit College logo.png'
+    },
+    'Siwelele': {
+        teamName: 'Siwelele', // Assuming Royal AM alias or separate
+        homeKit: '/jerseys/siwelele fc.jpeg',
+        awayKit: '',
+        logo: '/logos/Siwelele FC logo.png'
     }
 };
 

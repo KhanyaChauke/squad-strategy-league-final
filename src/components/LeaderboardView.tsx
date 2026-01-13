@@ -17,6 +17,8 @@ interface LeaderboardEntry {
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { pslStandings } from "@/data/pslStandings";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { UserTeamView } from "./UserTeamView";
 
 export const LeaderboardView = () => {
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -59,6 +61,7 @@ export const LeaderboardView = () => {
 
         fetchLeaderboard();
     }, []);
+
 
     // Helper to get static logos (Duplicated from LiveGamesView for consistency)
     const getTeamLogo = (teamName: string): string | undefined => {
@@ -109,6 +112,14 @@ export const LeaderboardView = () => {
         }
     };
 
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+    const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+
+    const handleUserClick = (userId: string) => {
+        setSelectedUserId(userId);
+        setIsTeamModalOpen(true);
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -121,7 +132,7 @@ export const LeaderboardView = () => {
             <Card>
                 <CardHeader>
                     <CardTitle>Top 50 Managers</CardTitle>
-                    <CardDescription>Global rankings updated after every gameweek.</CardDescription>
+                    <CardDescription>Global rankings updated after every gameweek. Click a manager to view their squad.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {isLoading ? (
@@ -153,7 +164,11 @@ export const LeaderboardView = () => {
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
                                     {leaderboard.map((entry) => (
-                                        <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
+                                        <tr
+                                            key={entry.id}
+                                            className="hover:bg-gray-50 transition-colors cursor-pointer group"
+                                            onClick={() => handleUserClick(entry.id)}
+                                        >
                                             <td className="px-2 py-2 md:px-6 md:py-4 whitespace-nowrap">
                                                 <div className="flex items-center justify-center md:justify-start">
                                                     {getRankIcon(entry.rank)}
@@ -161,11 +176,11 @@ export const LeaderboardView = () => {
                                             </td>
                                             <td className="px-2 py-2 md:px-6 md:py-4">
                                                 <div className="flex items-center">
-                                                    <div className="hidden md:block bg-blue-100 p-2 rounded-full mr-3">
+                                                    <div className="hidden md:block bg-blue-100 p-2 rounded-full mr-3 group-hover:bg-blue-200 transition-colors">
                                                         <UserIcon className="h-5 w-5 text-blue-600" />
                                                     </div>
                                                     <div>
-                                                        <div className="font-bold text-gray-900 text-xs md:text-base truncate max-w-[120px] md:max-w-none">{entry.teamName}</div>
+                                                        <div className="font-bold text-gray-900 text-xs md:text-base truncate max-w-[120px] md:max-w-none group-hover:text-blue-600 transition-colors">{entry.teamName}</div>
                                                         <div className="text-[10px] md:text-xs text-gray-500 truncate max-w-[120px] md:max-w-none">{entry.managerName}</div>
                                                     </div>
                                                 </div>
@@ -186,6 +201,19 @@ export const LeaderboardView = () => {
                     )}
                 </CardContent>
             </Card>
+
+            <Dialog open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen}>
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto w-full p-2 sm:p-6 bg-white/95 backdrop-blur-3xl">
+                    <DialogHeader className="mb-2">
+                        <DialogTitle>Team Viewer</DialogTitle>
+                    </DialogHeader>
+                    {selectedUserId && (
+                        <div className="mt-2">
+                            <UserTeamView userId={selectedUserId} onClose={() => setIsTeamModalOpen(false)} />
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

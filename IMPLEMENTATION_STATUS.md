@@ -19,7 +19,7 @@ This document tracks the completion status of the core features for the Squad St
 - [x] **Player Cards:** FIFA-style card components with dynamic jerseys.
 
 ## 🟢 3. Game Loop & Simulation (COMPLETED)
-- [x] **Gameweek Logic:** Algorithm to calculate points based on stats.
+- [x] **Gameweek Logic:** Algorithm to calculate po ints based on stats.
 - [x] **Simulation Engine:** Admin function to run gameweeks globally.
 - [x] **Scoring:** Points for Goals, Assists, Clean Sheets tailored to positions.
 

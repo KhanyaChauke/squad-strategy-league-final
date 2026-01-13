@@ -70,6 +70,14 @@ export const PSLDashboard = () => {
 
         setTopPlayers(playersData);
 
+        if (selectedSeason === '2025/2026') {
+          console.log("Forcing static data for 2025/2026 (Hardcoded mode)");
+          const { pslStandings } = await import('@/data/pslStandings');
+          setStandings(pslStandings);
+          setLoading(false);
+          return; // Exit early to avoid overwrites
+        }
+
         // 2. Fetch Standings (Db First Strategy)
         const { getSeasonStandingsFromDb, saveSeasonStandings } = await import('@/services/standingsDb');
 

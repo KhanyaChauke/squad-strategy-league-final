@@ -12,7 +12,7 @@ export interface PSLStanding {
     form: string[]; // ['W', 'D', 'L', 'W', 'W']
 }
 
-// Updated snapshot based on user provided table
+// Updated snapshot based on user provided table (Orlando Pirates 1st)
 export const pslStandings: PSLStanding[] = [
     { rank: 1, team: 'Orlando Pirates', played: 12, won: 9, drawn: 1, lost: 2, goalsFor: 18, goalsAgainst: 5, goalDifference: 13, points: 28, form: ['W', 'W', 'W', 'L', 'W'] },
     { rank: 2, team: 'Mamelodi Sundowns', played: 13, won: 7, drawn: 5, lost: 1, goalsFor: 20, goalsAgainst: 7, goalDifference: 13, points: 26, form: ['W', 'D', 'W', 'D', 'W'] },

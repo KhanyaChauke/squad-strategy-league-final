@@ -23,9 +23,11 @@ export const getStoredNewsApiKey = () => {
 };
 
 const NEWS_API_ORG_KEY = "92c9846c875047eeac8fda27eeacb14d";
-const HARDCODED_API_KEY = "1a5d324f62mshf82070b791b2f3ap10994fjsnd9dc8ed92749"; // Legacy RapidAPI key
+const HARDCODED_API_KEY = "1a5d324f62mshf82070b791b2f3ap10994fjsnd9dc8ed92749"; // Legacy RapidAPI key (LiveScore)
+const API_FOOTBALL_KEY = "1a5d324f62mshf82070b791b2f3ap10994fjsnd9dc8ed92749";
 const GNEWS_API_KEY = "46b746a39e92802f3adcc087019909cc";
 const JINA_API_KEY = "jina_dbf46d3721184e1caf32abf59aca6abe1GfgenzyFdPyFlnA9c3ZT3bs3J-k";
+
 
 const CACHE_KEY_NEWS = 'cached_psl_news_v2';
 const CACHE_KEY_FIXTURES = 'cached_live_fixtures';
@@ -285,7 +287,8 @@ const syncFromGNews = async (apiKey: string): Promise<{ success: boolean; error?
 const syncFromJina = async (apiKey: string): Promise<boolean> => {
     try {
         console.log("Fetching news from Jina DeepSearch...");
-        const query = 'South African PSL Football News latest scores updates today this week';
+        // More specific query to get STORIES, not landing pages
+        const query = '"Betway Premiership" OR "Kaizer Chiefs" OR "Orlando Pirates" OR "Mamelodi Sundowns" OR "PSL" transfer news match report interview';
 
         const response = await fetch(`https://s.jina.ai/${encodeURIComponent(query)}`, {
             method: 'GET',
@@ -302,17 +305,26 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
         }
 
         const responseData = await response.json();
-        // handling potential structure difference: { data: [...] } or just [...]
         const articles = responseData.data || responseData;
 
         if (Array.isArray(articles) && articles.length > 0) {
-            // await clearNewsCollection(); // Removed for aggregation
             const syncTime = Timestamp.now();
             console.log(`Synced ${articles.length} articles from Jina`);
+
+            let validArticlesCount = 0;
 
             for (const item of articles) {
                 const title = item.title || 'Football News';
                 const lowerTitle = title.toLowerCase();
+
+                // Aggressive filtering of generic landing pages/meta titles
+                if (lowerTitle.includes('live scores') && lowerTitle.includes('results')) continue;
+                if (lowerTitle === 'soccer news' || lowerTitle === 'football news') continue;
+                if (lowerTitle.includes('welcome to')) continue;
+                if (lowerTitle.includes('login')) continue;
+                if (lowerTitle.includes('register')) continue;
+                if (title.split(' ').length < 4) continue; // Skip very short titles (likely nav items)
+
                 const description = item.description || item.content?.slice(0, 200) || 'Click to read more';
 
                 let tag = 'Soccer';
@@ -331,10 +343,8 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
 
                 const docId = btoa(item.url || title).slice(0, 20);
 
-                // Try to find a date in Jina response (often 'publishedTime' or 'date')
                 const rawDate = item.publishedTime || item.date || item.publishedAt;
 
-                // Filter out news older than 7 days if date is present
                 if (rawDate) {
                     const dateObj = new Date(rawDate);
                     const diffTime = Math.abs(Date.now() - dateObj.getTime());
@@ -342,7 +352,6 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
                     if (diffDays > 7) continue;
                 }
 
-                // Default to yesterday for undated items so they don't displace confirmed fresh news
                 const publishedAt = rawDate ? Timestamp.fromDate(new Date(rawDate)) : Timestamp.fromMillis(Date.now() - 86400000);
                 const displayDate = rawDate ? formatRelativeTime(rawDate) : 'Recent';
 
@@ -353,7 +362,6 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
                     publishedAt,
                     syncedAt: syncTime,
                     source: 'Jina/Web',
-                    // Jina search might give images in 'image' or 'imageUrl'
                     imageUrl: item.image || item.imageUrl || item.thumbnail || getFallbackImage(title),
                     tag,
                     tagColor,
@@ -361,8 +369,9 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
                 };
 
                 await setDoc(doc(db, 'news', docId), newsData, { merge: true });
+                validArticlesCount++;
             }
-            return true;
+            return validArticlesCount > 0;
         }
         return false;
     } catch (e) {
@@ -591,7 +600,7 @@ export const fetchFixtures = async (apiKey?: string): Promise<Fixture[]> => {
         const shouldSync = Date.now() - lastSync > (1000 * 60 * 10);
 
         if (shouldSync) {
-            console.log('Syncing fixtures with API...');
+            console.log('Syncing fixtures... (Prioritizing API-Football)');
             await syncFixturesWithAPI(apiKey);
             const freshSnapshot = await getDocs(q);
             const freshData = freshSnapshot.docs.map(doc => ({
@@ -666,9 +675,23 @@ const isPSLRelevant = (stage: any, event: any) => {
 };
 
 const syncFixturesWithAPI = async (apiKey?: string) => {
+    // 1. Try API-Football First (Gold Standard)
+    try {
+        const success = await syncFixturesWithApiFootball();
+        if (success) {
+            console.log("API-Football Fixture Sync Successful");
+            return;
+        }
+    } catch (e) {
+        console.warn("API-Football Fixture Sync Failed, falling back...", e);
+    }
+
+    // 2. Fallback to RapidAPI (LiveScore)
     const effectiveKey = import.meta.env.VITE_RAPID_API_KEY || apiKey || getStoredNewsApiKey();
     if (!effectiveKey) return;
     const apiHost = 'livescore6.p.rapidapi.com';
+
+    console.log("Attempting RapidAPI Fallback for fixtures...");
 
     try {
         const response = await fetch(`https://${apiHost}/matches/v2/list-live?category=soccer`, {
@@ -713,6 +736,136 @@ const syncFixturesWithAPI = async (apiKey?: string) => {
         }
     } catch (e) {
         console.error("Fixture API Sync failed:", e);
+    }
+};
+
+// --- API-Football Integration (RapidAPI) ---
+
+const syncFixturesWithApiFootball = async (): Promise<boolean> => {
+    // API-Football Host
+    const apiHost = 'api-football-v1.p.rapidapi.com';
+    const leagueId = 288; // South Africa Premier Soccer League
+    const season = 2025; // Current Season
+
+    // 1. Live Fixtures
+    const liveUrl = `https://${apiHost}/v3/fixtures?league=${leagueId}&season=${season}&live=all`;
+
+    try {
+        const resp = await fetch(liveUrl, {
+            method: 'GET',
+            headers: {
+                'X-RapidAPI-Key': API_FOOTBALL_KEY,
+                'X-RapidAPI-Host': apiHost
+            }
+        });
+
+        const json = await resp.json();
+
+        // If not authenticated or error
+        if (json.errors && Object.keys(json.errors).length > 0) {
+            console.error("API-Football Error:", json.errors);
+            return false;
+        }
+
+        const syncTime = Timestamp.now();
+        let processedCount = 0;
+
+        if (json.response && Array.isArray(json.response)) {
+            for (const item of json.response) {
+                // Mapping
+                const fixture = item.fixture;
+                const home = item.teams.home;
+                const away = item.teams.away;
+                const goals = item.goals;
+
+                let status: Fixture['status'] = 'Not Started';
+                const shortStatus = fixture.status.short;
+
+                if (['1H', '2H', 'HT', 'ET', 'P', 'LIVE'].includes(shortStatus)) status = 'In Progress';
+                else if (['FT', 'AET', 'PEN'].includes(shortStatus)) status = 'Finished';
+                else if (['PST', 'CANC', 'ABD'].includes(shortStatus)) status = 'Postponed';
+
+                const fixtureData = {
+                    league: item.league.name || 'Betway Premiership',
+                    homeTeam: home.name,
+                    awayTeam: away.name,
+                    homeScore: goals.home,
+                    awayScore: goals.away,
+                    status: status,
+                    time: fixture.date ? new Date(fixture.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBD',
+                    date: fixture.date ? fixture.date.split('T')[0] : new Date().toISOString().split('T')[0],
+                    syncedAt: syncTime,
+                    homeLogo: home.logo,
+                    awayLogo: away.logo
+                };
+
+                await setDoc(doc(db, 'fixtures', String(fixture.id)), fixtureData, { merge: true });
+                processedCount++;
+            }
+        }
+
+        // If no live games, maybe fetch scheduled? 
+        // For now, return true if we didn't error, even if 0 results (means no games live)
+        if (processedCount === 0) {
+            console.log("No LIVE games currently on API-Football.");
+        }
+        return true;
+    } catch (e) {
+        console.error("API-Football Live Sync Error", e);
+        return false;
+    }
+};
+
+const syncStandingsWithApiFootball = async (): Promise<boolean> => {
+    // API-Football Host
+    const apiHost = 'api-football-v1.p.rapidapi.com';
+    const leagueId = 288; // South Africa Premier Soccer League
+    // Start with 2024 if 2025 is not active yet in backend, but user specified 2025/2026
+    const season = 2025;
+
+    // v3 Endpoint
+    const url = `https://${apiHost}/v3/standings?league=${leagueId}&season=${season}`;
+
+    try {
+        const resp = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'X-RapidAPI-Key': API_FOOTBALL_KEY,
+                'X-RapidAPI-Host': apiHost
+            }
+        });
+        const json = await resp.json();
+
+        if (json.response && json.response.length > 0) {
+            const leagueData = json.response[0].league;
+            if (leagueData && leagueData.standings && leagueData.standings.length > 0) {
+                const rows = leagueData.standings[0]; // Usually first array is the total table
+                const syncTime = Timestamp.now();
+
+                for (const row of rows) {
+                    const standing: PSLStanding & { syncedAt: any } = {
+                        rank: row.rank,
+                        team: row.team.name,
+                        played: row.all.played,
+                        win: row.all.win,
+                        draw: row.all.draw,
+                        loss: row.all.lose,
+                        goalsFor: row.all.goals.for,
+                        goalsAgainst: row.all.goals.against,
+                        goalDifference: row.goalsDiff,
+                        points: row.points,
+                        syncedAt: syncTime
+                    };
+                    await setDoc(doc(db, 'standings', `rank_${standing.rank}`), standing);
+                }
+                console.log("API-Football Standings Sync Successful");
+                return true;
+            }
+        }
+        return false;
+    } catch (e) {
+        console.error("API-Football Standings Sync Error", e);
+        return false;
     }
 };
 
@@ -852,6 +1005,15 @@ export const fetchStandings = async (apiKey?: string): Promise<PSLStanding[]> =>
 };
 
 const syncStandingsWithAPI = async (apiKey?: string) => {
+    // 1. API-Football Priority
+    try {
+        const success = await syncStandingsWithApiFootball();
+        if (success) return; // Exit if successful
+    } catch (e) {
+        console.warn("API-Football Standings Sync Failed, falling back...", e);
+    }
+
+    // 2. RapidAPI Fallback
     const effectiveKey = import.meta.env.VITE_RAPID_API_KEY || apiKey || getStoredNewsApiKey();
     if (!effectiveKey) return;
     const apiHost = 'livescore6.p.rapidapi.com';

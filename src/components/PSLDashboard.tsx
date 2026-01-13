@@ -83,6 +83,14 @@ export const PSLDashboard = () => {
             // Live Season: Fetch from API
             const { fetchStandings } = await import('@/services/newsService');
             fetchedStandings = await fetchStandings();
+
+            // Fallback to static data if API/DB returns nothing
+            if (!fetchedStandings || fetchedStandings.length === 0) {
+              console.log("No live standings found, falling back to static 2026 snapshot.");
+              const { pslStandings } = await import('@/data/pslStandings');
+              fetchedStandings = pslStandings;
+            }
+
             if (fetchedStandings && fetchedStandings.length > 0) {
               await saveSeasonStandings(selectedSeason, fetchedStandings);
             }

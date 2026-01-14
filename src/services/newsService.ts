@@ -288,7 +288,7 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
     try {
         console.log("Fetching news from Jina DeepSearch...");
         // More specific query to get STORIES, not landing pages - slightly broadened
-        const query = '"Betway Premiership" OR "Kaizer Chiefs" OR "Orlando Pirates" OR "Mamelodi Sundowns" OR "PSL" news';
+        const query = 'Betway Premiership OR Kaizer Chiefs OR Orlando Pirates OR Mamelodi Sundowns OR Sundowns OR PSL football news';
 
         const response = await fetch(`https://s.jina.ai/${encodeURIComponent(query)}`, {
             method: 'GET',

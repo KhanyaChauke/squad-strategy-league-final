@@ -225,7 +225,7 @@ const syncFromGNews = async (apiKey: string): Promise<{ success: boolean; error?
     try {
         console.log("Fetching news from GNews...");
         // Search for specific SA football terms, with broader fallback tags
-        const query = 'psl OR "kaizer chiefs" OR "orlando pirates" OR sundowns OR "bafana bafana" OR soccer OR football';
+        const query = '"South African football" OR PSL OR "Betway Premiership" OR "Bafana Bafana" OR "Kaizer Chiefs" OR "Orlando Pirates" OR Sundowns';
         const response = await fetch(`https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&country=za&max=10&apikey=${apiKey}`);
         const data = await response.json();
 
@@ -287,8 +287,8 @@ const syncFromGNews = async (apiKey: string): Promise<{ success: boolean; error?
 const syncFromJina = async (apiKey: string): Promise<boolean> => {
     try {
         console.log("Fetching news from Jina DeepSearch...");
-        // More specific query to get STORIES, not landing pages - slightly broadened
-        const query = 'Betway Premiership OR Kaizer Chiefs OR Orlando Pirates OR Mamelodi Sundowns OR Sundowns OR PSL football news';
+        // Broad query for EVERYTHING South African football
+        const query = 'South African football news PSL "Betway Premiership" "Bafana Bafana" transfers match reports';
 
         const response = await fetch(`https://s.jina.ai/${encodeURIComponent(query)}`, {
             method: 'GET',
@@ -309,7 +309,7 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
 
         if (Array.isArray(articles) && articles.length > 0) {
             const syncTime = Timestamp.now();
-            console.log(`Synced ${articles.length} articles from Jina`);
+            console.log(`[Jina Debug] Articles found: ${articles.length}`);
 
             let validArticlesCount = 0;
 
@@ -317,11 +317,12 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
                 const title = item.title || 'Football News';
                 const lowerTitle = title.toLowerCase();
 
+                console.log(`[Jina Debug] Processing: "${title}"`);
+
                 // Aggressive filtering of generic landing pages/meta titles
-                if (lowerTitle.includes('live scores') && lowerTitle.includes('results')) continue;
-                if (lowerTitle === 'soccer news' || lowerTitle === 'football news') continue;
-                if (lowerTitle.includes('welcome to') && lowerTitle.includes('login')) continue;
-                // Removed the < 4 words filter as "Chiefs win derby" is valid news (3 words)
+                if (lowerTitle.includes('live scores') && lowerTitle.includes('results')) { console.log('  -> Rejected: Live Scores'); continue; }
+                if (lowerTitle === 'soccer news' || lowerTitle === 'football news') { console.log('  -> Rejected: Generic Title'); continue; }
+                if (lowerTitle.includes('welcome to') && lowerTitle.includes('login')) { console.log('  -> Rejected: Login Page'); continue; }
 
                 const description = item.description || item.content?.slice(0, 200) || 'Click to read more';
 
@@ -350,18 +351,29 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
                     if (!isNaN(dateObj.getTime())) {
                         const diffTime = Math.abs(Date.now() - dateObj.getTime());
                         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                        if (diffDays > 14) continue;
+                        if (diffDays > 21) {
+                            console.log(`  -> Rejected: Too old (${diffDays} days)`);
+                            continue;
+                        }
                     }
                 }
 
-                const publishedAt = rawDate ? Timestamp.fromDate(new Date(rawDate)) : Timestamp.fromMillis(Date.now() - 86400000);
+                // --- Fix: Ensure publishedAt is valid before saving ---
+                let publishedTimestamp;
+                try {
+                    publishedTimestamp = rawDate ? Timestamp.fromDate(new Date(rawDate)) : Timestamp.fromMillis(Date.now() - 86400000);
+                } catch (e) {
+                    console.log("  -> Invalid Date for Timestamp, using Now");
+                    publishedTimestamp = Timestamp.now();
+                }
+
                 const displayDate = rawDate ? formatRelativeTime(rawDate) : 'Recent';
 
                 const newsData = {
                     title,
                     summary: description,
                     date: displayDate,
-                    publishedAt,
+                    publishedAt: publishedTimestamp,
                     syncedAt: syncTime,
                     source: 'Jina/Web',
                     imageUrl: item.image || item.imageUrl || item.thumbnail || getFallbackImage(title),
@@ -371,8 +383,10 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
                 };
 
                 await setDoc(doc(db, 'news', docId), newsData, { merge: true });
+                console.log(`  -> [Accepted]: ${title}`);
                 validArticlesCount++;
             }
+            console.log(`[Jina Debug] Total Valid Saved: ${validArticlesCount}`);
             return validArticlesCount > 0;
         }
         return false;

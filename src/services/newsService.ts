@@ -221,20 +221,31 @@ export const syncNewsWithAPI = async (apiKey: string) => {
 
 
 
+const PROXY_URL = "https://corsproxy.io/?";
+
 const syncFromGNews = async (apiKey: string): Promise<{ success: boolean; error?: string }> => {
     try {
         console.log("Fetching news from GNews...");
-        // Search for specific SA football terms, with broader fallback tags
         const query = '"South African football" OR PSL OR "Betway Premiership" OR "Bafana Bafana" OR "Kaizer Chiefs" OR "Orlando Pirates" OR Sundowns';
-        const response = await fetch(`https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&country=za&max=10&apikey=${apiKey}`);
+        const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&country=za&max=10&apikey=${apiKey}`;
+
+        let response;
+        try {
+            // Try direct first
+            response = await fetch(url);
+            if (!response.ok) throw new Error(`Direct status: ${response.status}`);
+        } catch (e) {
+            console.log("GNews Direct fetch failed, switching to proxy...");
+            response = await fetch(`${PROXY_URL}${encodeURIComponent(url)}`);
+        }
+
         const data = await response.json();
 
-        if (response.status !== 200) {
+        if (response.status !== 200 && !response.ok) {
             return { success: false, error: data.errors?.[0] || `GNews Error ${response.status}` };
         }
 
         if (data.articles && Array.isArray(data.articles) && data.articles.length > 0) {
-            // await clearNewsCollection(); // Removed for aggregation
             const syncTime = Timestamp.now();
             console.log(`Synced ${data.articles.length} articles from GNews`);
 
@@ -256,9 +267,8 @@ const syncFromGNews = async (apiKey: string): Promise<{ success: boolean; error?
                     tagColor = 'bg-green-600';
                 }
 
-                const docId = btoa(item.url).slice(0, 20);
-                // Default to yesterday for undated items so they don't displace confirmed fresh news
-                const publishedAt = item.publishedAt ? Timestamp.fromDate(new Date(item.publishedAt)) : Timestamp.fromMillis(Date.now() - 86400000);
+                const docId = btoa(item.url || title).slice(0, 20);
+                const publishedAt = item.publishedAt ? Timestamp.fromDate(new Date(item.publishedAt)) : Timestamp.now();
 
                 const newsData = {
                     title,
@@ -276,11 +286,11 @@ const syncFromGNews = async (apiKey: string): Promise<{ success: boolean; error?
                 await setDoc(doc(db, 'news', docId), newsData, { merge: true });
             }
             return { success: true };
-        } else {
-            return { success: false, error: "Invalid GNews response format" };
         }
-    } catch (e) {
-        return { success: false, error: e instanceof Error ? e.message : "GNews Network Error" };
+        return { success: false, error: "No articles found" };
+    } catch (e: any) {
+        console.error("GNews Sync failed:", e);
+        return { success: false, error: e.message };
     }
 };
 
@@ -397,80 +407,67 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
 };
 
 const syncFromNewsOrg = async (apiKey: string): Promise<boolean> => {
+    // NewsAPI free plan blocks browser requests ('Upgrade Required' 426). We MUST use a proxy.
     try {
-        // Use 'everything' endpoint to get older news (up to 2 weeks) if necessary to fill the quota
-        // AND ensure we get enough relevant content.
-        // Use 'everything' endpoint to get older news (up to 1 week)
+        console.log("Fetching news from NewsAPI.org (via Proxy)...");
         const fromDate = getOneWeekAgoDate();
         const query = '(soccer OR football OR psl OR "kaizer chiefs" OR "orlando pirates" OR sundowns OR "bafana bafana")';
 
-        // We use 'everything' instead of 'top-headlines' to get a broader history
-        const response = await fetch(`https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&from=${fromDate}&sortBy=publishedAt&language=en&apiKey=${apiKey}`);
+        const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&from=${fromDate}&sortBy=publishedAt&language=en&apiKey=${apiKey}`;
+        const encodedUrl = encodeURIComponent(url);
+
+        // Use proxy for NewsAPI
+        const response = await fetch(`${PROXY_URL}${encodedUrl}`);
+
+        if (!response.ok) {
+            const errText = await response.text();
+            console.error(`NewsAPI Error: ${response.status} - ${errText}`);
+            return false;
+        }
+
         const data = await response.json();
-
-        if (data.status === 'ok' && Array.isArray(data.articles) && data.articles.length > 0) {
-            // await clearNewsCollection(); // Removed for aggregation
+        if (data.status === 'ok' && Array.isArray(data.articles)) {
             const syncTime = Timestamp.now();
-            console.log(`Synced ${data.articles.length} articles from NewsAPI.org (Everything)`);
+            console.log(`Synced ${data.articles.length} articles from NewsAPI`);
 
-            let savedCount = 0;
-
+            let validCount = 0;
             for (const item of data.articles) {
                 if (item.title === '[Removed]') continue;
 
-                const title = item.title;
-                const lowerTitle = title.toLowerCase();
-                const description = (item.description || '').toLowerCase();
-                const content = (item.content || '').toLowerCase();
-                const combinedText = `${lowerTitle} ${description} ${content}`;
-
-                // Strict Exclusion logic REMOVED to allow all content
-
-                const summary = item.description || item.content || 'Click to read full story.';
-
-                let tag = 'Soccer';
-                let tagColor = 'bg-blue-600';
-
-                if (lowerTitle.includes('chiefs') || lowerTitle.includes('pirates') || lowerTitle.includes('sundowns')) {
-                    tag = 'PSL Giants';
-                    tagColor = 'bg-yellow-600';
-                } else if (lowerTitle.includes('transfer') || lowerTitle.includes('sign') || lowerTitle.includes('deal')) {
-                    tag = 'Transfer News';
-                    tagColor = 'bg-purple-600';
-                } else if (lowerTitle.includes('bafana') || lowerTitle.includes('banyana')) {
-                    tag = 'National Team';
-                    tagColor = 'bg-green-600';
-                }
-
-                const docId = btoa(item.url).slice(0, 20);
-                // Default to yesterday for undated items
-                const publishedAt = item.publishedAt ? Timestamp.fromDate(new Date(item.publishedAt)) : Timestamp.fromMillis(Date.now() - 86400000);
-
                 const newsData = {
-                    title,
-                    summary,
-                    date: item.publishedAt ? formatRelativeTime(item.publishedAt) : 'Recent',
-                    publishedAt,
+                    title: item.title,
+                    summary: item.description || '',
+                    date: formatRelativeTime(item.publishedAt),
+                    publishedAt: Timestamp.fromDate(new Date(item.publishedAt)),
                     syncedAt: syncTime,
-                    source: item.source.name || 'NewsAPI',
-                    imageUrl: item.urlToImage || getFallbackImage(title),
-                    tag,
-                    tagColor,
+                    source: item.source.name,
+                    imageUrl: item.urlToImage || getFallbackImage(item.title),
+                    tag: 'World News',
+                    tagColor: 'bg-blue-500',
                     url: item.url
                 };
 
-                await setDoc(doc(db, 'news', docId), newsData, { merge: true });
-                savedCount++;
+                const lower = item.title.toLowerCase();
+                if (lower.includes('chiefs') || lower.includes('pirates') || lower.includes('sundowns')) {
+                    newsData.tag = 'PSL Giants'; newsData.tagColor = 'bg-yellow-600';
+                } else if (lower.includes('psl') || lower.includes('premiership')) {
+                    newsData.tag = 'PSL'; newsData.tagColor = 'bg-green-600';
+                }
+
+                await setDoc(doc(db, 'news', btoa(item.url || item.title).slice(0, 20)), newsData, { merge: true });
+                validCount++;
             }
-            return savedCount > 0;
-        } else {
-            console.error("NewsAPI Error:", data.message);
-            return false;
+            return validCount > 0;
         }
+        return false;
     } catch (e) {
         console.error("NewsAPI Sync failed:", e);
         return false;
     }
+};
+
+
+
 };
 
 const syncFromRapidAPI = async (effectiveKey: string): Promise<{ success: boolean; error?: string }> => {

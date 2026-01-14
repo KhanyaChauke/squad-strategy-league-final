@@ -184,38 +184,65 @@ const clearNewsCollection = async () => {
     }
 };
 
-export const syncNewsWithAPI = async (apiKey: string) => {
-    console.log("Starting Aggregated News Sync (Cross-referencing multiple platforms)...");
+// --- REFACTORED: SERVER-SIDE NEWS SYNC ---
+// All API keys and fetching logic are now in netlify/functions/news.js
+// This frontend function just calls our own backend.
 
-    // 1. Clear old news ONCE at the start
-    await clearNewsCollection();
+export const syncNewsWithAPI = async (apiKey?: string) => {
+    console.log("Starting News Sync via Netlify Function...");
 
-    // 2. Define sources
-    // We prioritize Jina (Deep Search) and NewsAPI (Mainstream) for cross-referencing
-    const syncTasks = [];
+    try {
+        await clearNewsCollection(); // Clear old news first
 
-    // Jina
-    const jinaKey = (apiKey && apiKey.startsWith('jina_')) ? apiKey : JINA_API_KEY;
-    if (jinaKey) {
-        syncTasks.push(syncFromJina(jinaKey).then(success => ({ source: 'Jina', success })));
-    }
+        // Call our Serverless Function
+        const response = await fetch('/.netlify/functions/news');
 
-    // NewsAPI
-    const newsKey = (apiKey && !apiKey.startsWith('jina_')) ? apiKey : NEWS_API_ORG_KEY;
-    if (newsKey) {
-        syncTasks.push(syncFromNewsOrg(newsKey).then(success => ({ source: 'NewsAPI', success })));
-    }
+        if (!response.ok) {
+            throw new Error(`Serverless Function failed: ${response.status}`);
+        }
 
-    // Execute in parallel to aggregate results
-    const results = await Promise.all(syncTasks);
-    const successCount = results.filter(r => r.success).length;
+        const data = await response.json();
 
-    console.log(`Sync completed. Successful sources: ${successCount}/${results.length}`);
+        if (data.error) {
+            throw new Error(data.error);
+        }
 
-    // 3. Fallback if everything failed
-    if (successCount === 0) {
-        console.log("All primary sources failed. Attempting GNews fallback...");
-        await syncFromGNews(GNEWS_API_KEY);
+        if (data.articles && Array.isArray(data.articles)) {
+            console.log(`Received ${data.articles.length} articles from backend (Source: ${data.source})`);
+
+            const syncTime = Timestamp.now();
+            let savedCount = 0;
+
+            for (const item of data.articles) {
+                // Ensure ID is safe
+                const docId = btoa(item.url || item.title).slice(0, 20);
+
+                const newsData = {
+                    title: item.title,
+                    summary: item.summary,
+                    date: formatRelativeTime(item.publishedAt),
+                    publishedAt: Timestamp.fromDate(new Date(item.publishedAt)),
+                    syncedAt: syncTime,
+                    source: item.source,
+                    imageUrl: item.imageUrl,
+                    tag: item.tag,
+                    tagColor: item.tagColor,
+                    url: item.url
+                };
+
+                await setDoc(doc(db, 'news', docId), newsData, { merge: true });
+                savedCount++;
+            }
+            console.log(`Successfully saved ${savedCount} articles to Firestore.`);
+            return true;
+        }
+
+        console.warn("Backend returned no articles.");
+        return false;
+
+    } catch (e) {
+        console.error("News Sync Failed:", e);
+        return false;
     }
 };
 

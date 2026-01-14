@@ -178,7 +178,7 @@ const Dashboard = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo Section */}
           <div className="flex items-center space-x-2 cursor-pointer" onClick={() => setCurrentView('news')}>
-            <Trophy className="h-8 w-8 text-green-600" />
+            <img src="/touchline-logo.jpg" alt="Touchline SA" className="h-8 w-8 rounded-full object-cover" />
             <span className="text-xl md:text-2xl font-bold text-green-600">Touchline SA</span>
           </div>
 

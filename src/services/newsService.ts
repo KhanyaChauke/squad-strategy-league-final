@@ -287,8 +287,8 @@ const syncFromGNews = async (apiKey: string): Promise<{ success: boolean; error?
 const syncFromJina = async (apiKey: string): Promise<boolean> => {
     try {
         console.log("Fetching news from Jina DeepSearch...");
-        // More specific query to get STORIES, not landing pages
-        const query = '"Betway Premiership" OR "Kaizer Chiefs" OR "Orlando Pirates" OR "Mamelodi Sundowns" OR "PSL" transfer news match report interview';
+        // More specific query to get STORIES, not landing pages - slightly broadened
+        const query = '"Betway Premiership" OR "Kaizer Chiefs" OR "Orlando Pirates" OR "Mamelodi Sundowns" OR "PSL" news';
 
         const response = await fetch(`https://s.jina.ai/${encodeURIComponent(query)}`, {
             method: 'GET',
@@ -320,10 +320,8 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
                 // Aggressive filtering of generic landing pages/meta titles
                 if (lowerTitle.includes('live scores') && lowerTitle.includes('results')) continue;
                 if (lowerTitle === 'soccer news' || lowerTitle === 'football news') continue;
-                if (lowerTitle.includes('welcome to')) continue;
-                if (lowerTitle.includes('login')) continue;
-                if (lowerTitle.includes('register')) continue;
-                if (title.split(' ').length < 4) continue; // Skip very short titles (likely nav items)
+                if (lowerTitle.includes('welcome to') && lowerTitle.includes('login')) continue;
+                // Removed the < 4 words filter as "Chiefs win derby" is valid news (3 words)
 
                 const description = item.description || item.content?.slice(0, 200) || 'Click to read more';
 
@@ -345,11 +343,15 @@ const syncFromJina = async (apiKey: string): Promise<boolean> => {
 
                 const rawDate = item.publishedTime || item.date || item.publishedAt;
 
+                // Filter out news older than 14 days (relaxed from 7) to ensure we get *some* news during quiet periods
                 if (rawDate) {
                     const dateObj = new Date(rawDate);
-                    const diffTime = Math.abs(Date.now() - dateObj.getTime());
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    if (diffDays > 7) continue;
+                    // Check if date is valid
+                    if (!isNaN(dateObj.getTime())) {
+                        const diffTime = Math.abs(Date.now() - dateObj.getTime());
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        if (diffDays > 14) continue;
+                    }
                 }
 
                 const publishedAt = rawDate ? Timestamp.fromDate(new Date(rawDate)) : Timestamp.fromMillis(Date.now() - 86400000);

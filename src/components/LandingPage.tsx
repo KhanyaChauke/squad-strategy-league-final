@@ -112,7 +112,7 @@ const LandingPage = () => {
           <div className="text-center max-w-4xl mx-auto">
             <div className="flex justify-center mb-6">
               <div className="bg-white/10 backdrop-blur-sm rounded-full p-4">
-                <Trophy className="h-16 w-16 text-yellow-400" />
+                <img src="/touchline-logo.jpg" alt="Touchline SA Logo" className="h-16 w-16 rounded-full object-cover" />
               </div>
             </div>
             <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white to-green-200 bg-clip-text text-transparent">

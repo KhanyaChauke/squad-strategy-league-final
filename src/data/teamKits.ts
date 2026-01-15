@@ -47,9 +47,9 @@ export const teamKits: Record<string, TeamKit> = {
     },
     'Cape Town City': {
         teamName: 'Cape Town City',
-        homeKit: '', // No image available yet
+        homeKit: '/jerseys/capetowncity.png',
         awayKit: '',
-        logo: '' // No distinct logo found in list
+        logo: '/logos/Cape Town City logo.png' // Assuming standard naming convention
     },
     'TS Galaxy': {
         teamName: 'TS Galaxy',

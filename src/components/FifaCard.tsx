@@ -114,7 +114,7 @@ export const FifaCard: React.FC<FifaCardProps> = ({
         <img
           src={getPlayerImage(player.team)}
           alt={player.team}
-          className={`${sizeClasses.image} object-contain pb-1 mix-blend-multiply brightness-105 contrast-125`}
+          className={`${sizeClasses.image} object-contain pb-1 mix-blend-multiply brightness-110 contrast-125 bg-transparent`}
         />
       </div>
 

@@ -275,7 +275,7 @@ export const PlayersView = () => {
             />
 
             {/* Action Buttons Overlay - Mobile optimized */}
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-xl flex flex-col justify-end p-2 z-10">
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-t-lg rounded-b-[2.5rem] flex flex-col justify-end p-2 z-10">
               <div className="space-y-2 mb-2">
                 <Button
                   onClick={() => handleAddPlayer(player)}

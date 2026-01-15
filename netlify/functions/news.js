@@ -54,7 +54,7 @@ const normalizeArticle = (item, source) => {
     };
 };
 
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
     const NEWS_API_KEY = process.env.NEWS_API_ORG_KEY;
     const GNEWS_API_KEY = process.env.GNEWS_API_KEY;
 

@@ -41,9 +41,9 @@ export const teamKits: Record<string, TeamKit> = {
     },
     'SuperSport United': {
         teamName: 'SuperSport United',
-        homeKit: '', // No image available yet
+        homeKit: '/jerseys/supersport.png',
         awayKit: '',
-        logo: '' // No distinct logo found in list, might be one of the screenshots or missing
+        logo: '/logos/SuperSport United logo.png' // Assuming standard naming convention
     },
     'Cape Town City': {
         teamName: 'Cape Town City',

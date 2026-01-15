@@ -91,7 +91,7 @@ export const fetchPSLNews = async (apiKey: string): Promise<NewsArticle[]> => {
         const isSyncStale = Date.now() - lastSyncTime > (1000 * 60 * 60 * 12);
         const isContentStale = Date.now() - latestArticleTime > (1000 * 60 * 60 * 48);
 
-        const shouldSync = true; // FORCE SYNC ENABLED TEMPORARILY
+        const shouldSync = isSyncStale || isContentStale;
 
 
         if (shouldSync) {

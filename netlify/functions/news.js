@@ -76,7 +76,7 @@ export const handler = async (event, context) => {
         if (NEWS_API_KEY) {
             try {
                 const start = getOneWeekAgoDate();
-                const query = '(soccer OR football OR psl OR "kaizer chiefs" OR "orlando pirates" OR sundowns OR "bafana bafana")';
+                const query = '("South Africa" AND (soccer OR football)) OR "Betway Premiership" OR "Kaizer Chiefs" OR "Orlando Pirates" OR "Mamelodi Sundowns" OR "Bafana Bafana"';
                 const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&from=${start}&sortBy=publishedAt&language=en&apiKey=${NEWS_API_KEY}`;
 
                 // NOTE: Server-side calls to NewsAPI are allowed on Free Tier (unlike browser calls)

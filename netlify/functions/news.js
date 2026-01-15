@@ -55,40 +55,32 @@ const normalizeArticle = (item, source) => {
 };
 
 export const handler = async (event, context) => {
-    const logs = [];
-    const log = (msg) => {
-        console.log(msg);
-        logs.push(msg);
-    };
+    const NEWS_API_KEY = process.env.NEWS_API_ORG_KEY;
+    const GNEWS_API_KEY = process.env.GNEWS_API_KEY;
+
+    if (!NEWS_API_KEY && !GNEWS_API_KEY) {
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: "Server API Keys not configured" }),
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json'
+            }
+        };
+    }
 
     try {
-        log("Function started. Node " + process.version);
-
-        const NEWS_API_KEY = process.env.NEWS_API_ORG_KEY;
-        const GNEWS_API_KEY = process.env.GNEWS_API_KEY;
-
-        log(`Keys present: NewsAPI=${!!NEWS_API_KEY}, GNews=${!!GNEWS_API_KEY}`);
-
-        if (!NEWS_API_KEY && !GNEWS_API_KEY) {
-            throw new Error("Server API Keys not configured in Netlify.");
-        }
-
-        // 1. Try NewsAPI
+        // 1. Try NewsAPI (Primary)
         if (NEWS_API_KEY) {
             try {
-                log("Attempting NewsAPI...");
                 const start = getOneWeekAgoDate();
                 const query = '("South Africa" AND (soccer OR football)) OR "Betway Premiership" OR "Kaizer Chiefs" OR "Orlando Pirates" OR "Mamelodi Sundowns" OR "Bafana Bafana"';
                 const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&from=${start}&sortBy=publishedAt&language=en&apiKey=${NEWS_API_KEY}`;
 
-                log("Fetching URL: " + url.replace(NEWS_API_KEY, "REDACTED"));
                 const response = await fetch(url);
-                log(`NewsAPI Response Status: ${response.status}`);
-
                 const data = await response.json();
 
-                if (response.ok && data.status === 'ok' && Array.isArray(data.articles)) {
-                    log(`NewsAPI Success. Found ${data.articles.length} articles.`);
+                if (response.ok && data.status === 'ok' && Array.isArray(data.articles) && data.articles.length > 0) {
                     const validArticles = data.articles
                         .filter(a => a.title !== '[Removed]')
                         .map(a => normalizeArticle(a, a.source.name || 'NewsAPI'));
@@ -96,38 +88,34 @@ export const handler = async (event, context) => {
                     return {
                         statusCode: 200,
                         headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ articles: validArticles, source: 'NewsAPI', debug_logs: logs })
+                        body: JSON.stringify({ articles: validArticles, source: 'NewsAPI' })
                     };
                 }
-                log("NewsAPI Error Payload: " + JSON.stringify(data));
+                console.warn("NewsAPI returned empty or error", data);
             } catch (e) {
-                log("NewsAPI Exception: " + e.message);
+                console.error("NewsAPI Exception:", e);
             }
         }
 
-        // 2. Try GNews
+        // 2. Try GNews (Fallback)
         if (GNEWS_API_KEY) {
             try {
-                log("Attempting GNews...");
                 const query = '"South African football" OR PSL OR "Betway Premiership" OR "Bafana Bafana" OR "Kaizer Chiefs" OR "Orlando Pirates" OR Sundowns';
                 const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&country=za&max=10&apikey=${GNEWS_API_KEY}`;
 
                 const response = await fetch(url);
-                log(`GNews Response Status: ${response.status}`);
                 const data = await response.json();
 
                 if (response.ok && data.articles) {
-                    log(`GNews Success. Found ${data.articles.length} articles.`);
                     const validArticles = data.articles.map(a => normalizeArticle(a, a.source.name || 'GNews'));
                     return {
                         statusCode: 200,
                         headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ articles: validArticles, source: 'GNews', debug_logs: logs })
+                        body: JSON.stringify({ articles: validArticles, source: 'GNews' })
                     };
                 }
-                log("GNews Error Payload: " + JSON.stringify(data));
             } catch (e) {
-                log("GNews Exception: " + e.message);
+                console.error("GNews Exception:", e);
             }
         }
 
@@ -135,15 +123,15 @@ export const handler = async (event, context) => {
         return {
             statusCode: 503,
             headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: "All news sources failed", debug_logs: logs })
+            body: JSON.stringify({ error: "All news sources failed", articles: [] })
         };
 
     } catch (e) {
-        log("CRITICAL FAILURE: " + e.message);
+        console.error("CRITICAL FAILURE:", e);
         return {
             statusCode: 500,
             headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: e.message, debug_logs: logs })
+            body: JSON.stringify({ error: e.message })
         };
     }
 };

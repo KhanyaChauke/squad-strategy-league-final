@@ -138,3 +138,4 @@ export const handler = async (event, context) => {
         };
     }
 };
+// Force redeploy for env vars

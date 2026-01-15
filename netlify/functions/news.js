@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');
+// const fetch = require('node-fetch'); // Removed: node-fetch v3 is ESM-only. Node 18+ has global fetch.
 
 // --- Helper Functions ---
 

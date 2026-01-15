@@ -2,9 +2,9 @@
 
 // --- Helper Functions ---
 
-const getOneWeekAgoDate = () => {
+const getThreeWeeksAgoDate = () => {
     const date = new Date();
-    date.setDate(date.getDate() - 7);
+    date.setDate(date.getDate() - 21);
     return date.toISOString().split('T')[0];
 };
 
@@ -73,8 +73,9 @@ export const handler = async (event, context) => {
         // 1. Try NewsAPI (Primary)
         if (NEWS_API_KEY) {
             try {
-                const start = getOneWeekAgoDate();
-                const query = '("South Africa" AND (soccer OR football)) OR "Betway Premiership" OR "Kaizer Chiefs" OR "Orlando Pirates" OR "Mamelodi Sundowns" OR "Bafana Bafana"';
+                const start = getThreeWeeksAgoDate();
+                // Broaden query to ensure we catch transfers, injuries, and specific team news
+                const query = '("South Africa" AND (soccer OR football)) OR "Betway Premiership" OR "Kaizer Chiefs" OR "Orlando Pirates" OR "Mamelodi Sundowns" OR "Bafana Bafana" OR "PSL transfer"';
                 const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&from=${start}&sortBy=publishedAt&language=en&apiKey=${NEWS_API_KEY}`;
 
                 const response = await fetch(url);

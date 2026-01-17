@@ -75,7 +75,8 @@ export const handler = async (event, context) => {
             try {
                 const start = getThreeWeeksAgoDate();
                 // Strict query: Must contain 'soccer' or 'football' AND one of the SA specific terms
-                const query = '(soccer OR football) AND ("South Africa" OR "PSL" OR "Betway Premiership" OR "Kaizer Chiefs" OR "Orlando Pirates" OR "Mamelodi Sundowns" OR "Bafana Bafana")';
+                // Explicitly EXCLUDE rugby, cricket, and horse racing to avoid irrelevant sports news
+                const query = '(soccer OR football) AND ("South Africa" OR "PSL" OR "Betway Premiership" OR "Kaizer Chiefs" OR "Orlando Pirates" OR "Mamelodi Sundowns" OR "Bafana Bafana") AND NOT (rugby OR cricket OR horse OR racing OR "horse racing")';
                 const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&from=${start}&sortBy=publishedAt&language=en&apiKey=${NEWS_API_KEY}`;
 
                 const response = await fetch(url);
@@ -101,7 +102,7 @@ export const handler = async (event, context) => {
         // 2. Try GNews (Fallback)
         if (GNEWS_API_KEY) {
             try {
-                const query = '(soccer OR football) AND ("South Africa" OR PSL OR "Betway Premiership" OR "Kaizer Chiefs" OR "Orlando Pirates" OR "Sundowns")';
+                const query = '(soccer OR football) AND ("South Africa" OR PSL OR "Betway Premiership" OR "Kaizer Chiefs" OR "Orlando Pirates" OR "Sundowns") AND NOT (rugby OR cricket OR horse OR racing)';
                 const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&country=za&max=10&apikey=${GNEWS_API_KEY}`;
 
                 const response = await fetch(url);

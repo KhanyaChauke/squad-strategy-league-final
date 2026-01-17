@@ -2,6 +2,7 @@
 import { Player } from '@/contexts/AuthContext';
 import { calculatePoints, MatchStats } from './pointsService';
 import { playersDatabase } from '@/data/playersData';
+import { Shirt } from 'lucide-react';
 
 export interface GameweekResult {
     gameweek: number;
@@ -18,6 +19,7 @@ const generateRandomStats = (position: string): MatchStats => {
     const isDEF = position === 'DEF';
     const isMID = position === 'MID';
     const isATT = position === 'ATT';
+
 
     // Base randoms
     const minutes = Math.random() > 0.1 ? 90 : Math.floor(Math.random() * 90); // 90% chance of full game

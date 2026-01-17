@@ -285,7 +285,7 @@ export const PlayersView = () => {
                     user?.bench?.some(p => p.id === player.id) ||
                     (selectedFormation && (user?.squad?.filter(p => p.position === player.position).length || 0) >= selectedFormation.positions[player.position as keyof typeof selectedFormation.positions]) ||
                     (!selectedFormation && (user?.squad?.length || 0) >= 11) ||
-                    (user?.budget || 0) < player.price
+                    Number(user?.budget || 0) < player.price
                   }
                 >
                   Add Squad
@@ -299,7 +299,7 @@ export const PlayersView = () => {
                     user?.bench?.some(p => p.id === player.id) ||
                     ((user?.squad?.length || 0) + (user?.bench?.length || 0)) >= 15 ||
                     (user?.bench?.length || 0) >= 4 ||
-                    (user?.budget || 0) < player.price
+                    Number(user?.budget || 0) < player.price
                   }
                 >
                   Add Bench

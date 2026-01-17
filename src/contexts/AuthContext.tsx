@@ -368,7 +368,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const updatedUser = {
       ...user,
-      budget: user.budget - player.price,
+      budget: Number(user.budget) - Number(player.price),
       squad: [...user.squad, player]
     };
 
@@ -387,7 +387,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const updatedUser = {
       ...user,
-      budget: user.budget + playerToRemove.price,
+      budget: Number(user.budget) + Number(playerToRemove.price),
       squad: user.squad.filter(p => p.id !== playerId),
       transfersMade: isTransferred ? (user.transfersMade || 0) + 1 : (user.transfersMade || 0)
     };
@@ -407,7 +407,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return false;
     }
 
-    if (user.budget < player.price) {
+    if (Number(user.budget) < Number(player.price)) {
+      console.warn(`[AuthContext] Insufficient Funds for Bench. Budget: ${user.budget}, Price: ${player.price}`);
       return false;
     }
 
@@ -417,7 +418,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const updatedUser = {
       ...user,
-      budget: user.budget - player.price,
+      budget: Number(user.budget) - Number(player.price),
       bench: [...user.bench, player]
     };
 
@@ -433,7 +434,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const updatedUser = {
       ...user,
-      budget: user.budget + playerToRemove.price,
+      budget: Number(user.budget) + Number(playerToRemove.price),
       bench: user.bench.filter(p => p.id !== playerId)
     };
 

@@ -20,30 +20,32 @@ export default defineConfig(({ mode }) => ({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'touchline-logo.jpg', 'ios/100.png', 'ios/1024.png'], // Including logo
+      includeAssets: ['touchline-logo.jpg'],
       manifest: {
         name: 'Touchline SA',
         short_name: 'Touchline SA',
         description: 'Build your dream squad and compete with friends in the ultimate South African fantasy soccer experience',
         theme_color: '#2D7D32',
-        background_color: '#ffffff',
+        background_color: '#2D7D32',
         display: 'standalone',
         orientation: 'portrait',
         scope: '/',
         start_url: '/',
         icons: [
           {
-            src: 'touchline-logo.jpg',
+            src: '/touchline-logo.jpg',
             sizes: '192x192',
-            type: 'image/jpeg'
+            type: 'image/jpeg',
+            purpose: 'any'
           },
           {
-            src: 'touchline-logo.jpg',
+            src: '/touchline-logo.jpg',
             sizes: '512x512',
-            type: 'image/jpeg'
+            type: 'image/jpeg',
+            purpose: 'any'
           },
           {
-            src: 'touchline-logo.jpg',
+            src: '/touchline-logo.jpg',
             sizes: '512x512',
             type: 'image/jpeg',
             purpose: 'maskable'
@@ -51,7 +53,7 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,tsx}']
+        globPatterns: ['**/*.{js,css,html,png,svg,jpg,jpeg,tsx}']
       }
     }),
     // mode === 'development' &&

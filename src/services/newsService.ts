@@ -213,7 +213,22 @@ export const syncNewsWithAPI = async (apiKey?: string) => {
             const syncTime = Timestamp.now();
             let savedCount = 0;
 
+            const keywords = [
+                'football', 'soccer', 'league', 'psl', 'kaizer chiefs', 'orlando pirates',
+                'sundowns', 'goal', 'match', 'fixture', 'transfer', 'coach', 'player',
+                'fifa', 'caf', 'afcon', 'premier league', 'champions league', 'betway', 'dstv',
+                'amazulu', 'supersport', 'city', 'united', 'fc', 'club', 'winger', 'striker', 'defender', 'keeper',
+                'sport', 'game', 'score', 'win', 'lose', 'draw', 'table', 'standings', 'results', 'news'
+            ];
+
             for (const item of data.articles) {
+                // Filter for football relevance
+                const textToCheck = (item.title + ' ' + (item.summary || '')).toLowerCase();
+                const isRelevant = keywords.some(k => textToCheck.includes(k));
+
+                if (!isRelevant) {
+                    continue;
+                }
                 // Ensure ID is safe
                 const docId = btoa(item.url || item.title).slice(0, 20);
 

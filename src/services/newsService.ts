@@ -22,11 +22,11 @@ export const getStoredNewsApiKey = () => {
     return localStorage.getItem('psl_user_api_key');
 };
 
-const NEWS_API_ORG_KEY = "92c9846c875047eeac8fda27eeacb14d";
-const HARDCODED_API_KEY = "1a5d324f62mshf82070b791b2f3ap10994fjsnd9dc8ed92749"; // Legacy RapidAPI key (LiveScore)
-const API_FOOTBALL_KEY = "1a5d324f62mshf82070b791b2f3ap10994fjsnd9dc8ed92749";
-const GNEWS_API_KEY = "46b746a39e92802f3adcc087019909cc";
-const JINA_API_KEY = "jina_dbf46d3721184e1caf32abf59aca6abe1GfgenzyFdPyFlnA9c3ZT3bs3J-k";
+const NEWS_API_ORG_KEY = import.meta.env.VITE_NEWS_API_KEY || "";
+const GNEWS_API_KEY = import.meta.env.VITE_GNEWS_API_KEY || "";
+const JINA_API_KEY = import.meta.env.VITE_JINA_API_KEY || "";
+const API_FOOTBALL_KEY = import.meta.env.VITE_RAPID_API_KEY || "";
+const HARDCODED_API_KEY = import.meta.env.VITE_RAPID_API_KEY || "";
 
 
 const CACHE_KEY_NEWS = 'cached_psl_news_v2';

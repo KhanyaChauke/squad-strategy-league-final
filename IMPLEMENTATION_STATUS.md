@@ -46,6 +46,33 @@ This document tracks the completion status of the core features for the Squad St
 - [ ] **Auto-Subs:** Logic to automatically sub in bench players if starters don't play.
 - [ ] **Live Match Integration:** Linking the "Live Games" real-life players to the User's fantasy squad (Real-time points).
 
+## 🔵 7. Market Expansion Strategy (SA Focus) (NEW)
+- [ ] **WhatsApp Viral Loop:**
+    - [ ] "Share Squad" button generating visual/text team summary.
+    - [ ] Invite links for private leagues.
+- [ ] **Connectivity & Data:**
+    - [ ] **Offline Persistence:** Enable Firestore offline cache for load-shedding support.
+    - [ ] **Lite Mode:** Toggle for low-data usage (reduced images/fetches).
+- [ ] **Localization:**
+    - [ ] Rebrand UI with "Diski" terminology (Laduma, Mzansi, etc.).
+    - [ ] Localized awards and badges.
+- [ ] **Payments:**
+    - [ ] Integration with Paystack/Ozow (EFT support) for future premium features.
+
+## 🟣 8. Commercial & Exit Readiness (Future Sale) (NEW)
+- [ ] **Legal & Compliance (POPIA):**
+    - [ ] Privacy Policy & Terms of Service pages.
+    - [ ] "Delete Account" functionality (Data subject rights).
+    - [ ] Consent banners for data processing.
+- [ ] **System Professionalization:**
+    - [ ] **Role-Based Admin:** Migrate from email-hardcoded to Firestore `role: 'admin'` field.
+    - [ ] **Operations Manual:** Create `OPERATIONS.md` (Run-book for buyers).
+- [ ] **Codebase Hygiene:**
+    - [ ] Move root testing scripts to `/scripts` folder.
+    - [ ] Secure all API keys via Environment Variables (InProgress).
+- [ ] **Analytics & Valuation:**
+    - [ ] Integrate GA4 or Mixpanel to track "Squad Completion Rate" (Key Value Metric).
+
 ---
 
-**Summary:** The application is functionally complete as a Single-Player Fantasy Game. Users can register, buy real players, see news, and simulate games. The missing pieces are primarily "Social" features (Private Leagues) and "Advanced Gameplay" rules (Strict transfer limits, Auto-subs).
+**Summary:** The application is functionally complete as a Single-Player Fantasy Game. The focus now shifts to **Market Fit** (SA-specific features) and **Business Asset Value** (Compliance, Analytics, and Turnkey Operations).

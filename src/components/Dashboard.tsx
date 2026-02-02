@@ -10,7 +10,7 @@ import { SquadView } from '@/components/SquadView';
 import { PSLDashboard } from '@/components/PSLDashboard';
 import { NewsView } from '@/components/NewsView';
 import { LiveGamesView } from '@/components/LiveGamesView';
-import { LeaderboardView } from '@/components/LeaderboardView';
+import { LeaguesView } from '@/components/LeaguesView';
 import { AuthModal } from '@/components/AuthModal';
 import {
   Sheet,
@@ -187,7 +187,7 @@ const Dashboard = () => {
             <nav className="flex space-x-1 lg:space-x-2">
               <NavButton view="news" icon={Newspaper} label="News" />
               <NavButton view="fpls" icon={UserCircle} label="Fantasy Squad" />
-              <NavButton view="leaderboard" icon={Trophy} label="Leaderboard" />
+              <NavButton view="leaderboard" icon={Trophy} label="Leagues" />
               <NavButton view="psl" icon={Trophy} label="PSL Table" />
               <NavButton view="live-games" icon={Layout} label="Live Games" />
             </nav>
@@ -262,7 +262,7 @@ const Dashboard = () => {
                         <UserCircle className="mr-2 h-4 w-4" /> Fantasy Squad (My Team)
                       </Button>
                       <Button variant={currentView === 'leaderboard' ? 'default' : 'ghost'} className="justify-start w-full" onClick={() => handleViewChange('leaderboard')}>
-                        <Trophy className="mr-2 h-4 w-4" /> Leaderboard
+                        <Trophy className="mr-2 h-4 w-4" /> Leagues
                       </Button>
                       <Button variant={currentView === 'psl' ? 'default' : 'ghost'} className="justify-start w-full" onClick={() => handleViewChange('psl')}>
                         <Trophy className="mr-2 h-4 w-4" /> PSL Table
@@ -513,7 +513,7 @@ const Dashboard = () => {
             <div className="flex space-x-4 mb-6 text-sm">
               <Button onClick={() => setCurrentView('squad')} variant="outline" size="sm">My Squad</Button>
               <Button onClick={() => setCurrentView('players')} variant="outline" size="sm">Transfer Market</Button>
-              <Button onClick={() => setCurrentView('leaderboard')} variant="outline" size="sm">Leaderboard</Button>
+              <Button onClick={() => setCurrentView('leaderboard')} variant="outline" size="sm">Leagues</Button>
             </div>
             {renderHomeView()}
           </div>
@@ -530,7 +530,7 @@ const Dashboard = () => {
             <PlayersView />
           </div>
         )}
-        {currentView === 'leaderboard' && <LeaderboardView />}
+        {currentView === 'leaderboard' && <LeaguesView />}
         {currentView === 'psl' && <PSLDashboard />}
         {currentView === 'live-games' && <LiveGamesView />}
       </div>
